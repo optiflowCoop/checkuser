@@ -1,0 +1,13 @@
+IBM Db2 Interactive CLI Sample Program
+(C) COPYRIGHT International Business Machines Corp. 1993,1996
+All Rights Reserved
+Licensed Materials - Property of IBM
+US Government Users Restricted Rights - Use, duplication or
+disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+SQLError: rc = 0 (SQL_SUCCESS) 
+SQLGetDiagRec: SQLState     : 08001
+          fNativeError : -30081
+          szErrorMsg   : [IBM][CLI Driver] SQL30081N  A communication error has been detected. Communication protocol being used: "TCP/IP".  Communication API being used: "SOCKETS".  Location where the error was detected: "10.119.58.24".  Communication function detecting the error: "connect".  Protocol specific error code(s): "10060", "*", "*".  SQLSTATE=08001
+
+          cbErrorMsg   : 338
+
