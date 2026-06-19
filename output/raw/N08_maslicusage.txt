@@ -1,0 +1,9 @@
+IBM Db2 Interactive CLI Sample Program
+(C) COPYRIGHT International Business Machines Corp. 1993,1996
+All Rights Reserved
+Licensed Materials - Property of IBM
+US Government Users Restricted Rights - Use, duplication or
+disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+> SELECT USERID, MAXPRODID, LICENSETYPE, ISADMIN FROM MASLICUSAGE;
+FetchAll: 0 rows fetched.
+> 

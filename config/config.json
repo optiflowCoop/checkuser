@@ -1,0 +1,91 @@
+{
+  "output_dir": "output",
+  "queries": [
+    "maxuser",
+    "person",
+    "email",
+    "groupuser",
+    "maxgroup",
+    "persongroup",
+    "persongroupteam",
+    "persongroupview",
+    "maxlicusage",
+    "maslicusage",
+    "maxlicuserasc",
+    "maxlicappaccess",
+    "maxlicapps",
+    "maxrelationship"
+  ],
+  "connections": [
+    {
+      "name": "BASE",
+      "env_db": "BASE",
+      "driver": "ibm_db",
+      "hostname": "10.119.246.24",
+      "port": 50005,
+      "database": "prdmax76",
+      "username": "maximo",
+      "password": "M@x*2025#For3"
+    },
+    {
+      "name": "ODN1",
+      "env_db": "ODN1",
+      "driver": "ibm_db",
+      "hostname": "10.120.216.24",
+      "port": 50005,
+      "database": "prdmax76",
+      "username": "maximo",
+      "password": "M@x*2025#For3"
+    },
+    {
+      "name": "ODN2",
+      "env_db": "ODN2",
+      "driver": "ibm_db",
+      "hostname": "10.118.6.24",
+      "port": 50005,
+      "database": "prdmax76",
+      "username": "maximo",
+      "password": "M@x*2025#For3"
+    },
+    {
+      "name": "N06",
+      "env_db": "N06",
+      "driver": "ibm_db",
+      "hostname": "10.120.148.24",
+      "port": 50005,
+      "database": "prdmax76",
+      "username": "maximo",
+      "password": "M@x*2025#For3"
+    },
+    {
+      "name": "N08",
+      "env_db": "N08",
+      "driver": "ibm_db",
+      "hostname": "10.120.148.240",
+      "port": 50005,
+      "database": "prdmax76",
+      "username": "maximo",
+      "password": "M@x*2025#For3"
+    },
+    {
+      "name": "N09",
+      "env_db": "N09",
+      "driver": "ibm_db",
+      "hostname": "10.120.149.24",
+      "port": 50005,
+      "database": "prdmax76",
+      "username": "maximo",
+      "password": "M@x*2025#For3"
+    },
+    {
+      "name": "HTQ",
+      "env_db": "HTQ",
+      "driver": "ibm_db",
+      "hostname": "10.119.58.24",
+      "port": 50005,
+      "database": "prdmax76",
+      "username": "maximo",
+      "password": "M@x*2025#For3"
+    }
+  ]
+}

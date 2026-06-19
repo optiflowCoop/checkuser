@@ -1,0 +1,85 @@
+IBM Db2 Interactive CLI Sample Program
+(C) COPYRIGHT International Business Machines Corp. 1993,1996
+All Rights Reserved
+Licensed Materials - Property of IBM
+US Government Users Restricted Rights - Use, duplication or
+disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+> SELECT GROUPNAME, DESCRIPTION, INDEPENDENT, AUTHALLSITES, AUTHALLGLS, AUTHALLSTOREROOMS, AUTHLABORALL, AUTHLABORCREW, AUTHLABORSELF, AUTHLABORSUPER, AUTHPERSONGROUP, DFLTAPP, WORKCENTER FROM MAXGROUP;
+FetchAll:  Columns: 13
+  GROUPNAME DESCRIPTION INDEPENDENT AUTHALLSITES AUTHALLGLS AUTHALLSTOREROOMS AUTHLABORALL AUTHLABORCREW AUTHLABORSELF AUTHLABORSUPER AUTHPERSONGROUP DFLTAPP WORKCENTER 
+  OOG_RELIABILITY_TEAM, Reliability Team, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_SUPERVISOR, Grupo de supervisores, 0, 0, 0, 0, 1, 0, 0, 0, 0, -, -
+  TUTOR_GROUP, Tutor, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  MGUEST, Guest Group, 0, 1, 0, 0, 0, 0, 0, 0, 0, SELFSERVICE, -
+  Inv_ready, Inventory Read Only, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  MAXREADONLYSPPT, Maximo Read Only Access for Support, 0, 1, 1, 1, 1, 0, 0, 0, 0, -, -
+  OOG_RIGMGR, Rig Manager, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_BASE_READ_ONLY, Base Read Only, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  MAXADMIN, Maximo Administrators (Super Users), 1, 1, 1, 1, 1, 0, 0, 0, 0, -, -
+  MAXREG, Self Registration Process Access, 1, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  MAXDEFLTREG, New User, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  MAXEVERYONE, All Maximo Users, 0, 0, 1, 0, 0, 0, 0, 0, 0, -, -
+  OOG_ASSET_MANAGER, Asset Manager, 0, 0, 0, 0, 1, 0, 0, 0, 0, -, -
+  OOG_OPMGR, Operation Manager, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_MAINTENANCE_COORDINATOR, Maintenance Coordinator, 0, 0, 1, 0, 1, 0, 0, 0, 0, -, -
+  OOG_MATERIALS_COORDINATOR, Materials Coordinator, 0, 0, 1, 0, 0, 0, 0, 0, 0, -, -
+  OOG_DEFSITE_DATA_RESTRICTIONS, Default site data restrictions, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  PLSV_CA, PLSV CA Site, 0, 0, 0, 1, 0, 0, 0, 0, 0, -, -
+  OOG_HELPDESK, Help desk group, 1, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_ASSIST_RIGMGR, Assistant Rig Manager, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_FIELD_SUPPORT, Field Support, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_MAXIMO_COORDINATOR, Maximo Coordinator, 0, 0, 0, 0, 1, 0, 0, 0, 0, -, -
+  OOG_ALLSITES, All Sites Security Group, 0, 0, 0, 1, 0, 0, 0, 0, 0, -, -
+  OOG_DEPARTMENT_LEADER, Department Leader, 0, 0, 0, 0, 1, 0, 0, 0, 0, -, -
+  OOG_MAINTENANCE_LEADER, Maintenance Leader, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  PLSV_DEPUTY_PROJECT_MANAGER, Deputy Project Manager, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_ALL_PERF, All sites exclude PLSV sites., 0, 0, 0, 1, 0, 0, 0, 0, 0, -, -
+  PLSV_TECHNICIAN, Technician, 0, 0, 0, 0, 1, 0, 0, 0, 0, -, -
+  OOG_PR_CREATOR, Group to allow users creating and approving PR's, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  PLSV_EXCLUSIVE_ACCESS, Access to applications and Start Center only for PLSV users, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  PLSV_PM_APPROVER, Preventive Maintenance Approver for PLSV, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_ALL_PLSV, All PLSV sites., 0, 0, 0, 1, 0, 0, 0, 0, 0, -, -
+  OOG_ALL_DRILLING, All DRILLING sites., 0, 0, 0, 1, 0, 0, 0, 0, 0, -, -
+  OOG_MASS_UPDATE_DUE_DATE, Grant access to mass update the PM's next due date field., 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_MATERIAL_ENGINEER, Materials Engineer, 0, 0, 0, 0, 1, 0, 0, 0, 0, -, -
+  OOG_DEPARTMENT_LEADER_SUBSEA, Department Leader SubSea, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_REPAIR_RETURN, Repair and Return, 0, 0, 0, 0, 1, 0, 0, 0, 0, -, -
+  OOG_SUP_REPAIR_RETURN, Supervisor Repair and Return, 0, 0, 0, 0, 1, 0, 0, 0, 0, -, -
+  OOG_PROJECT_ENGINEER, Project Engineers Group, 0, 0, 1, 0, 1, 0, 0, 0, 0, -, -
+  OOG_ASSET_ENGINEER, Asset Engineer Group - Read Only, 0, 1, 1, 0, 1, 0, 0, 0, 0, -, -
+  OOG_ASSET_COORDINATOR, Asset Coordinator Group, 0, 0, 1, 0, 0, 0, 0, 0, 0, -, -
+  OOG_ENGINEER_COORDINATOR, Engineers Coordinators Group, 0, 0, 1, 0, 0, 0, 0, 0, 0, -, -
+  OOG_MOCPEO_EMISSOR, Emissor da MOC - People, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_MOCDOC_EMISSOR, Emissor da MOC - Documents, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_MOCDOC_APROVADOR, Aprovador da MOC - Documents, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_MOCPEO_APROVADOR, Aprovador da MOC - People, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_MOCPEO_GESTOR, Gestor da MOC - People, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_MOC_APPROVERS, Group for all MOC approvers, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_MOCDOC_GESTOR, Gestor da MOC - Documents, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_MOC_OPENERS, People that open MOCs O&Fs, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_MACRO_ACTIONS, Atualizacao de acoes em  MACROESTRUTURA, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_REGISTER_HTQ, HTQ Item Registration, 0, 0, 0, 0, 1, 0, 0, 0, 0, -, -
+  HTQ_MATERIALS_COORDINATOR, HTQ Materials Coordinator, 0, 0, 1, 0, 0, 0, 0, 0, 0, -, -
+  OOG_USERS_HTQ, HTQ Users, 0, 0, 0, 1, 0, 0, 0, 0, 0, -, -
+  MOBILE, Security Group for Mobile, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_SQP_QUALITY, SQP Quality Department, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_TRANSPORTADOR, Grupo para acessar aplicaoes de transportador, 1, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_REQUISITANTET, Grupo para acessar aplicaoes de transporte como requisitante, 1, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_LOGISTICA_ADM, Grupo para Administrar aplicações de Transporte, 1, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_LOGISTICA, Grupo para acessar aplicações de Transporte, 1, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_SQP_OPENERS, SQP Openers, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_RIGSUPSQP, Rig Superintendent SQP, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_APPUSERS, Grupo para permitir acesso a aplicação Users, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_PTW_ADMIN, Permit To Work Admin, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_PTW_ISSUER, Permit to Work Issuer, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_PTW_APPROVERS, Permit to Work Approvers, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_ISOLATION_MANAGER, Isolation Manager, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_MOC_MACRO, MOC para MACROESTRUTURA, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_ISOLATION_APPROVER, Isolation Approver, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_MATERIALS_COORDINATOR_YARD, Materials Coordinator Yard, 0, 0, 1, 0, 0, 0, 0, 0, 0, -, -
+  OOG_DEPARTMENT_TEAM, Department Team, 0, 0, 0, 0, 1, 0, 0, 0, 0, -, -
+  OOG_INSPECTORSUP, Inspector supervisor group OOG, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_QUALIFIED_PROFESSIONAL, Qualified Professional - SPIE, 0, 0, 1, 0, 1, 0, 0, 0, 0, -, -
+  OOG_AB_SST, Grupo de segurança para acesso a aplicação Alert & Bulletins SST, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+FetchAll: 74 rows fetched.
+> 

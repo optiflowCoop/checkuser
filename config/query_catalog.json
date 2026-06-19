@@ -1,0 +1,82 @@
+{
+  "queries": [
+    {
+      "name": "maxuser",
+      "category": "identity",
+      "output_name": "maxuser",
+      "required": true
+    },
+    {
+      "name": "person",
+      "category": "identity",
+      "output_name": "person",
+      "required": true
+    },
+    {
+      "name": "email",
+      "category": "identity",
+      "output_name": "email",
+      "required": true
+    },
+    {
+      "name": "groupuser",
+      "category": "access",
+      "output_name": "groupuser",
+      "required": true
+    },
+    {
+      "name": "maxgroup",
+      "category": "access",
+      "output_name": "maxgroup",
+      "required": true
+    },
+    {
+      "name": "persongroup",
+      "category": "access",
+      "output_name": "persongroup",
+      "required": false
+    },
+    {
+      "name": "persongroupteam",
+      "category": "access",
+      "output_name": "persongroupteam",
+      "required": false
+    },
+    {
+      "name": "persongroupview",
+      "category": "access",
+      "output_name": "persongroupview",
+      "required": false
+    },
+    {
+      "name": "maxlicusage",
+      "category": "licensing",
+      "output_name": "maxlicusage",
+      "required": false
+    },
+    {
+      "name": "maslicusage",
+      "category": "licensing",
+      "output_name": "maslicusage",
+      "required": false
+    },
+    {
+      "name": "maxlicuserasc",
+      "category": "licensing",
+      "output_name": "maxlicuserasc",
+      "required": false
+    },
+    {
+      "name": "maxlicappaccess",
+      "category": "licensing",
+      "output_name": "maxlicappaccess",
+      "required": false
+    },
+    {
+      "name": "maxlicapps",
+      "category": "licensing",
+      "output_name": "maxlicapps",
+      "required": false
+    }
+  ]
+}
