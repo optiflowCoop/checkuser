@@ -15,6 +15,7 @@ from scripts.config import get_app_points_config, get_entitlement_keywords, get_
 from scripts.domain.user import build_user_profiles, get_user_domain_category
 from scripts.services.analysis import analyze_governance, analyze_title_divergences
 from scripts.services.app_points import simulate_app_points
+from scripts.services.usage_analyzer import analyze_usage
 from scripts.reporting.html_builder import build_html_structure, fmt_br, render_table
 
 # --- Constants ---
@@ -59,15 +60,18 @@ def main():
     foresea_domains = get_foresea_domains()
     foresea_profiles = [p for p in active_profiles if p['DOMAIN_CATEGORY'] in ('FORESEA', 'PARCEIRO')]
     app_points_data = simulate_app_points(foresea_profiles)
+    
+    # 5. Apply Usage Intelligence (Optimization Recommendations)
+    app_points_data_optimized = analyze_usage(app_points_data)
 
-    # 5. Prepare Data for HTML Builder
+    # 6. Prepare Data for HTML Builder
     summary_data = {
         'active_profiles_count': len(active_profiles),
         'title_divergence_count': len(title_divergences_list),
         'app_points_summary': {
-            'auth_users': [s for s in app_points_data if s['LICENSE_MODEL'] == 'AUTHORIZED'],
-            'conc_users': [s for s in app_points_data if s['LICENSE_MODEL'] == 'CONCURRENT'],
-            'premium_users': [s for s in app_points_data if s['ENTITLEMENT'] == 'PREMIUM'],
+            'auth_users': [s for s in app_points_data_optimized if s['LICENSE_MODEL'] == 'AUTHORIZED'],
+            'conc_users': [s for s in app_points_data_optimized if s['LICENSE_MODEL'] == 'CONCURRENT'],
+            'premium_users': [s for s in app_points_data_optimized if s['ENTITLEMENT'] == 'PREMIUM'],
         }
     }
     governance_data = {
@@ -81,8 +85,8 @@ def main():
         'user_profiles': user_profiles # Pass consolidated profiles for detailed tables
     }
 
-    # 6. Build and Write HTML
-    html_content = build_html_structure(summary_data, governance_data, app_points_data, domain_counts)
+    # 7. Build and Write HTML
+    html_content = build_html_structure(summary_data, governance_data, app_points_data_optimized, domain_counts)
     html_path = OUT_DIR / 'maximo_unified_dashboard.html'
     html_path.write_text(html_content, encoding='utf-8')
     print(f'WROTE {html_path.name}')

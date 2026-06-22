@@ -13,6 +13,17 @@ def render_table(headers, rows, table_id="", extra_class=""):
     html += '  </tbody>\n</table></div>\n'
     return html
 
+def get_recommendation_badge(rec):
+    if rec == "INATIVO (>90d)":
+        return '<span class="badge badge-neutral">INATIVO (>90d)</span>'
+    if rec == "DOWNGRADE_CANDIDATE":
+        return '<span class="badge badge-warning">DOWNGRADE</span>'
+    if rec == "MOVE_TO_CONCURRENT":
+        return '<span class="badge badge-accent">P/ CONCURRENT</span>'
+    if rec == "CONFIRMED_AUTHORIZED":
+        return '<span class="badge badge-success">CONFIRMADO</span>'
+    return '<span>OK</span>'
+
 def build_html_structure(summary, governance, app_points, domains):
     # --- Calculate Summaries ---
     auth_users = summary['app_points_summary']['auth_users']
@@ -21,83 +32,33 @@ def build_html_structure(summary, governance, app_points, domains):
     total_auth_points = sum(u['APP_POINTS'] for u in auth_users)
     total_conc_points = sum(u['APP_POINTS'] for u in conc_users)
     total_estimated_cost = total_auth_points + int(total_conc_points * 0.3)
+    
+    downgrade_candidates = [u for u in app_points if u['OPTIMIZATION_REC'] == 'DOWNGRADE_CANDIDATE']
+    inactive_users = [u for u in app_points if u['OPTIMIZATION_REC'] == 'INATIVO (>90d)']
 
-    # --- Build Section 5: Type Divergences ---
+    # --- Build Governance Table Rows ---
+    cross_env_rows = [[f"<strong>{c.get('USERID')}</strong>", c.get('ENV_LIST'), c.get('DISPLAYNAME_LIST'), get_recommendation_badge(c.get('HYPOTHESIS', ''))] for c in governance['cross_env'][:200]]
+    login_conflicts_rows = [[f"<strong>{l.get('LOGINID')}</strong>", l.get('USERID_LIST'), l.get('DISPLAYNAME_LIST'), get_recommendation_badge(l.get('MERGE_DECISION', ''))] for l in governance['login_conflicts'][:200]]
+    worklist_rows = [[w.get('RAW_ID'), w.get('DISPLAYNAME'), w.get('HYPOTHESIS'), w.get('MERGE_DECISION')] for w in governance['worklist'][:200]]
+    
     title_divergence_html = []
-    for div in governance['detailed_divergences'][:50]:
+    for div in governance['detailed_divergences'][:30]:
         title = div['title']
         data = div['data']
-        
         alerts = []
-        all_types = {t for types in data['types'].values() for t in types}
+        all_types = {t for types in data['types'].values() for t in types if t}
         if len(all_types) > 1: alerts.append('<span class="badge badge-critical">TYPE DIVERGENTE</span>')
         
         base_groups = next(iter(data['groups'].values()), set())
-        has_group_div = any(s != base_groups for s in data['groups'].values())
-        if has_group_div: alerts.append('<span class="badge badge-high">GRUPOS DIVERGENTES</span>')
+        if any(s != base_groups for s in data['groups'].values()): alerts.append('<span class="badge badge-high">GRUPOS DIVERGENTES</span>')
             
         title_divergence_html.append(f'<div class="type-card"><h4>{title} {" ".join(alerts)}</h4>')
-        
         if len(all_types) > 1:
-            title_divergence_html.append(f'<div class="env-divergence"><div class="env-header" style="color:#991b1b;">⚠️ Inconsistência de TYPE</div>')
+            title_divergence_html.append('<div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div>')
             for env, types in sorted(data['types'].items()):
-                types_list = ', '.join([f"{t}" for t in sorted(types)])
-                title_divergence_html.append(f'<div style="font-size:0.8rem; margin-left:0.5rem;">📍 <strong>{env}</strong>: {types_list}</div>')
+                title_divergence_html.append(f'<div>📍 {env}: {", ".join(sorted(t for t in types if t))}</div>')
             title_divergence_html.append('</div>')
-            
-        if has_group_div:
-            if base_groups:
-                title_divergence_html.append(f'<div style="padding:0.6rem; background:#f0fdf4; border-left:3px solid #10b981; border-radius:4px; margin-bottom:0.8rem;">')
-                title_divergence_html.append(f'<div style="font-weight:600; color:#166534; font-size:0.85rem;">✓ Baseline Comum ({len(base_groups)} grupos):</div>')
-                title_divergence_html.append(f'<div style="font-size:0.75rem; color:#166534;">{", ".join(sorted(base_groups)[:8])}...</div></div>')
-            for env, groups in sorted(data['groups'].items()):
-                extra = groups - base_groups
-                if extra:
-                    title_divergence_html.append(f'<div class="env-divergence"><div class="env-header">🔸 {env} (+{len(extra)} extras)</div>')
-                    title_divergence_html.append(f'<div class="extra-groups">Adições locais: {", ".join(sorted(extra)[:10])}...</div></div>')
         title_divergence_html.append('</div>')
-
-    # --- Build Governance Tables ---
-    cross_env_rows = []
-    for c in governance['cross_env'][:200]:
-        w_match = next((w for w in governance['worklist'] if w.get('USERID') == c.get('USERID')), {})
-        prio = w_match.get('REVIEW_PRIORITY', 'LOW')
-        badge = "badge-critical" if prio == 'CRITICAL' else "badge-high" if prio == 'HIGH' else "badge-medium" if prio == 'MEDIUM' else "badge-low"
-        hypo = w_match.get('HYPOTHESIS', 'UNKNOWN')
-        dec = w_match.get('MERGE_DECISION', 'MANUAL_REVIEW_REQUIRED')
-        cross_env_rows.append([
-            f"<strong>{c.get('USERID')}</strong>",
-            f"<span class='env-data'>{c.get('ENV_LIST')}</span><span class='status-data' style='display:none;'>{c.get('STATUS_LIST', '')}</span>",
-            c.get('DISPLAYNAME_LIST'),
-            f'<span class="{badge} hyp-data">{hypo}</span>',
-            f"<span class='dec-data' style='font-weight:600;'>{dec}</span>"
-        ])
-    
-    login_conflicts_rows = []
-    for l in governance['login_conflicts'][:200]:
-        dec = l.get('MERGE_DECISION', 'MANUAL_REVIEW_REQUIRED')
-        if not dec or dec == 'None': dec = 'MANUAL_REVIEW_REQUIRED'
-        login_conflicts_rows.append([
-            f"<strong>{l.get('LOGINID')}</strong>",
-            f"<span class='env-data'>{l.get('ENV_LIST')}</span>",
-            l.get('USERID_LIST'),
-            l.get('DISPLAYNAME_LIST'),
-            f"<span class='dec-data' style='font-weight:600; color:#f59e0b;'>{dec}</span>"
-        ])
-
-    worklist_rows = []
-    for w in governance['worklist'][:300]:
-        prio = w.get('REVIEW_PRIORITY', 'LOW')
-        badge = "badge-critical" if prio == 'CRITICAL' else "badge-high" if prio == 'HIGH' else "badge-medium" if prio == 'MEDIUM' else "badge-low"
-        hypo = w.get('HYPOTHESIS', 'UNKNOWN')
-        worklist_rows.append([
-            f"<span class='env-data' style='display:none;'>{w.get('ENV_DB')}</span><span class='status-data' style='display:none;'>{w.get('STATUS', '')}</span>{w.get('RAW_ID')}",
-            w.get('DISPLAYNAME'),
-            w.get('PRIMARYEMAIL'),
-            w.get('COLLISION_TYPE'),
-            f'<span class="{badge} hyp-data">{hypo}</span>',
-            f"<strong class='dec-data'>{w.get('MERGE_DECISION')}</strong>"
-        ])
 
     # --- Build AppPoints Table ---
     app_points_rows = []
@@ -105,14 +66,15 @@ def build_html_structure(summary, governance, app_points, domains):
         app_points_rows.append([
             f"<strong>{s['USERID']}</strong>",
             s['DISPLAYNAME'][:30],
+            get_recommendation_badge(s['OPTIMIZATION_REC']),
             f"<span class='badge' style='background:#f1f5f9;'>{s['ENTITLEMENT']}</span>",
-            f"<span style='font-weight:600; color:{'#10b981' if s['LICENSE_MODEL'] == 'AUTHORIZED' else '#334155'}'>{s['LICENSE_MODEL']}</span>",
+            f"<span style='font-weight:600;'>{s['LICENSE_MODEL']}</span>",
             f"<strong>{s['APP_POINTS']}</strong>",
-            s['USAGE_PROFILE'],
+            s['LOGIN_COUNT_90D'],
             s['TITLES'][:40] + ("..." if len(s['TITLES']) > 40 else "")
         ])
 
-    # --- Generate HTML ---
+    # --- Final HTML Assembly ---
     return f"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -121,7 +83,7 @@ def build_html_structure(summary, governance, app_points, domains):
     <title>Dashboard Maximo Unificado</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {{ --primary: #0f172a; --secondary: #1e293b; --accent: #2563eb; --bg: #f8fafc; --card-bg: #ffffff; --text: #334155; --border: #e2e8f0; --danger: #ef4444; --warning: #f59e0b; --success: #10b981;}}
+        :root {{ --primary: #0f172a; --secondary: #1e293b; --accent: #2563eb; --bg: #f8fafc; --card-bg: #ffffff; --text: #334155; --border: #e2e8f0; --danger: #ef4444; --warning: #f59e0b; --success: #10b981; --neutral:#64748b}}
         * {{ box-sizing: border-box; }}
         body {{ font-family: "Segoe UI", system-ui, -apple-system, sans-serif; margin: 0; background-color: var(--bg); color: var(--text); line-height: 1.5; }}
         .topbar {{ background: var(--primary); color: white; padding: 1.5rem 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center;}}
@@ -155,7 +117,7 @@ def build_html_structure(summary, governance, app_points, domains):
         .border-warning {{ border-bottom: 4px solid var(--warning); }}
         .border-accent {{ border-bottom: 4px solid var(--accent); }}
         .border-success {{ border-bottom: 4px solid var(--success); }}
-        .border-neutral {{ border-bottom: 4px solid #94a3b8; }}
+        .border-neutral {{ border-bottom: 4px solid var(--neutral); }}
         
         .charts-container {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; margin-top: 2rem; }}
         .chart-box {{ height: 320px; display: flex; justify-content: center; align-items: center; background: #ffffff; border-radius: 8px; border: 1px solid var(--border); padding: 1rem; }}
@@ -167,13 +129,14 @@ def build_html_structure(summary, governance, app_points, domains):
         tbody tr:hover {{ background-color: #f8fafc; }}
         tbody tr:last-child td {{ border-bottom: none; }}
         
-        .badge {{ padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; display: inline-block; text-align: center; margin-left: 0.5rem; }}
-        .badge-critical {{ background-color: #fef2f2; color: #991b1b; border: 1px solid #f87171; }}
-        .badge-high {{ background-color: #fff7ed; color: #9a3412; border: 1px solid #fb923c; }}
-        .badge-medium {{ background-color: #eff6ff; color: #1e40af; border: 1px solid #60a5fa; }}
-        .badge-low {{ background-color: #ecfdf5; color: #166534; border: 1px solid #34d399; }}
+        .badge {{ padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: inline-block; text-align: center; }}
+        .badge-critical {{ background-color: var(--danger); color: white; }}
+        .badge-high {{ background-color: var(--warning); color: white; }}
+        .badge-medium {{ background-color: var(--accent); color: white; }}
+        .badge-success {{ background-color: var(--success); color: white; }}
+        .badge-neutral {{ background-color: var(--neutral); color: white; }}
         
-        .search-container {{ display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; background: #f1f5f9; padding: 1.5rem; border-radius: 8px; border: 1px solid #cbd5e1; }}
+        .search-container {{ display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; background: #f1f5f9; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); }}
         .search-bar {{ flex-grow: 1; padding: 12px 16px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; min-width: 250px; }}
         .filter-select {{ padding: 12px 16px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; background: white; min-width: 200px; }}
         
@@ -323,7 +286,7 @@ def build_html_structure(summary, governance, app_points, domains):
 
         <div class="card">
             <h2 class="card-header">Detalhes da Simulação (Top 500 Maior Custo)</h2>
-            {render_table(['USERID', 'Nome', 'Entitlement', 'Licença Requerida', 'AppPoints', 'Perfil Uso', 'Cargos Mapeados'], app_points_rows, 'table-apppoints', 'filterable-table')}
+            {render_table(['USERID', 'Nome', 'Recomendação', 'Entitlement', 'Licença', 'Custo', 'Logins 90d', 'Cargos'], app_points_rows, 'table-apppoints', 'filterable-table')}
         </div>
     </div>
 
