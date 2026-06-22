@@ -1,8 +1,10 @@
 # reporting/html_builder.py
 from datetime import datetime
 
+
 def fmt_br(num):
-    return f"{num:,}".replace(",", ".")
+    return f"{num:,.0f}".replace(",", ".")
+
 
 def render_table(headers, rows, table_id="", extra_class=""):
     html = f'<div class="table-responsive"><table id="{table_id}" class="{extra_class}">\n'
@@ -12,6 +14,7 @@ def render_table(headers, rows, table_id="", extra_class=""):
         html += '    <tr>' + ''.join(f'<td>{c}</td>' for c in row) + '</tr>\n'
     html += '  </tbody>\n</table></div>\n'
     return html
+
 
 def get_recommendation_badge(rec):
     if rec == "INATIVO (>90d)":
@@ -24,23 +27,52 @@ def get_recommendation_badge(rec):
         return '<span class="badge badge-success">CONFIRMADO</span>'
     return '<span>OK</span>'
 
+
 def build_html_structure(summary, governance, app_points, domains):
-    # --- Calculate Summaries ---
+    # --- Cálculo de Resumos e Cenários Previsionais de AppPoints ---
     auth_users = summary['app_points_summary']['auth_users']
     conc_users = summary['app_points_summary']['conc_users']
     premium_users = summary['app_points_summary']['premium_users']
-    total_auth_points = sum(u['APP_POINTS'] for u in auth_users)
-    total_conc_points = sum(u['APP_POINTS'] for u in conc_users)
-    total_estimated_cost = total_auth_points + int(total_conc_points * 0.3)
-    
-    downgrade_candidates = [u for u in app_points if u['OPTIMIZATION_REC'] == 'DOWNGRADE_CANDIDATE']
-    inactive_users = [u for u in app_points if u['OPTIMIZATION_REC'] == 'INATIVO (>90d)']
+
+    custo_atual = 0
+    custo_saneado = 0
+    custo_otimizado = 0
+
+    for u in app_points:
+        pts = u['APP_POINTS']
+        lic = u['LICENSE_MODEL']
+        rec = u['OPTIMIZATION_REC']
+
+        # 1. Custo Atual Base (com rácio concurrent assumido)
+        val_atual = pts if lic == 'AUTHORIZED' else pts * 0.3
+        custo_atual += val_atual
+
+        # 2. Custo Pós-Saneamento (remove inativos > 90d)
+        if rec != 'INATIVO (>90d)':
+            custo_saneado += val_atual
+
+            # 3. Custo Pós-Otimização
+            val_otimizado = val_atual
+            if rec == 'DOWNGRADE_CANDIDATE':
+                # Simula poupança de Downgrade (ex: de Premium [15] para Base [10])
+                if u['ENTITLEMENT'] == 'PREMIUM':
+                    pts_novo = 10
+                    val_otimizado = pts_novo if lic == 'AUTHORIZED' else pts_novo * 0.3
+            elif rec == 'MOVE_TO_CONCURRENT':
+                # Move utilizador Authorized para Concurrent (passa a consumir 30%)
+                val_otimizado = pts * 0.3
+
+            custo_otimizado += val_otimizado
 
     # --- Build Governance Table Rows ---
-    cross_env_rows = [[f"<strong>{c.get('USERID')}</strong>", c.get('ENV_LIST'), c.get('DISPLAYNAME_LIST'), get_recommendation_badge(c.get('HYPOTHESIS', ''))] for c in governance['cross_env'][:200]]
-    login_conflicts_rows = [[f"<strong>{l.get('LOGINID')}</strong>", l.get('USERID_LIST'), l.get('DISPLAYNAME_LIST'), get_recommendation_badge(l.get('MERGE_DECISION', ''))] for l in governance['login_conflicts'][:200]]
-    worklist_rows = [[w.get('RAW_ID'), w.get('DISPLAYNAME'), w.get('HYPOTHESIS'), w.get('MERGE_DECISION')] for w in governance['worklist'][:200]]
-    
+    cross_env_rows = [[f"<strong>{c.get('USERID')}</strong>", c.get('ENV_LIST'), c.get('DISPLAYNAME_LIST'),
+                       get_recommendation_badge(c.get('HYPOTHESIS', ''))] for c in governance['cross_env'][:200]]
+    login_conflicts_rows = [[f"<strong>{l.get('LOGINID')}</strong>", l.get('USERID_LIST'), l.get('DISPLAYNAME_LIST'),
+                             get_recommendation_badge(l.get('MERGE_DECISION', ''))] for l in
+                            governance['login_conflicts'][:200]]
+    worklist_rows = [[w.get('RAW_ID'), w.get('DISPLAYNAME'), w.get('HYPOTHESIS'), w.get('MERGE_DECISION')] for w in
+                     governance['worklist'][:200]]
+
     title_divergence_html = []
     for div in governance['detailed_divergences'][:30]:
         title = div['title']
@@ -48,13 +80,15 @@ def build_html_structure(summary, governance, app_points, domains):
         alerts = []
         all_types = {t for types in data['types'].values() for t in types if t}
         if len(all_types) > 1: alerts.append('<span class="badge badge-critical">TYPE DIVERGENTE</span>')
-        
+
         base_groups = next(iter(data['groups'].values()), set())
-        if any(s != base_groups for s in data['groups'].values()): alerts.append('<span class="badge badge-high">GRUPOS DIVERGENTES</span>')
-            
+        if any(s != base_groups for s in data['groups'].values()): alerts.append(
+            '<span class="badge badge-high">GRUPOS DIVERGENTES</span>')
+
         title_divergence_html.append(f'<div class="type-card"><h4>{title} {" ".join(alerts)}</h4>')
         if len(all_types) > 1:
-            title_divergence_html.append('<div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div>')
+            title_divergence_html.append(
+                '<div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div>')
             for env, types in sorted(data['types'].items()):
                 title_divergence_html.append(f'<div>📍 {env}: {", ".join(sorted(t for t in types if t))}</div>')
             title_divergence_html.append('</div>')
@@ -97,49 +131,49 @@ def build_html_structure(summary, governance, app_points, domains):
         .tab-content {{ display: none; }}
         .tab-content.active {{ display: block; animation: fadeIn 0.3s ease; }}
         @keyframes fadeIn {{ from {{ opacity: 0; }} to {{ opacity: 1; }} }}
-        
+
         .alert-box {{ background-color: #eff6ff; border-left: 4px solid var(--accent); padding: 1rem 1.5rem; border-radius: 6px; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.5rem; }}
         .alert-box strong {{ color: #1e3a8a; font-size: 1.1rem; }}
         .alert-box p {{ margin: 0; color: #1e40af; }}
-        
+
         .card {{ background: var(--card-bg); border-radius: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); border: 1px solid var(--border); padding: 1.8rem; margin-bottom: 2rem; }}
         .card-header {{ margin-top: 0; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border); padding-bottom: 0.75rem; color: var(--secondary); font-size: 1.4rem; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }}
         .card-header:hover {{ color: var(--accent); }}
-        
+
         .stats-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; }}
         .stat-card {{ background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; text-align: center; transition: transform 0.2s; position: relative; }}
         .stat-card:hover {{ transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }}
         .stat-value {{ font-size: 2.2rem; font-weight: 700; color: var(--primary); margin-bottom: 0.2rem; }}
         .stat-title {{ font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: #1e293b; font-weight: 700; margin-bottom: 0.5rem; }}
         .stat-subtitle {{ font-size: 0.75rem; color: #64748b; line-height: 1.2; }}
-        
+
         .border-danger {{ border-bottom: 4px solid var(--danger); }}
         .border-warning {{ border-bottom: 4px solid var(--warning); }}
         .border-accent {{ border-bottom: 4px solid var(--accent); }}
         .border-success {{ border-bottom: 4px solid var(--success); }}
         .border-neutral {{ border-bottom: 4px solid var(--neutral); }}
-        
+
         .charts-container {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; margin-top: 2rem; }}
         .chart-box {{ height: 320px; display: flex; justify-content: center; align-items: center; background: #ffffff; border-radius: 8px; border: 1px solid var(--border); padding: 1rem; }}
-        
+
         .table-responsive {{ overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); max-height: 600px; overflow-y: auto; }}
         table {{ width: 100%; border-collapse: collapse; text-align: left; }}
         th, td {{ padding: 14px 16px; border-bottom: 1px solid var(--border); vertical-align: top; word-wrap: break-word; white-space: normal; }}
         th {{ background-color: #f1f5f9; color: #334155; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; position: sticky; top: 0; z-index: 10; }}
         tbody tr:hover {{ background-color: #f8fafc; }}
         tbody tr:last-child td {{ border-bottom: none; }}
-        
+
         .badge {{ padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: inline-block; text-align: center; }}
         .badge-critical {{ background-color: var(--danger); color: white; }}
         .badge-high {{ background-color: var(--warning); color: white; }}
         .badge-medium {{ background-color: var(--accent); color: white; }}
         .badge-success {{ background-color: var(--success); color: white; }}
         .badge-neutral {{ background-color: var(--neutral); color: white; }}
-        
+
         .search-container {{ display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; background: #f1f5f9; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); }}
         .search-bar {{ flex-grow: 1; padding: 12px 16px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; min-width: 250px; }}
         .filter-select {{ padding: 12px 16px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; background: white; min-width: 200px; }}
-        
+
         /* Analysis Grid CSS */
         .type-analysis-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }}
         .type-card {{ background: #ffffff; border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; transition: box-shadow 0.2s; }}
@@ -160,18 +194,17 @@ def build_html_structure(summary, governance, app_points, domains):
             <p style="text-align: right; color: #cbd5e1;">Atualizado em:<br><strong>{datetime.now().strftime("%d/%m/%Y %H:%M")}</strong></p>
         </div>
     </div>
-    
+
     <div class="tabs">
         <button class="tab-button active" onclick="openTab(event, 'tab-painel')">1. Painel Operacional</button>
         <button class="tab-button" onclick="openTab(event, 'tab-gov')">2. Governança & Saneamento</button>
         <button class="tab-button" onclick="openTab(event, 'tab-apppoints')">3. Otimização AppPoints</button>
     </div>
 
-    <!-- TAB 1: PAINEL -->
     <div id="tab-painel" class="container tab-content active">
         <div class="alert-box">
             <strong>Visão de Negócio — Foco em MAS 9 AppPoints e Identidades Ativas</strong>
-            <p>Este Dashboard foca nativamente na visão de <strong>contas ativas</strong> para mapear o risco real e auxiliar no capacity planning do MAS 9. Lembre-se: O número de "Registros Ativos" (onde esilva repete na base A e B) é diferente do número de "Pessoas Únicas", onde o esilva conta como apenas 1 independente das bases em que estiver alocado.</p>
+            <p>Este Dashboard foca nativamente na visão de contas ativas para mapear o risco real e auxiliar no capacity planning do MAS 9.</p>
         </div>
 
         <div class="card">
@@ -182,7 +215,7 @@ def build_html_structure(summary, governance, app_points, domains):
                 <div class="stat-card border-accent"><div class="stat-value">{fmt_br(len(governance['cross_env']))}</div><div class="stat-title">Riscos de Reuso</div><div class="stat-subtitle">Logins ativos repetidos</div></div>
                 <div class="stat-card border-danger"><div class="stat-value" style="color: var(--danger);">{fmt_br(len([w for w in governance['worklist'] if w.get('HYPOTHESIS') == 'CONFIRMED_DIFFERENT_PERSON']))}</div><div class="stat-title">Colisões Críticas</div><div class="stat-subtitle">Nomes diferentes no mesmo login</div></div>
             </div>
-            
+
             <div class="charts-container" style="grid-template-columns: 1fr 2fr;">
                 <div class="chart-box" style="flex-direction: column;">
                     <h3 style="margin-top:0; font-size: 1rem; color: var(--primary);">Distribuição por Domínio</h3>
@@ -192,7 +225,7 @@ def build_html_structure(summary, governance, app_points, domains):
                     <div style="width: 100%;">
                         <h3 style="margin-top:0; font-size: 1rem; color: var(--primary);">Entendimento da Segregação</h3>
                         <p style="font-size: 0.9rem; color: var(--text); margin-bottom: 1rem;">
-                            A análise foca em segregar os usuários que são colaboradores diretos (Foresea) e parceiros integrados, dos terceiros ou temporários, para otimizar o consumo de licenças.
+                            A análise foca em segregar os utilizadores que são colaboradores diretos (Foresea) e parceiros integrados, dos terceiros ou temporários, para otimizar o consumo de licenças.
                         </p>
                         <div style="display: flex; justify-content: space-between; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border);">
                             <div><strong style="color: #10b981; font-size: 1.2rem;">{fmt_br(domains.get('FORESEA', 0))}</strong> <br><span style="font-size: 0.8rem; color: #64748b;">FORESEA</span></div>
@@ -206,9 +239,7 @@ def build_html_structure(summary, governance, app_points, domains):
         </div>
     </div>
 
-    <!-- TAB 2: GOVERNANÇA -->
     <div id="tab-gov" class="container tab-content">
-        <!-- Search Filters -->
         <div class="card" style="background-color: #ffffff; border-color: #cbd5e1;">
             <h3 style="margin-top: 0; color: var(--primary);">🔍 Filtro Interativo (Aplica-se às tabelas abaixo)</h3>
             <div class="search-container">
@@ -229,7 +260,6 @@ def build_html_structure(summary, governance, app_points, domains):
 
         <div class="card">
             <h2 class="card-header">Amostra 1: Cargos com Divergência de Perfil (Fase 2)</h2>
-            <p style="color: #64748b; font-size: 0.95rem;">Comparativo de Grupos de Segurança atribuídos para um mesmo Tipo (TYPE/Cargo) entre as unidades. Fica fácil ver qual unidade está com grupos a mais (em azul) do que o padrão esperado.</p>
             <div class="type-analysis-grid">
                 {''.join(title_divergence_html)}
             </div>
@@ -251,36 +281,57 @@ def build_html_structure(summary, governance, app_points, domains):
         </div>
     </div>
 
-    <!-- TAB 3: APPPOINTS -->
     <div id="tab-apppoints" class="container tab-content">
         <div class="alert-box" style="border-left-color: var(--success); background-color: #ecfdf5;">
-            <strong>🎯 Meta: Otimização de Licenciamento MAS 9</strong>
-            <p>Esta simulação processa apenas usuários dos domínios Foresea e Parceiros. A inteligência classifica usuários como <strong>AUTHORIZED</strong> se possuírem perfil de uso intenso (POWER) ou cargos críticos definidos pela gestão.</p>
+            <strong>🎯 Meta: Otimização de Licenciamento MAS 9 (Foresea e Parceiros)</strong>
+            <p>Os cenários previsionais abaixo quantificam o potencial de poupança (AppPoints diários) entre o "As-Is", a limpeza de inativos e a aplicação das recomendações da inteligência (Downgrades e migração para o modelo Concurrent com rácio de 30%).</p>
         </div>
 
         <div class="card">
-            <h2 class="card-header">Resumo da Simulação de Custos</h2>
+            <h2 class="card-header">Cenários Previsionais de Uso (AppPoints)</h2>
             <div class="stats-grid">
                 <div class="stat-card border-danger">
-                    <div class="stat-value" style="color: var(--danger);">{fmt_br(total_estimated_cost)}</div>
-                    <div class="stat-title">Custo Total Estimado</div>
-                    <div class="stat-subtitle">Authorized + (Concurrent * 30%)</div>
+                    <div class="stat-value" style="color: var(--danger);">{fmt_br(custo_atual)}</div>
+                    <div class="stat-title">Cenário Atual Bruto</div>
+                    <div class="stat-subtitle">Soma base do parque atual</div>
                 </div>
                 <div class="stat-card border-warning">
-                    <div class="stat-value" style="color: var(--warning);">{fmt_br(len(premium_users))}</div>
-                    <div class="stat-title">Usuários Premium (O&G)</div>
-                    <div class="stat-subtitle">Acesso a módulos de indústria</div>
-                </div>
-                <div class="stat-card border-accent">
-                    <div class="stat-value">{fmt_br(len(auth_users))}</div>
-                    <div class="stat-title">Licenças Authorized</div>
-                    <div class="stat-subtitle">Cargos críticos ou Power users</div>
+                    <div class="stat-value" style="color: var(--warning);">{fmt_br(custo_saneado)}</div>
+                    <div class="stat-title">Pós-Saneamento</div>
+                    <div class="stat-subtitle">Limpeza de utilizadores Inativos</div>
                 </div>
                 <div class="stat-card border-success">
-                    <div class="stat-value" style="color: var(--success);">{fmt_br(len(conc_users))}</div>
-                    <div class="stat-title">Licenças Concurrent</div>
-                    <div class="stat-subtitle">Pool compartilhado offshore/onshore</div>
+                    <div class="stat-value" style="color: var(--success);">{fmt_br(custo_otimizado)}</div>
+                    <div class="stat-title">Pós-Otimização</div>
+                    <div class="stat-subtitle">Regras de Downgrade + Concurrent</div>
                 </div>
+            </div>
+        </div>
+
+        <div class="card" style="background-color: #ffffff; border-color: #cbd5e1;">
+            <h3 style="margin-top: 0; color: var(--primary);">🔍 Filtros de Licenciamento</h3>
+            <div class="search-container">
+                <input type="text" id="searchAppPoints" class="search-bar" onkeyup="filterAppPoints()" placeholder="Pesquisar por ID, Nome, Cargo...">
+                <select id="filterEntitlement" class="filter-select" onchange="filterAppPoints()">
+                    <option value="">🔰 Todos os Entitlements</option>
+                    <option value="PREMIUM">PREMIUM</option>
+                    <option value="BASE">BASE</option>
+                    <option value="LIMITED">LIMITED</option>
+                    <option value="SELF FREE">SELF FREE</option>
+                </select>
+                <select id="filterLicense" class="filter-select" onchange="filterAppPoints()">
+                    <option value="">🔑 Todos os Tipos de Licença</option>
+                    <option value="AUTHORIZED">AUTHORIZED</option>
+                    <option value="CONCURRENT">CONCURRENT</option>
+                </select>
+                <select id="filterRec" class="filter-select" onchange="filterAppPoints()">
+                    <option value="">💡 Todas as Recomendações</option>
+                    <option value="OK">OK</option>
+                    <option value="INATIVO">Inativo (>90d)</option>
+                    <option value="DOWNGRADE">Downgrade Candidate</option>
+                    <option value="P/ CONCURRENT">Move to Concurrent</option>
+                    <option value="CONFIRMADO">Confirmado Authorized</option>
+                </select>
             </div>
         </div>
 
@@ -297,26 +348,26 @@ def build_html_structure(summary, governance, app_points, domains):
             for (i = 0; i < tabcontent.length; i++) {{ tabcontent[i].style.display = "none"; tabcontent[i].classList.remove("active"); }}
             tablinks = document.getElementsByClassName("tab-button");
             for (i = 0; i < tablinks.length; i++) {{ tablinks[i].classList.remove("active"); }}
-            
+
             var target = document.getElementById(tabName);
             target.style.display = "block";
-            // slight delay to ensure display block is applied before adding opacity class
             setTimeout(() => target.classList.add("active"), 10);
             evt.currentTarget.classList.add("active");
         }}
 
+        // Filtro Geral da Tab de Governança
         function filterTable() {{
             var input = document.getElementById("searchInput").value.toUpperCase();
             var statusFilter = document.getElementById("statusFilter").value.toUpperCase();
             var decFilter = document.getElementById("decFilter").value.toUpperCase();
-            
-            var tables = document.querySelectorAll(".filterable-table");
+
+            var tables = document.querySelectorAll("#tab-gov .filterable-table");
             tables.forEach(function(table) {{
                 var tr = table.getElementsByTagName("tr");
                 for (var i = 1; i < tr.length; i++) {{
                     var rowText = tr[i].textContent || tr[i].innerText;
                     var matchInput = input === "" || rowText.toUpperCase().indexOf(input) > -1;
-                    
+
                     var statusSpan = tr[i].querySelector('.status-data');
                     var statusContent = statusSpan ? statusSpan.innerText.toUpperCase() : "";
                     var matchStatus = true;
@@ -324,12 +375,37 @@ def build_html_structure(summary, governance, app_points, domains):
                         if (statusFilter === "ACTIVE") matchStatus = statusContent.indexOf("ACTIVE") > -1;
                         else if (statusFilter === "INACTIVE") matchStatus = statusContent.indexOf("ACTIVE") === -1;
                     }}
-                    
                     var matchDec = decFilter === "" || rowText.toUpperCase().indexOf(decFilter) > -1;
-                    
                     tr[i].style.display = (matchInput && matchStatus && matchDec) ? "" : "none";
                 }}
             }});
+        }}
+
+        // Novo Filtro Específico para a Tab AppPoints
+        function filterAppPoints() {{
+            var input = document.getElementById("searchAppPoints").value.toUpperCase();
+            var entFilter = document.getElementById("filterEntitlement").value.toUpperCase();
+            var licFilter = document.getElementById("filterLicense").value.toUpperCase();
+            var recFilter = document.getElementById("filterRec").value.toUpperCase();
+
+            var table = document.getElementById("table-apppoints");
+            if(!table) return;
+            var tr = table.getElementsByTagName("tr");
+
+            for (var i = 1; i < tr.length; i++) {{
+                // Colunas específicas: 0(ID), 1(Nome), 2(Recomendação), 3(Entitlement), 4(Licença), 7(Cargos)
+                var tdNameTitle = tr[i].cells[0].textContent + " " + tr[i].cells[1].textContent + " " + tr[i].cells[7].textContent;
+                var tdRec = tr[i].cells[2].textContent.toUpperCase();
+                var tdEnt = tr[i].cells[3].textContent.toUpperCase();
+                var tdLic = tr[i].cells[4].textContent.toUpperCase();
+
+                var matchSearch = input === "" || tdNameTitle.toUpperCase().indexOf(input) > -1;
+                var matchEnt = entFilter === "" || tdEnt.indexOf(entFilter) > -1;
+                var matchLic = licFilter === "" || tdLic.indexOf(licFilter) > -1;
+                var matchRec = recFilter === "" || tdRec.indexOf(recFilter) > -1;
+
+                tr[i].style.display = (matchSearch && matchEnt && matchLic && matchRec) ? "" : "none";
+            }}
         }}
 
         const domainLabels = {list(domains.keys())};
