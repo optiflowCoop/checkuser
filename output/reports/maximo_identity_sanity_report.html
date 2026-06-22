@@ -89,7 +89,7 @@ tbody tr:last-child td { border-bottom: none; }
 <h1>Dashboard Governança Maximo EAM</h1>
 <p>Fase 2: Padronização de Baseline e Governança de Acessos</p>
 </div>
-<div><p style="text-align: right; color: #cbd5e1;">Atualizado em:<br><strong>21/06/2026 20:56</strong></p></div>
+<div><p style="text-align: right; color: #cbd5e1;">Atualizado em:<br><strong>21/06/2026 21:25</strong></p></div>
 </div>
 <div class="container">
 <div class="alert-box">
@@ -101,15 +101,21 @@ tbody tr:last-child td { border-bottom: none; }
 <p>Análise expandida com dados de <strong>Title</strong> (cargo funcional ex: Supervisor de Elétrica) e <strong>PersonGroup</strong> (departamento/equipe) para identificar divergências de perfil de acesso entre unidades. Todos os conflitos exibem <strong>motivo técnico detalhado</strong> para acelerar saneamento e padronização.</p>
 </div>
 <div class="card">
-<h2 class="card-header" onclick="toggleSection('section1')">1. Resumo Executivo Operacional (Contas Ativas) <span class="toggle-icon">▼</span></h2>
+<h2 class="card-header" onclick="toggleSection('section1')">1. Resumo Executivo Operacional <span class="toggle-icon">▼</span></h2>
 <div id="section1" class="card-content">
+<h3 style="color: var(--primary); margin: 0 0 1rem 0; font-size: 1.1rem; border-left: 4px solid var(--accent); padding-left: 1rem;">📊 Métricas de Governança de Identidades</h3>
 <div class="stats-grid">
-<div class="stat-card border-success"><div class="stat-value" style="color: var(--success);">1.907</div><div class="stat-title">Pessoas Únicas Ativas</div><div class="stat-subtitle">"Pessoas físicas" projetadas para o MAS 9</div></div>
-<div class="stat-card border-accent"><div class="stat-value">2.148</div><div class="stat-title">Registros Ativos</div><div class="stat-subtitle">Contas logáveis no Maximo hoje</div></div>
-<div class="stat-card border-warning"><div class="stat-value" style="color: var(--warning);">1.831</div><div class="stat-title">Riscos de Reuso</div><div class="stat-subtitle">Logins ativos repetidos entre sondas</div></div>
-<div class="stat-card border-danger"><div class="stat-value" style="color: var(--danger);">0</div><div class="stat-title">Colisões Críticas</div><div class="stat-subtitle">Nomes diferentes no mesmo login</div></div>
-<div class="stat-card border-accent"><div class="stat-value" style="color: var(--accent);">176</div><div class="stat-title">Ativos com Perfil</div><div class="stat-subtitle">Usuários ativos com Title/PersonGroup</div></div>
-<div class="stat-card border-neutral"><div class="stat-value" style="color: #64748b;">13.286</div><div class="stat-title">Total Histórico Legado</div><div class="stat-subtitle">Todos os registros brutos da tabela</div></div>
+<div class="stat-card border-success"><div class="stat-value" id="stat-unique-active" style="color: var(--success);" data-active="1907" data-all="9758">1.907</div><div class="stat-title">Pessoas Únicas <span id="stat-unique-scope">(Ativas)</span></div><div class="stat-subtitle">"Pessoas físicas" projetadas para o MAS 9</div></div>
+<div class="stat-card border-accent"><div class="stat-value" id="stat-records" data-active="2148" data-all="13286">2.148</div><div class="stat-title">Registros <span id="stat-records-scope">(Ativos)</span></div><div class="stat-subtitle">Contas logáveis no Maximo</div></div>
+<div class="stat-card border-warning"><div class="stat-value" id="stat-reuse" style="color: var(--warning);" data-active="1831" data-all="1878">1.831</div><div class="stat-title">Riscos de Reuso <span id="stat-reuse-scope">(Ativos)</span></div><div class="stat-subtitle">Logins repetidos entre sondas</div></div>
+<div class="stat-card border-danger"><div class="stat-value" id="stat-critical" style="color: var(--danger);" data-active="0" data-all="8">0</div><div class="stat-title">Colisões Críticas <span id="stat-critical-scope">(Ativas)</span></div><div class="stat-subtitle">Nomes diferentes no mesmo login</div></div>
+</div>
+<h3 style="color: var(--primary); margin: 2rem 0 1rem 0; font-size: 1.1rem; border-left: 4px solid #10b981; padding-left: 1rem;">🎯 Fase 2: Baseline Funcional</h3>
+<div class="stats-grid">
+<div class="stat-card border-accent"><div class="stat-value" style="color: #10b981;">278</div><div class="stat-title">Funções Distintas (TITLE)</div><div class="stat-subtitle">Cargos únicos mapeados na organização</div></div>
+<div class="stat-card border-warning"><div class="stat-value" style="color: var(--warning);" id="stat-divergent">0</div><div class="stat-title">Funções com Divergência</div><div class="stat-subtitle">Cargos com TYPE ou grupos inconsistentes</div></div>
+<div class="stat-card border-success"><div class="stat-value" id="stat-profile" style="color: var(--accent);" data-active="176" data-all="811">176</div><div class="stat-title">Perfis Completos <span id="stat-profile-scope">(Ativos)</span></div><div class="stat-subtitle">Usuários com Title + PersonGroup</div></div>
+<div class="stat-card border-neutral"><div class="stat-value" style="color: #64748b;">5</div><div class="stat-title">Unidades com Dados</div><div class="stat-subtitle">Bases que possuem informações de perfil</div></div>
 </div>
 <div class="charts-container">
 <div class="chart-box"><canvas id="uniqueEnvChart"></canvas></div>
@@ -1806,6 +1812,7 @@ tbody tr:last-child td { border-bottom: none; }
 </div>
 </div>
 </div>
+<script>document.getElementById("stat-divergent").innerHTML = "30";</script>
 </div></div>
 <div class="card">
 <h2 class="card-header" onclick="toggleSection('section5legacy')">7. 📊 Visão Legada: Auditoria de Perfis (Modo Comparativo) <span class="toggle-icon">▼</span></h2>
@@ -1849,6 +1856,9 @@ tbody tr:last-child td { border-bottom: none; }
                 var envFilter = document.getElementById("envFilter").value.toUpperCase();
                 var statusFilter = document.getElementById("statusFilter").value.toUpperCase();
                 var decFilter = document.getElementById("decFilter").value.toUpperCase();
+                
+                // Atualizar cards baseado no filtro de status
+                updateStatCards(statusFilter);
                 
                 var tables = document.querySelectorAll(".filterable-table");
                 
@@ -1896,6 +1906,41 @@ tbody tr:last-child td { border-bottom: none; }
                     }
                 });
             }
+            
+            function updateStatCards(statusFilter) {
+                function formatBR(num) {
+                    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                }
+                
+                var statUnique = document.getElementById("stat-unique-active");
+                var statRecords = document.getElementById("stat-records");
+                var statReuse = document.getElementById("stat-reuse");
+                var statCritical = document.getElementById("stat-critical");
+                var statProfile = document.getElementById("stat-profile");
+                
+                var scopeLabel = statusFilter === "ACTIVE" ? "(Ativas)" : statusFilter === "INACTIVE" ? "(Inativas)" : "(Todas)";
+                
+                if (statusFilter === "" || statusFilter === "ACTIVE") {
+                    statUnique.innerHTML = formatBR(statUnique.getAttribute('data-active'));
+                    statRecords.innerHTML = formatBR(statRecords.getAttribute('data-active'));
+                    statReuse.innerHTML = formatBR(statReuse.getAttribute('data-active'));
+                    statCritical.innerHTML = formatBR(statCritical.getAttribute('data-active'));
+                    statProfile.innerHTML = formatBR(statProfile.getAttribute('data-active'));
+                } else {
+                    statUnique.innerHTML = formatBR(statUnique.getAttribute('data-all'));
+                    statRecords.innerHTML = formatBR(statRecords.getAttribute('data-all'));
+                    statReuse.innerHTML = formatBR(statReuse.getAttribute('data-all'));
+                    statCritical.innerHTML = formatBR(statCritical.getAttribute('data-all'));
+                    statProfile.innerHTML = formatBR(statProfile.getAttribute('data-all'));
+                }
+                
+                document.getElementById("stat-unique-scope").innerHTML = scopeLabel;
+                document.getElementById("stat-records-scope").innerHTML = scopeLabel;
+                document.getElementById("stat-reuse-scope").innerHTML = scopeLabel;
+                document.getElementById("stat-critical-scope").innerHTML = scopeLabel;
+                document.getElementById("stat-profile-scope").innerHTML = scopeLabel;
+            }
+            
             
             // Graficos Chart.js
             

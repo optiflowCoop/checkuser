@@ -70,7 +70,8 @@ def build_html():
             reused_userids_active.add(c.get('USERID', '').strip().upper())
             
     total_reused_active = len(reused_userids_active)
-    critical_diff_active = sum(1 for w in active_worklist if w.get('HYPOTHESIS') == 'CONFIRMED_DIFFERENT_PERSON')
+    critical_diff_active = sum(1 for w in worklist if w.get('STATUS', '').upper() == 'ACTIVE' and w.get('HYPOTHESIS') == 'CONFIRMED_DIFFERENT_PERSON') if worklist else 0
+    critical_diff_all = sum(1 for w in worklist if w.get('HYPOTHESIS') == 'CONFIRMED_DIFFERENT_PERSON') if worklist else 0
     pending_ad_active = sum(1 for w in active_worklist if w.get('MERGE_DECISION') in ('AWAITING_AD_MATCH', 'MERGE_AFTER_AD_MATCH'))
     
     env_labels = list(by_env.keys())
@@ -226,17 +227,33 @@ def build_html():
 
     # --- Bloco 1: Executive Summary ---
     html.append('<div class="card">')
-    html.append('<h2 class="card-header" onclick="toggleSection(\'section1\')">1. Resumo Executivo Operacional (Contas Ativas) <span class="toggle-icon">▼</span></h2>')
+    html.append('<h2 class="card-header" onclick="toggleSection(\'section1\')">1. Resumo Executivo Operacional <span class="toggle-icon">▼</span></h2>')
     html.append('<div id="section1" class="card-content">')
+    
+    # Calcular métricas Fase 2
+    total_titles = len(set([r.get('TITLE', '').strip() for r in identities if r.get('TITLE', '').strip()]))
+    units_with_profiles = len(set([r.get('ENV_DB', '').strip() for r in identities if (r.get('TITLE', '').strip() or r.get('PERSONGROUP', '').strip())]))
+    total_profiles_with_data = sum(1 for r in identities if (r.get('TITLE', '').strip() or r.get('PERSONGROUP', '').strip()))
+    
+    html.append('<h3 style="color: var(--primary); margin: 0 0 1rem 0; font-size: 1.1rem; border-left: 4px solid var(--accent); padding-left: 1rem;">📊 Métricas de Governança de Identidades</h3>')
     html.append('<div class="stats-grid">')
     
-    html.append(f'<div class="stat-card border-success"><div class="stat-value" style="color: var(--success);">{fmt_br(unique_active_logins)}</div><div class="stat-title">Pessoas Únicas Ativas</div><div class="stat-subtitle">"Pessoas físicas" projetadas para o MAS 9</div></div>')
-    html.append(f'<div class="stat-card border-accent"><div class="stat-value">{fmt_br(active_records)}</div><div class="stat-title">Registros Ativos</div><div class="stat-subtitle">Contas logáveis no Maximo hoje</div></div>')
-    html.append(f'<div class="stat-card border-warning"><div class="stat-value" style="color: var(--warning);">{fmt_br(total_reused_active)}</div><div class="stat-title">Riscos de Reuso</div><div class="stat-subtitle">Logins ativos repetidos entre sondas</div></div>')
-    html.append(f'<div class="stat-card border-danger"><div class="stat-value" style="color: var(--danger);">{fmt_br(critical_diff_active)}</div><div class="stat-title">Colisões Críticas</div><div class="stat-subtitle">Nomes diferentes no mesmo login</div></div>')
-    html.append(f'<div class="stat-card border-accent"><div class="stat-value" style="color: var(--accent);">{fmt_br(active_profiles_with_context)}</div><div class="stat-title">Ativos com Perfil</div><div class="stat-subtitle">Usuários ativos com Title/PersonGroup</div></div>')
-    html.append(f'<div class="stat-card border-neutral"><div class="stat-value" style="color: #64748b;">{fmt_br(total_records)}</div><div class="stat-title">Total Histórico Legado</div><div class="stat-subtitle">Todos os registros brutos da tabela</div></div>')
-    html.append('</div>')
+    html.append(f'<div class="stat-card border-success"><div class="stat-value" id="stat-unique-active" style="color: var(--success);" data-active="{unique_active_logins}" data-all="{len(set([r.get('USERID', '').strip().upper() for r in identities if r.get('USERID', '').strip()]))}">{fmt_br(unique_active_logins)}</div><div class="stat-title">Pessoas Únicas <span id="stat-unique-scope">(Ativas)</span></div><div class="stat-subtitle">"Pessoas físicas" projetadas para o MAS 9</div></div>')
+    html.append(f'<div class="stat-card border-accent"><div class="stat-value" id="stat-records" data-active="{active_records}" data-all="{total_records}">{fmt_br(active_records)}</div><div class="stat-title">Registros <span id="stat-records-scope">(Ativos)</span></div><div class="stat-subtitle">Contas logáveis no Maximo</div></div>')
+    html.append(f'<div class="stat-card border-warning"><div class="stat-value" id="stat-reuse" style="color: var(--warning);" data-active="{total_reused_active}" data-all="{len(cross_env) if cross_env else 0}">{fmt_br(total_reused_active)}</div><div class="stat-title">Riscos de Reuso <span id="stat-reuse-scope">(Ativos)</span></div><div class="stat-subtitle">Logins repetidos entre sondas</div></div>')
+    html.append(f'<div class="stat-card border-danger"><div class="stat-value" id="stat-critical" style="color: var(--danger);" data-active="{critical_diff_active}" data-all="{critical_diff_all}">{fmt_br(critical_diff_active)}</div><div class="stat-title">Colisões Críticas <span id="stat-critical-scope">(Ativas)</span></div><div class="stat-subtitle">Nomes diferentes no mesmo login</div></div>')
+    
+    html.append('</div>')  # fecha stats-grid governança
+    
+    html.append('<h3 style="color: var(--primary); margin: 2rem 0 1rem 0; font-size: 1.1rem; border-left: 4px solid #10b981; padding-left: 1rem;">🎯 Fase 2: Baseline Funcional</h3>')
+    html.append('<div class="stats-grid">')
+    
+    html.append(f'<div class="stat-card border-accent"><div class="stat-value" style="color: #10b981;">{fmt_br(total_titles)}</div><div class="stat-title">Funções Distintas (TITLE)</div><div class="stat-subtitle">Cargos únicos mapeados na organização</div></div>')
+    html.append(f'<div class="stat-card border-warning"><div class="stat-value" style="color: var(--warning);" id="stat-divergent">0</div><div class="stat-title">Funções com Divergência</div><div class="stat-subtitle">Cargos com TYPE ou grupos inconsistentes</div></div>')
+    html.append(f'<div class="stat-card border-success"><div class="stat-value" id="stat-profile" style="color: var(--accent);" data-active="{active_profiles_with_context}" data-all="{total_profiles_with_data}">{fmt_br(active_profiles_with_context)}</div><div class="stat-title">Perfis Completos <span id="stat-profile-scope">(Ativos)</span></div><div class="stat-subtitle">Usuários com Title + PersonGroup</div></div>')
+    html.append(f'<div class="stat-card border-neutral"><div class="stat-value" style="color: #64748b;">{fmt_br(units_with_profiles)}</div><div class="stat-title">Unidades com Dados</div><div class="stat-subtitle">Bases que possuem informações de perfil</div></div>')
+    
+    html.append('</div>')  # fecha stats-grid fase 2
     
     html.append('<div class="charts-container">')
     html.append('<div class="chart-box"><canvas id="uniqueEnvChart"></canvas></div>')
@@ -572,11 +589,14 @@ def build_html():
     else:
         html.append('<div class="alert-success" style="margin-top:0;"><strong>✅ Baseline Perfeito!</strong> Não há divergências detectadas. Todos os cargos (TITLEs) possuem TYPE e grupos consistentes entre unidades.</div>')
     
+    # Atualizar card de divergências
+    html.append(f'<script>document.getElementById("stat-divergent").innerHTML = "{fmt_br(len(title_analysis))}";</script>')
+    
     html.append('</div></div>')
     
     # --- Legacy Baseline View (Mantido para compatibilidade) ---
     html.append('<div class="card">')
-    html.append('<h2 class="card-header" onclick="toggleSection(\'section5legacy\')">7. 📊 Visão Legada: Auditoria de Perfis (Modo Comparativo) <span class="toggle-icon">▼</span></h2>')
+    html.append('<h2 class="card-header" onclick="toggleSection(\'section5legacy\')">6. 📊 Visão Legada: Auditoria de Perfis (Modo Comparativo) <span class="toggle-icon">▼</span></h2>')
     html.append('<div id="section5legacy" class="card-content collapsed">')
     html.append('<p style="color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem;"><strong>Legenda:</strong> Comparativo de grupos por TYPE (classificação genérica). <span class="badge-grp common">Grupos comuns</span> = presentes em todas as unidades. <span class="badge-grp diff">Grupos locais</span> = adicionados apenas em algumas bases (destacados em azul por unidade). Escopo: <em>todas as contas</em>.</p>')
     
@@ -670,6 +690,9 @@ def build_html():
                 var statusFilter = document.getElementById("statusFilter").value.toUpperCase();
                 var decFilter = document.getElementById("decFilter").value.toUpperCase();
                 
+                // Atualizar cards baseado no filtro de status
+                updateStatCards(statusFilter);
+                
                 var tables = document.querySelectorAll(".filterable-table");
                 
                 tables.forEach(function(table) {
@@ -716,6 +739,41 @@ def build_html():
                     }
                 });
             }
+            
+            function updateStatCards(statusFilter) {
+                function formatBR(num) {
+                    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                }
+                
+                var statUnique = document.getElementById("stat-unique-active");
+                var statRecords = document.getElementById("stat-records");
+                var statReuse = document.getElementById("stat-reuse");
+                var statCritical = document.getElementById("stat-critical");
+                var statProfile = document.getElementById("stat-profile");
+                
+                var scopeLabel = statusFilter === "ACTIVE" ? "(Ativas)" : statusFilter === "INACTIVE" ? "(Inativas)" : "(Todas)";
+                
+                if (statusFilter === "" || statusFilter === "ACTIVE") {
+                    statUnique.innerHTML = formatBR(statUnique.getAttribute('data-active'));
+                    statRecords.innerHTML = formatBR(statRecords.getAttribute('data-active'));
+                    statReuse.innerHTML = formatBR(statReuse.getAttribute('data-active'));
+                    statCritical.innerHTML = formatBR(statCritical.getAttribute('data-active'));
+                    statProfile.innerHTML = formatBR(statProfile.getAttribute('data-active'));
+                } else {
+                    statUnique.innerHTML = formatBR(statUnique.getAttribute('data-all'));
+                    statRecords.innerHTML = formatBR(statRecords.getAttribute('data-all'));
+                    statReuse.innerHTML = formatBR(statReuse.getAttribute('data-all'));
+                    statCritical.innerHTML = formatBR(statCritical.getAttribute('data-all'));
+                    statProfile.innerHTML = formatBR(statProfile.getAttribute('data-all'));
+                }
+                
+                document.getElementById("stat-unique-scope").innerHTML = scopeLabel;
+                document.getElementById("stat-records-scope").innerHTML = scopeLabel;
+                document.getElementById("stat-reuse-scope").innerHTML = scopeLabel;
+                document.getElementById("stat-critical-scope").innerHTML = scopeLabel;
+                document.getElementById("stat-profile-scope").innerHTML = scopeLabel;
+            }
+            
             
             // Graficos Chart.js
             
