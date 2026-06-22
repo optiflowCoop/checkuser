@@ -144,7 +144,7 @@ def build_html_structure(summary, governance, app_points, domains):
         .alert-box p {{ margin: 0; color: #1e40af; }}
 
         .card {{ background: var(--card-bg); border-radius: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); border: 1px solid var(--border); padding: 1.8rem; margin-bottom: 2rem; }}
-        .card-header {{ margin-top: 0; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border); padding-bottom: 0.75rem; color: var(--secondary); font-size: 1.4rem; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }}
+        .card-header {{ margin-top: 0; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border); padding-bottom: 0.75rem; color: var(--secondary); font-size: 1.4rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }}
 
         .stats-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; }}
         .stat-card {{ background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; text-align: center; transition: transform 0.2s; position: relative; }}
@@ -195,6 +195,13 @@ def build_html_structure(summary, governance, app_points, domains):
         .calc-badge-pts {{ font-size: 0.75rem; background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 4px; margin-left: 8px; }}
         .financial-box {{ background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 1rem; text-align: center; margin-top: 1rem; }}
         .financial-value {{ font-size: 1.8rem; font-weight: 800; color: #047857; margin: 0.5rem 0; }}
+
+        /* Legend Cards CSS */
+        .legend-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }}
+        .legend-box {{ background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }}
+        .legend-box h3 {{ margin-top: 0; color: var(--primary); font-size: 1.05rem; border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 6px;}}
+        .legend-list {{ padding-left: 1.2rem; margin-bottom: 0; font-size: 0.88rem; color: var(--text); }}
+        .legend-list li {{ margin-bottom: 0.6rem; }}
     </style>
 </head>
 <body>
@@ -258,7 +265,7 @@ def build_html_structure(summary, governance, app_points, domains):
             <div class="card-header" style="border-bottom:none; margin-bottom:0;">
                 <div>
                     <h2 style="margin:0; font-size:1.5rem; color:var(--success);">🧮 Simulador Gerencial de Custos (AppPoints O&G)</h2>
-                    <p style="font-size: 0.9rem; color: #64748b; font-weight: normal;">Traduza o esforço técnico de otimização em impacto financeiro real (Estimativa Opex).</p>
+                    <p style="font-size: 0.9rem; color: #64748b; font-weight: normal; margin-top: 4px;">Traduza o esforço técnico de otimização em impacto financeiro real (Estimativa Opex).</p>
                 </div>
             </div>
 
@@ -298,7 +305,6 @@ def build_html_structure(summary, governance, app_points, domains):
                     <div class="financial-box">
                         <div style="font-size: 0.85rem; text-transform: uppercase; font-weight: bold; color: #065f46;">Custo Anual de Licenciamento Projetado</div>
                         <div id="calcFinancialTotal" class="financial-value">$ 0</div>
-                        <div style="font-size: 0.8rem; color: #047857;">(Estimativa baseada na simulação ao lado)</div>
                     </div>
 
                     <div id="calcAlertBox" style="margin-top: 1rem; padding: 0.75rem 1rem; border-radius: 6px; background-color: var(--danger); color: white; font-weight: bold; font-size: 1.1rem; display: none; box-shadow: 0 4px 6px -1px rgba(239,68,68,0.4);">
@@ -308,6 +314,51 @@ def build_html_structure(summary, governance, app_points, domains):
 
                 <div style="flex: 1; min-width: 300px; height: 280px; display: flex; justify-content: center; align-items: center;">
                     <canvas id="simChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="border-top: 4px solid var(--primary); background-color: #ffffff;">
+            <h2 class="card-header" style="border-bottom: none; margin-bottom: 0.5rem; color: var(--primary);">🧠 Motor de Decisão: Critérios de Classificação</h2>
+            <p style="font-size: 0.95rem; color: #64748b; margin-top: 0; margin-bottom: 1.5rem;">Como a inteligência define qual usuário consumirá qual licença no MAS 9.</p>
+
+            <div class="legend-grid">
+                <div class="legend-box" style="border-left: 3px solid #1e3a8a;">
+                    <h3><span style="font-size:1.2rem;">🔰</span> Nível de Acesso (Entitlement)</h3>
+                    <ul class="legend-list">
+                        <li><strong>PREMIUM:</strong> Obrigatório para usuários que acessam módulos críticos de <b>Óleo & Gás (Foresea)</b>, como Permissão de Trabalho (PTW) e HSE.</li>
+                        <li><strong>BASE:</strong> Atribuído a usuários da gestão de manutenção padrão (Ex: PCM, Ordens de Serviço, Almoxarifado).</li>
+                        <li><strong>LIMITED:</strong> Acessos restritos, focado apenas na visualização ou em apontamentos rápidos.</li>
+                    </ul>
+                </div>
+
+                <div class="legend-box" style="border-left: 3px solid #f59e0b;">
+                    <h3><span style="font-size:1.2rem;">🔑</span> Modelo (Auth vs Conc)</h3>
+                    <ul class="legend-list">
+                        <li><strong>AUTHORIZED:</strong> Licença fixa nominal. Atribuída a <b>Cargos Críticos / Liderança</b> ou usuários Onshore que ficam logados o tempo todo ("Power Users").</li>
+                        <li><strong>CONCURRENT:</strong> Licença em *Pool* (Simultânea). Atribuída ao grosso da tripulação das <b>Sondas (Offshore)</b> para otimizar os AppPoints durante os revezamentos de turno.</li>
+                    </ul>
+                </div>
+
+                <div class="legend-box" style="border-left: 3px solid #10b981;">
+                    <h3><span style="font-size:1.2rem;">📊</span> Perfil de Uso (Grupos)</h3>
+                    <ul class="legend-list">
+                        <li>O perfil mede o "peso" das permissões lógicas de cada usuário na base de dados (Quantidade de <i>Security Groups</i>).</li>
+                        <li><strong>POWER:</strong> Mais de 8 Grupos.</li>
+                        <li><strong>MEDIUM:</strong> Entre 5 e 8 Grupos.</li>
+                        <li><strong>LIGHT:</strong> 4 Grupos ou menos.</li>
+                    </ul>
+                </div>
+
+                <div class="legend-box" style="border-left: 3px solid #64748b;">
+                    <h3><span style="font-size:1.2rem;">🪙</span> Custo (Tabela IBM MAS 9)</h3>
+                    <p style="font-size: 0.85rem; color: #64748b; margin-top:-0.5rem; margin-bottom: 0.8rem;">Matriz oficial de conversão.</p>
+                    <table style="width: 100%; font-size: 0.85rem; text-align: left; border-collapse: collapse; background: white;">
+                        <tr style="background: #f1f5f9;"><th style="padding: 6px;">Nível</th><th style="padding: 6px;">Authorized</th><th style="padding: 6px;">Concurrent</th></tr>
+                        <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 6px;"><b>Premium</b></td><td style="padding: 6px; font-weight:bold;">5 pts</td><td style="padding: 6px; font-weight:bold;">15 pts</td></tr>
+                        <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 6px;"><b>Base</b></td><td style="padding: 6px;">3 pts</td><td style="padding: 6px;">10 pts</td></tr>
+                        <tr><td style="padding: 6px;"><b>Limited</b></td><td style="padding: 6px;">2 pts</td><td style="padding: 6px;">5 pts</td></tr>
+                    </table>
                 </div>
             </div>
         </div>
@@ -395,7 +446,6 @@ def build_html_structure(summary, governance, app_points, domains):
 
         <div class="card">
             <h2 class="card-header">Top 30: Cargos com Divergência de Matriz de Segurança</h2>
-            <p style="font-size: 0.9rem; margin-top:-1rem; margin-bottom: 1.5rem;">Cargos homônimos (Ex: Eletricista) que possuem permissões sistêmicas distintas dependendo de qual Sonda vieram.</p>
             <div class="type-analysis-grid">
                 {''.join(title_divergence_html)}
             </div>
@@ -526,7 +576,6 @@ def build_html_structure(summary, governance, app_points, domains):
         function downloadCSV(csv, filename) {{
             var csvFile;
             var downloadLink;
-            // Configura o BOM para garantir que o Excel abra com acentos UTF-8 corretos
             var BOM = "\\uFEFF";
             csvFile = new Blob([BOM + csv], {{type: "text/csv;charset=utf-8;"}});
             downloadLink = document.createElement("a");
@@ -543,14 +592,14 @@ def build_html_structure(summary, governance, app_points, domains):
             var rows = table.querySelectorAll("tr");
 
             for (var i = 0; i < rows.length; i++) {{
-                if(rows[i].style.display === "none") continue; // Exporta apenas o que o gestor filtrou
+                if(rows[i].style.display === "none") continue;
 
                 var row = [], cols = rows[i].querySelectorAll("td, th");
                 for (var j = 0; j < cols.length; j++) {{
                     var data = cols[j].innerText.replace(/(\\r\\n|\\n|\\r)/gm, " ").replace(/"/g, '""');
                     row.push('"' + data + '"');
                 }}
-                csv.push(row.join(";")); // Separador padrão de CSV brasileiro
+                csv.push(row.join(";"));
             }}
             downloadCSV(csv.join("\\n"), filename);
         }}
