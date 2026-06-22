@@ -1,128 +1,114 @@
-# -*- coding: utf-8 -*-
-
-"""
-Módulo de Geração de Relatório HTML
-
-Responsável por construir o dashboard HTML com os resultados da análise.
-"""
-
+# reporting/html_report.py
 from datetime import datetime
 
 def fmt_br(num):
-    """Formata um número para o padrão brasileiro."""
     return f"{num:,}".replace(",", ".")
 
-def render_table(headers, rows, table_id="", extra_class=""):
-    """Renderiza uma tabela HTML a partir de uma lista de cabeçalhos e linhas."""
-    html = f'<div class="table-responsive"><table id="{table_id}" class="{extra_class}">\n'
-    html += '  <thead><tr>' + ''.join(f'<th>{h}</th>' for h in headers) + '</tr></thead>\n'
-    html += '  <tbody>\n'
-    for row in rows:
-        html += '    <tr>' + ''.join(f'<td>{c}</td>' for c in row) + '</tr>\n'
-    html += '  </tbody>\n'
-    html += '</table></div>\n'
-    return html
+def build_html_structure(summary_data, governance_data, app_points_data, domain_counts):
+    # --- CSS ---
+    css = """
+<style>
+    :root { --primary: #0f172a; --secondary: #1e293b; --accent: #2563eb; --bg: #f8fafc; --card-bg: #ffffff; --text: #334155; --border: #e2e8f0; --danger: #ef4444; --warning: #f59e0b; --success: #10b981;}
+    body { font-family: "Segoe UI", sans-serif; margin: 0; background-color: var(--bg); color: var(--text); }
+    .topbar { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+    .tabs { background: var(--secondary); padding: 0 2rem; }
+    .tab-button { background: none; border: none; color: #cbd5e1; padding: 1rem 1.5rem; cursor: pointer; font-size: 1rem; border-bottom: 3px solid transparent; }
+    .tab-button.active { color: white; border-bottom-color: var(--accent); }
+    .container { max-width: 1600px; margin: 0 auto; padding: 2rem; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+    .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 2rem; }
+    .card-header { margin: -1.5rem -1.5rem 1.5rem; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); font-size: 1.2rem; font-weight: 600; }
+    .stat-value { font-size: 2.5rem; font-weight: 700; color: var(--primary); }
+    .stat-title { font-size: 0.9rem; text-transform: uppercase; font-weight: 600; margin-top: 0.5rem; }
+    .chart-container { height: 300px; }
+    .table-responsive { overflow-x: auto; max-height: 500px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 15px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+    th { background-color: #f1f5f9; position: sticky; top: 0; }
+    .type-analysis-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 1.5rem; }
+    .type-card { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; }
+    .type-card h4 { margin: 0 0 1rem 0; font-size: 1.1rem; color: var(--primary); border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; }
+</style>
+"""
+    # --- AppPoints Summaries ---
+    auth_users = summary_data['app_points_summary']['auth_users']
+    conc_users = summary_data['app_points_summary']['conc_users']
+    premium_users = summary_data['app_points_summary']['premium_users']
+    total_auth_points = sum(u['APP_POINTS'] for u in auth_users)
+    total_conc_points = sum(u['APP_POINTS'] for u in conc_users)
+    total_estimated_cost = total_auth_points + int(total_conc_points * 0.3)
 
-def build_html_report(summary_data, simulation_data):
+    # --- Build HTML for each tab ---
+    painel_html = build_painel_tab(summary_data, domain_counts)
+    governanca_html = build_governanca_tab(governance_data)
+    app_points_html = build_app_points_tab(app_points_data, total_estimated_cost, premium_users, auth_users, conc_users)
+
+    # --- Final Assembly ---
+    return f"""
+    <!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Dashboard Unificado</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>{css}</head>
+    <body>
+        <div class="topbar"><h1>Dashboard de Governança e AppPoints</h1><p>Atualizado em: {datetime.now().strftime("%d/%m/%Y %H:%M")}</p></div>
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab(event,'painel')">Painel de Controle</button>
+            <button class="tab-button" onclick="openTab(event,'governanca')">Governança e Saneamento</button>
+            <button class="tab-button" onclick="openTab(event,'app-points')">Simulação de AppPoints</button>
+        </div>
+        {painel_html}
+        {governanca_html}
+        {app_points_html}
+        <script>
+            function openTab(e,t){{var n,a,o;for(a=(n=document.getElementsByClassName("tab-content")).length,o=0;o<a;o++)n[o].style.display="none";for(a=(o=document.getElementsByClassName("tab-button")).length,n=0;n<a;n++)o[n].className=o[n].className.replace(" active","");document.getElementById(t).style.display="block",e.currentTarget.className+=" active"}}
+            const domainLabels={list(domain_counts.keys())},domainValues={list(domain_counts.values())};
+            new Chart(document.getElementById("domainChart"),{{type:"pie",data:{{labels:domainLabels,datasets:[{{data:domainValues,backgroundColor:["#10b981","#2563eb","#f59e0b","#94a3b8"]}}]}},options:{{responsive:!0,maintainAspectRatio:!1,plugins:{{legend:{{position:"bottom"}}}}}}}});
+        </script>
+    </body></html>
     """
-    Constrói o conteúdo completo do arquivo HTML.
 
-    Args:
-        summary_data (dict): Um dicionário com as métricas executivas.
-        simulation_data (list): Uma lista de dicionários, onde cada um representa
-                                um usuário na simulação de AppPoints.
-
-    Returns:
-        str: A string completa do conteúdo HTML.
+def build_painel_tab(summary, domains):
+    return f"""
+    <div id="painel" class="container tab-content active">
+        <div class="grid">
+            <div class="card"><div class="card-header">Distribuição por Domínio</div><div class="chart-container"><canvas id="domainChart"></canvas></div></div>
+            <div class="card"><div class="card-header">Saúde da Governança</div>
+                <div class="grid" style="grid-template-columns:1fr 1fr;text-align:center;">
+                    <div><div class="stat-value" style="color:var(--success)">{fmt_br(summary['active_profiles_count'])}</div><div class="stat-title">Pessoas Ativas</div></div>
+                    <div><div class="stat-value" style="color:var(--warning)">{fmt_br(summary['title_divergence_count'])}</div><div class="stat-title">Cargos com Divergência</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
     """
-    
-    # --- Extrair dados para os cards ---
-    unique_active_logins = summary_data.get('unique_active_logins', 0)
-    active_records = summary_data.get('active_records', 0)
-    total_reused_active = summary_data.get('total_reused_active', 0)
-    critical_diff_active = summary_data.get('critical_diff_active', 0)
-    
-    total_authorized_points = summary_data.get('total_authorized_points', 0)
-    authorized_users = summary_data.get('authorized_users', 0)
-    total_concurrent_points = summary_data.get('total_concurrent_points', 0)
-    concurrent_users = summary_data.get('concurrent_users', 0)
-    
-    # --- Início do Documento HTML ---
-    html = [
-        '<!DOCTYPE html>',
-        '<html lang="pt-BR">',
-        '<head>',
-        '<meta charset="utf-8">',
-        '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
-        '<title>Maximo MAS 9 - Análise de AppPoints</title>',
-        '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>',
-        '<style>',
-        ':root { --primary: #0f172a; --secondary: #1e293b; --accent: #2563eb; --bg: #f8fafc; --card-bg: #ffffff; --text: #334155; --border: #e2e8f0; --danger: #ef4444; --warning: #f59e0b; --success: #10b981;}',
-        'body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; margin: 0; background-color: var(--bg); color: var(--text); line-height: 1.5; }',
-        '.topbar { background: var(--primary); color: white; padding: 1.5rem 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center;}',
-        '.topbar h1 { margin: 0; font-size: 1.8rem; font-weight: 600; }',
-        '.topbar p { margin: 0; color: #94a3b8; font-size: 0.9rem; margin-top: 0.2rem; }',
-        '.container { max-width: 1600px; margin: 0 auto; padding: 2rem; }',
-        '.card { background: var(--card-bg); border-radius: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); padding: 1.8rem; margin-bottom: 2rem; }',
-        '.card-header { margin-top: 0; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border); padding-bottom: 0.75rem; font-size: 1.4rem; font-weight: 600; }',
-        '.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }',
-        '.stat-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; text-align: center; }',
-        '.stat-value { font-size: 2.2rem; font-weight: 700; color: var(--primary); margin-bottom: 0.2rem; }',
-        '.stat-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; margin-bottom: 0.5rem; }',
-        '.stat-subtitle { font-size: 0.75rem; color: #64748b; }',
-        '.border-danger { border-bottom: 4px solid var(--danger); }',
-        '.border-warning { border-bottom: 4px solid var(--warning); }',
-        '.border-accent { border-bottom: 4px solid var(--accent); }',
-        '.border-success { border-bottom: 4px solid var(--success); }',
-        '.table-responsive { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); max-height: 600px; overflow-y: auto; }',
-        'table { width: 100%; border-collapse: collapse; } th, td { padding: 14px 16px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; } th { background-color: #f1f5f9; font-weight: 600; position: sticky; top: 0; }',
-        '</style>',
-        '</head>',
-        '<body>',
-        '<div class="topbar">',
-        '<div><h1>Dashboard de Análise de AppPoints</h1><p>Fase 4: Análise de Entitlement e Otimização de Licenciamento</p></div>',
-        f'<div><p style="text-align: right; color: #cbd5e1;">Atualizado em:<br><strong>{datetime.now().strftime("%d/%m/%Y %H:%M")}</strong></p></div>',
-        '</div>',
-        '<div class="container">',
-    ]
-    
-    # --- Bloco 1: Resumo de Identidades ---
-    html.append('<div class="card"><h2 class="card-header">1. Resumo Executivo de Identidades</h2><div class="stats-grid">')
-    html.append(f'<div class="stat-card border-success"><div class="stat-value" style="color: var(--success);">{fmt_br(unique_active_logins)}</div><div class="stat-title">Pessoas Únicas (Ativas)</div><div class="stat-subtitle">Base para licenciamento</div></div>')
-    html.append(f'<div class="stat-card border-accent"><div class="stat-value">{fmt_br(active_records)}</div><div class="stat-title">Registros Ativos</div><div class="stat-subtitle">Contas logáveis no sistema</div></div>')
-    html.append(f'<div class="stat-card border-warning"><div class="stat-value" style="color: var(--warning);">{fmt_br(total_reused_active)}</div><div class="stat-title">Riscos de Reuso</div><div class="stat-subtitle">Logins repetidos entre bases</div></div>')
-    html.append(f'<div class="stat-card border-danger"><div class="stat-value" style="color: var(--danger);">{fmt_br(critical_diff_active)}</div><div class="stat-title">Colisões Críticas</div><div class="stat-subtitle">Mesmo login, pessoas diferentes</div></div>')
-    html.append('</div></div>')
 
-    # --- Bloco 2: Simulação de AppPoints ---
-    html.append('<div class="card"><h2 class="card-header">2. 💰 Simulação de AppPoints (Baseado em Entitlement)</h2>')
-    html.append('<div class="stats-grid">')
-    html.append(f'<div class="stat-card border-accent"><div class="stat-value">{fmt_br(total_authorized_points)}</div><div class="stat-title">Total AppPoints (Authorized)</div><div class="stat-subtitle">{fmt_br(authorized_users)} usuários</div></div>')
-    html.append(f'<div class="stat-card border-success"><div class="stat-value">{fmt_br(total_concurrent_points)}</div><div class="stat-title">Total AppPoints (Concurrent Pool)</div><div class="stat-subtitle">{fmt_br(concurrent_users)} usuários</div></div>')
-    html.append(f'<div class="stat-card border-warning"><div class="stat-value">{fmt_br(int(total_concurrent_points * 0.3))}</div><div class="stat-title">Estimativa Concorrência (30%)</div><div class="stat-subtitle">Simulação de pico de uso</div></div>')
-    html.append(f'<div class="stat-card border-danger"><div class="stat-value">{fmt_br(total_authorized_points + int(total_concurrent_points * 0.3))}</div><div class="stat-title">Custo Total Estimado</div><div class="stat-subtitle">Authorized + Pico Concurrent</div></div>')
-    html.append('</div>')
+def build_governanca_tab(data):
+    cross_env_rows = ''.join(f"<tr><td>{c.get('USERID')}</td><td>{c.get('ENV_LIST')}</td><td>{c.get('DISPLAYNAME_LIST')}</td></tr>" for c in data['cross_env'][:200])
+    login_conflicts_rows = ''.join(f"<tr><td>{c.get('LOGINID')}</td><td>{c.get('USERID_LIST')}</td><td>{c.get('DISPLAYNAME_LIST')}</td></tr>" for c in data['login_conflicts'][:200])
+    worklist_rows = ''.join(f"<tr><td>{w.get('RAW_ID')}</td><td>{w.get('DISPLAYNAME')}</td><td>{w.get('HYPOTHESIS')}</td><td>{w.get('MERGE_DECISION')}</td></tr>" for w in data['worklist'][:200])
+    title_divergence_rows = ''.join(f"<tr><td>{d['title']}</td></tr>" for d in data['title_divergences'])
     
-    html.append('<h3 style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">Detalhamento por Usuário (Top 500 por custo)</h3>')
-    app_points_rows = []
-    # Ordena os dados pela pontuação para mostrar os mais caros primeiro
-    for entry in sorted(simulation_data, key=lambda x: x['APP_POINTS'], reverse=True):
-        app_points_rows.append([
-            entry['USERID'],
-            entry['DISPLAYNAME'],
-            entry['ENTITLEMENT'],
-            entry['OPERATIONAL_PRESENCE'],
-            entry['LICENSE_MODEL'],
-            entry['APP_POINTS'],
-            entry['USAGE_PROFILE'],
-            entry['GROUP_COUNT'],
-            entry['APPS_COUNT'],
-        ])
-    
-    headers = ['USERID', 'Nome', 'Entitlement', 'Presença', 'Licença', 'AppPoints', 'Perfil de Uso', 'Grupos', 'Aplicações']
-    html.append(render_table(headers, app_points_rows[:500], "appPointsTable"))
-    html.append('</div>')
+    return f"""
+    <div id="governanca" class="container tab-content">
+        <div class="card"><div class="card-header">Cargos com Divergência de Perfil</div><div class="table-responsive"><table><thead><tr><th>Cargo (TITLE)</th></tr></thead><tbody>{title_divergence_rows}</tbody></table></div></div>
+        <div class="card"><div class="card-header">Reuso de USERID entre Ambientes</div><div class="table-responsive"><table><thead><tr><th>USERID</th><th>Ambientes</th><th>Nomes</th></tr></thead><tbody>{cross_env_rows}</tbody></table></div></div>
+        <div class="card"><div class="card-header">Conflitos de Login Corporativo (LOGINID)</div><div class="table-responsive"><table><thead><tr><th>LOGINID</th><th>USERIDs</th><th>Nomes</th></tr></thead><tbody>{login_conflicts_rows}</tbody></table></div></div>
+        <div class="card"><div class="card-header">Fila de Saneamento (Worklist)</div><div class="table-responsive"><table><thead><tr><th>ID Bruto</th><th>Nome</th><th>Hipótese</th><th>Decisão</th></tr></thead><tbody>{worklist_rows}</tbody></table></div></div>
+    </div>
+    """
 
-    # --- Fim do Documento HTML ---
-    html.append('</div></body></html>')
-    return '\n'.join(html)
+def build_app_points_tab(data, total_cost, premium, auth, conc):
+    app_points_rows = ''.join(f"<tr><td>{s['USERID']}</td><td>{s['DISPLAYNAME']}</td><td>{s['ENTITLEMENT']}</td><td>{s['LICENSE_MODEL']}</td><td>{s['APP_POINTS']}</td><td>{s['USAGE_PROFILE']}</td><td>{s['TITLES']}</td></tr>" for s in sorted(data, key=lambda x: x['APP_POINTS'], reverse=True)[:500])
+    return f"""
+    <div id="app-points" class="container tab-content">
+        <div class="card"><div class="card-header">Resumo da Simulação (Universo Foresea)</div>
+            <div class="grid">
+                <div style="text-align:center"><div class="stat-value" style="color:var(--danger)">{fmt_br(total_cost)}</div><div class="stat-title">Custo Total Estimado</div></div>
+                <div style="text-align:center"><div class="stat-value" style="color:var(--warning)">{fmt_br(len(premium))}</div><div class="stat-title">Usuários Premium (O&G)</div></div>
+                <div style="text-align:center"><div class="stat-value">{fmt_br(len(auth))}</div><div class="stat-title">Usuários Authorized</div></div>
+                <div style="text-align:center"><div class="stat-value">{fmt_br(len(conc))}</div><div class="stat-title">Usuários Concurrent</div></div>
+            </div>
+        </div>
+        <div class="card"><div class="card-header">Detalhes da Simulação (Top 500 por Custo)</div><div class="table-responsive"><table><thead><tr><th>USERID</th><th>Nome</th><th>Entitlement</th><th>Licença</th><th>Custo</th><th>Perfil</th><th>Cargos</th></tr></thead><tbody>{app_points_rows}</tbody></table></div></div>
+    </div>
+    """

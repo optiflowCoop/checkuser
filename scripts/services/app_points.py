@@ -1,0 +1,20 @@
+# services/app_points.py
+from scripts.analysis.classification import classify_usage_profile, assign_license_model
+from scripts.analysis.entitlement import determine_user_entitlement, calculate_app_points
+
+def simulate_app_points(profiles_to_simulate):
+    """
+    Performs the AppPoints simulation for a given list of user profiles.
+    """
+    app_points_data = []
+    for profile in profiles_to_simulate:
+        usage = classify_usage_profile(len(profile['GROUPS']))
+        entitlement = determine_user_entitlement(profile['GROUPS'])
+        license_model = assign_license_model(usage, profile['TITLES'])
+        points = calculate_app_points(entitlement, license_model)
+        app_points_data.append({
+            'USERID': profile['USERID'], 'DISPLAYNAME': '; '.join(profile['DISPLAYNAME']),
+            'ENTITLEMENT': entitlement, 'LICENSE_MODEL': license_model, 'APP_POINTS': points,
+            'USAGE_PROFILE': usage, 'TITLES': '; '.join(profile['TITLES']),
+        })
+    return app_points_data

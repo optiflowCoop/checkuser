@@ -1,44 +1,51 @@
-# -*- coding: utf-8 -*-
+# analysis/licensing.py
+from scripts.config import get_app_points_config, get_entitlement_keywords, get_critical_titles
 
-"""
-Módulo do Motor de Licenciamento
+def classify_usage_profile(group_count):
+    if group_count > 8: return "POWER"
+    if group_count > 4: return "MEDIUM"
+    return "LIGHT"
 
-Responsável por atribuir o modelo de licença (Authorized/Concurrent)
-e calcular o custo final em AppPoints.
-"""
+def determine_user_entitlement(user_groups):
+    keywords = get_entitlement_keywords()
+    for group in user_groups:
+        group_upper = group.upper()
+        if any(keyword in group_upper for keyword in keywords['PREMIUM']): return 'PREMIUM'
+    for group in user_groups:
+        group_upper = group.upper()
+        if any(keyword in group_upper for keyword in keywords['BASE']): return 'BASE'
+    for group in user_groups:
+        group_upper = group.upper()
+        if any(keyword in group_upper for keyword in keywords['LIMITED']): return 'LIMITED'
+    return 'SELF FREE'
 
-from ..config import get_app_points_config
-
-def assign_license_model(usage_profile, operational_presence):
-    """
-    Atribui o modelo de licença (Authorized ou Concurrent) com base no perfil do usuário.
-
-    A regra de negócio é:
-    - Usuários 'POWER' que são 'ONSHORE' são candidatos a 'AUTHORIZED'.
-    - Todos os outros são 'CONCURRENT'.
-
-    Args:
-        usage_profile (str): O perfil de uso ('POWER', 'MEDIUM', 'LIGHT').
-        operational_presence (str): A presença operacional ('ONSHORE', 'OFFSHORE').
-
-    Returns:
-        str: O modelo de licença ('AUTHORIZED' ou 'CONCURRENT').
-    """
-    if usage_profile == "POWER" and operational_presence == "ONSHORE":
+def assign_license_model(usage_profile, user_titles):
+    critical_titles = get_critical_titles()
+    user_titles_str = " ".join(user_titles).upper()
+    is_critical = any(crit_title in user_titles_str for crit_title in critical_titles)
+    if usage_profile == "POWER" or is_critical:
         return "AUTHORIZED"
-    
     return "CONCURRENT"
 
 def calculate_app_points(entitlement, license_model):
-    """
-    Calcula o custo em AppPoints com base no entitlement e no modelo de licença.
-
-    Args:
-        entitlement (str): O nível de licença ('PREMIUM', 'BASE', etc.).
-        license_model (str): O modelo de licença ('AUTHORIZED', 'CONCURRENT').
-
-    Returns:
-        int: O custo em AppPoints.
-    """
     config = get_app_points_config()
     return config.get(entitlement, {}).get(license_model, 0)
+
+def run_app_points_simulation(user_profiles):
+    foresea_profiles = [p for p in user_profiles.values() if p['STATUS'] == 'ACTIVE' and p['DOMAIN_CATEGORY'] in ('FORESEA', 'PARCEIRO')]
+    app_points_data = []
+    for profile in foresea_profiles:
+        usage = classify_usage_profile(len(profile['GROUPS']))
+        entitlement = determine_user_entitlement(profile['GROUPS'])
+        license_model = assign_license_model(usage, profile['TITLES'])
+        points = calculate_app_points(entitlement, license_model)
+        app_points_data.append({
+            'USERID': profile['USERID'], 
+            'DISPLAYNAME': '; '.join(profile['DISPLAYNAME']),
+            'ENTITLEMENT': entitlement, 
+            'LICENSE_MODEL': license_model, 
+            'APP_POINTS': points,
+            'USAGE_PROFILE': usage, 
+            'TITLES': '; '.join(profile['TITLES']),
+        })
+    return app_points_data

@@ -101,6 +101,41 @@ def is_premium_app(app_name):
     
     return False
 
+def detect_premium_from_groups(groups_list):
+    """
+    Detecta se usuário precisa Premium baseado em grupos de segurança O&G.
+    
+    LOGINTRACKING tem apenas IDs numéricos de apps, sem mapeamento disponível.
+    Solução: usar GROUPS de consolidated_user_access que identificam acesso O&G.
+    
+    Args:
+        groups_list: Lista ou string delimitada por ; com nomes de grupos
+        
+    Returns:
+        bool: True se encontrar grupos O&G que requerem Premium
+    """
+    if not groups_list:
+        return False
+    
+    # Parse groups se for string
+    if isinstance(groups_list, str):
+        groups = [g.strip().upper() for g in groups_list.split(';') if g.strip()]
+    else:
+        groups = [str(g).upper() for g in groups_list if g]
+    
+    # Keywords O&G em nomes de grupos
+    OG_GROUP_KEYWORDS = [
+        'OG_', 'O&G', 'OILGAS', 'PETROLEUM', 'PETRO',
+        'HSE', 'DRILLING', 'DRILL', 'RIG', 'FPSO',
+        'PFWORK', 'LOCREC', 'COMPLIANCE', 'WELL'
+    ]
+    
+    for group in groups:
+        if any(keyword in group for keyword in OG_GROUP_KEYWORDS):
+            return True
+    
+    return False
+
 # Funções críticas que precisam AUTHORIZED mesmo offshore (sempre disponíveis)
 CRITICAL_TITLES = [
     'almoxarife', 'almox', 'supply', 'suprimento',
@@ -116,7 +151,7 @@ def is_critical_function(title):
     title_lower = title.lower()
     return any(crit in title_lower for crit in CRITICAL_TITLES)
 
-def classify_user_tier(app_list, login_count_90d, operational_presence, title=''):
+def classify_user_tier(app_list, login_count_90d, operational_presence, title='', groups=''):
     """
     Classifica usuário em tiers para otimização
     
@@ -127,15 +162,17 @@ def classify_user_tier(app_list, login_count_90d, operational_presence, title=''
     - Demais = CONCURRENT
     
     Args:
-        app_list: Lista de aplicações acessadas
+        app_list: Lista de aplicações acessadas (IDs numéricos do LOGINTRACKING - ignorado)
         login_count_90d: Número de logins nos últimos 90 dias
         operational_presence: 'OFFSHORE' ou 'ONSHORE'
         title: Cargo do usuário (para detectar funções críticas)
+        groups: String ou lista de grupos de segurança (para detectar O&G Premium)
     
     Returns:
         tuple: (tier, required_license, app_points_cost)
     """
-    has_premium = any(is_premium_app(app) for app in app_list)
+    # Detectar Premium baseado em GROUPS (não apps, pois LOGINTRACKING tem apenas IDs)
+    has_premium = detect_premium_from_groups(groups)
     is_critical = is_critical_function(title)
     
     # REGRA 1: Ociosos (0 logins)
@@ -282,12 +319,13 @@ def main():
         # Determinar presença operacional (OFFSHORE vs ONSHORE)
         operational_presence = classify_operational_presence(persongroup, title)
         
-        # Classificar tier e licença (passando title para detectar funções críticas)
+        # Classificar tier e licença (passando title e groups para detectar funções críticas e Premium O&G)
         tier, required_license, app_points = classify_user_tier(
-            list(all_apps), 
+            list(all_apps),  # Apps do LOGINTRACKING (IDs numéricos - não usado para Premium)
             total_logins,
             operational_presence,
-            title  # Passar title para identificar funções críticas (almoxarife, supervisor, etc)
+            title,  # Para identificar funções críticas (almoxarife, supervisor, etc)
+            groups  # Para detectar grupos O&G que requerem Premium
         )
         
         # Classificar por domínio de email

@@ -1,0 +1,389 @@
+# reporting/html_builder.py
+from datetime import datetime
+
+def fmt_br(num):
+    return f"{num:,}".replace(",", ".")
+
+def render_table(headers, rows, table_id="", extra_class=""):
+    html = f'<div class="table-responsive"><table id="{table_id}" class="{extra_class}">\n'
+    html += '  <thead><tr>' + ''.join(f'<th>{h}</th>' for h in headers) + '</tr></thead>\n'
+    html += '  <tbody>\n'
+    for row in rows:
+        html += '    <tr>' + ''.join(f'<td>{c}</td>' for c in row) + '</tr>\n'
+    html += '  </tbody>\n</table></div>\n'
+    return html
+
+def build_html_structure(summary, governance, app_points, domains):
+    # --- Calculate Summaries ---
+    auth_users = summary['app_points_summary']['auth_users']
+    conc_users = summary['app_points_summary']['conc_users']
+    premium_users = summary['app_points_summary']['premium_users']
+    total_auth_points = sum(u['APP_POINTS'] for u in auth_users)
+    total_conc_points = sum(u['APP_POINTS'] for u in conc_users)
+    total_estimated_cost = total_auth_points + int(total_conc_points * 0.3)
+
+    # --- Build Section 5: Type Divergences ---
+    title_divergence_html = []
+    for div in governance['detailed_divergences'][:50]:
+        title = div['title']
+        data = div['data']
+        
+        alerts = []
+        all_types = {t for types in data['types'].values() for t in types}
+        if len(all_types) > 1: alerts.append('<span class="badge badge-critical">TYPE DIVERGENTE</span>')
+        
+        base_groups = next(iter(data['groups'].values()), set())
+        has_group_div = any(s != base_groups for s in data['groups'].values())
+        if has_group_div: alerts.append('<span class="badge badge-high">GRUPOS DIVERGENTES</span>')
+            
+        title_divergence_html.append(f'<div class="type-card"><h4>{title} {" ".join(alerts)}</h4>')
+        
+        if len(all_types) > 1:
+            title_divergence_html.append(f'<div class="env-divergence"><div class="env-header" style="color:#991b1b;">⚠️ Inconsistência de TYPE</div>')
+            for env, types in sorted(data['types'].items()):
+                types_list = ', '.join([f"{t}" for t in sorted(types)])
+                title_divergence_html.append(f'<div style="font-size:0.8rem; margin-left:0.5rem;">📍 <strong>{env}</strong>: {types_list}</div>')
+            title_divergence_html.append('</div>')
+            
+        if has_group_div:
+            if base_groups:
+                title_divergence_html.append(f'<div style="padding:0.6rem; background:#f0fdf4; border-left:3px solid #10b981; border-radius:4px; margin-bottom:0.8rem;">')
+                title_divergence_html.append(f'<div style="font-weight:600; color:#166534; font-size:0.85rem;">✓ Baseline Comum ({len(base_groups)} grupos):</div>')
+                title_divergence_html.append(f'<div style="font-size:0.75rem; color:#166534;">{", ".join(sorted(base_groups)[:8])}...</div></div>')
+            for env, groups in sorted(data['groups'].items()):
+                extra = groups - base_groups
+                if extra:
+                    title_divergence_html.append(f'<div class="env-divergence"><div class="env-header">🔸 {env} (+{len(extra)} extras)</div>')
+                    title_divergence_html.append(f'<div class="extra-groups">Adições locais: {", ".join(sorted(extra)[:10])}...</div></div>')
+        title_divergence_html.append('</div>')
+
+    # --- Build Governance Tables ---
+    cross_env_rows = []
+    for c in governance['cross_env'][:200]:
+        w_match = next((w for w in governance['worklist'] if w.get('USERID') == c.get('USERID')), {})
+        prio = w_match.get('REVIEW_PRIORITY', 'LOW')
+        badge = "badge-critical" if prio == 'CRITICAL' else "badge-high" if prio == 'HIGH' else "badge-medium" if prio == 'MEDIUM' else "badge-low"
+        hypo = w_match.get('HYPOTHESIS', 'UNKNOWN')
+        dec = w_match.get('MERGE_DECISION', 'MANUAL_REVIEW_REQUIRED')
+        cross_env_rows.append([
+            f"<strong>{c.get('USERID')}</strong>",
+            f"<span class='env-data'>{c.get('ENV_LIST')}</span><span class='status-data' style='display:none;'>{c.get('STATUS_LIST', '')}</span>",
+            c.get('DISPLAYNAME_LIST'),
+            f'<span class="{badge} hyp-data">{hypo}</span>',
+            f"<span class='dec-data' style='font-weight:600;'>{dec}</span>"
+        ])
+    
+    login_conflicts_rows = []
+    for l in governance['login_conflicts'][:200]:
+        dec = l.get('MERGE_DECISION', 'MANUAL_REVIEW_REQUIRED')
+        if not dec or dec == 'None': dec = 'MANUAL_REVIEW_REQUIRED'
+        login_conflicts_rows.append([
+            f"<strong>{l.get('LOGINID')}</strong>",
+            f"<span class='env-data'>{l.get('ENV_LIST')}</span>",
+            l.get('USERID_LIST'),
+            l.get('DISPLAYNAME_LIST'),
+            f"<span class='dec-data' style='font-weight:600; color:#f59e0b;'>{dec}</span>"
+        ])
+
+    worklist_rows = []
+    for w in governance['worklist'][:300]:
+        prio = w.get('REVIEW_PRIORITY', 'LOW')
+        badge = "badge-critical" if prio == 'CRITICAL' else "badge-high" if prio == 'HIGH' else "badge-medium" if prio == 'MEDIUM' else "badge-low"
+        hypo = w.get('HYPOTHESIS', 'UNKNOWN')
+        worklist_rows.append([
+            f"<span class='env-data' style='display:none;'>{w.get('ENV_DB')}</span><span class='status-data' style='display:none;'>{w.get('STATUS', '')}</span>{w.get('RAW_ID')}",
+            w.get('DISPLAYNAME'),
+            w.get('PRIMARYEMAIL'),
+            w.get('COLLISION_TYPE'),
+            f'<span class="{badge} hyp-data">{hypo}</span>',
+            f"<strong class='dec-data'>{w.get('MERGE_DECISION')}</strong>"
+        ])
+
+    # --- Build AppPoints Table ---
+    app_points_rows = []
+    for s in sorted(app_points, key=lambda x: x['APP_POINTS'], reverse=True)[:500]:
+        app_points_rows.append([
+            f"<strong>{s['USERID']}</strong>",
+            s['DISPLAYNAME'][:30],
+            f"<span class='badge' style='background:#f1f5f9;'>{s['ENTITLEMENT']}</span>",
+            f"<span style='font-weight:600; color:{'#10b981' if s['LICENSE_MODEL'] == 'AUTHORIZED' else '#334155'}'>{s['LICENSE_MODEL']}</span>",
+            f"<strong>{s['APP_POINTS']}</strong>",
+            s['USAGE_PROFILE'],
+            s['TITLES'][:40] + ("..." if len(s['TITLES']) > 40 else "")
+        ])
+
+    # --- Generate HTML ---
+    return f"""<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Maximo Unificado</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {{ --primary: #0f172a; --secondary: #1e293b; --accent: #2563eb; --bg: #f8fafc; --card-bg: #ffffff; --text: #334155; --border: #e2e8f0; --danger: #ef4444; --warning: #f59e0b; --success: #10b981;}}
+        * {{ box-sizing: border-box; }}
+        body {{ font-family: "Segoe UI", system-ui, -apple-system, sans-serif; margin: 0; background-color: var(--bg); color: var(--text); line-height: 1.5; }}
+        .topbar {{ background: var(--primary); color: white; padding: 1.5rem 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center;}}
+        .topbar h1 {{ margin: 0; font-size: 1.8rem; font-weight: 600; letter-spacing: -0.5px; }}
+        .topbar p {{ margin: 0; color: #94a3b8; font-size: 0.9rem; margin-top: 0.2rem; }}
+        .tabs {{ background: var(--secondary); padding: 0 2rem; display: flex; gap: 1rem; }}
+        .tab-button {{ background: none; border: none; color: #cbd5e1; padding: 1rem 1.5rem; cursor: pointer; font-size: 1rem; border-bottom: 3px solid transparent; font-weight: 600; transition: all 0.2s;}}
+        .tab-button:hover {{ color: white; }}
+        .tab-button.active {{ color: white; border-bottom-color: var(--accent); }}
+        .container {{ max-width: 1400px; margin: 0 auto; padding: 2rem; }}
+        .tab-content {{ display: none; }}
+        .tab-content.active {{ display: block; animation: fadeIn 0.3s ease; }}
+        @keyframes fadeIn {{ from {{ opacity: 0; }} to {{ opacity: 1; }} }}
+        
+        .alert-box {{ background-color: #eff6ff; border-left: 4px solid var(--accent); padding: 1rem 1.5rem; border-radius: 6px; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.5rem; }}
+        .alert-box strong {{ color: #1e3a8a; font-size: 1.1rem; }}
+        .alert-box p {{ margin: 0; color: #1e40af; }}
+        
+        .card {{ background: var(--card-bg); border-radius: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); border: 1px solid var(--border); padding: 1.8rem; margin-bottom: 2rem; }}
+        .card-header {{ margin-top: 0; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border); padding-bottom: 0.75rem; color: var(--secondary); font-size: 1.4rem; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }}
+        .card-header:hover {{ color: var(--accent); }}
+        
+        .stats-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; }}
+        .stat-card {{ background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; text-align: center; transition: transform 0.2s; position: relative; }}
+        .stat-card:hover {{ transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }}
+        .stat-value {{ font-size: 2.2rem; font-weight: 700; color: var(--primary); margin-bottom: 0.2rem; }}
+        .stat-title {{ font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: #1e293b; font-weight: 700; margin-bottom: 0.5rem; }}
+        .stat-subtitle {{ font-size: 0.75rem; color: #64748b; line-height: 1.2; }}
+        
+        .border-danger {{ border-bottom: 4px solid var(--danger); }}
+        .border-warning {{ border-bottom: 4px solid var(--warning); }}
+        .border-accent {{ border-bottom: 4px solid var(--accent); }}
+        .border-success {{ border-bottom: 4px solid var(--success); }}
+        .border-neutral {{ border-bottom: 4px solid #94a3b8; }}
+        
+        .charts-container {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; margin-top: 2rem; }}
+        .chart-box {{ height: 320px; display: flex; justify-content: center; align-items: center; background: #ffffff; border-radius: 8px; border: 1px solid var(--border); padding: 1rem; }}
+        
+        .table-responsive {{ overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); max-height: 600px; overflow-y: auto; }}
+        table {{ width: 100%; border-collapse: collapse; text-align: left; }}
+        th, td {{ padding: 14px 16px; border-bottom: 1px solid var(--border); vertical-align: top; word-wrap: break-word; white-space: normal; }}
+        th {{ background-color: #f1f5f9; color: #334155; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; position: sticky; top: 0; z-index: 10; }}
+        tbody tr:hover {{ background-color: #f8fafc; }}
+        tbody tr:last-child td {{ border-bottom: none; }}
+        
+        .badge {{ padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; display: inline-block; text-align: center; margin-left: 0.5rem; }}
+        .badge-critical {{ background-color: #fef2f2; color: #991b1b; border: 1px solid #f87171; }}
+        .badge-high {{ background-color: #fff7ed; color: #9a3412; border: 1px solid #fb923c; }}
+        .badge-medium {{ background-color: #eff6ff; color: #1e40af; border: 1px solid #60a5fa; }}
+        .badge-low {{ background-color: #ecfdf5; color: #166534; border: 1px solid #34d399; }}
+        
+        .search-container {{ display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; background: #f1f5f9; padding: 1.5rem; border-radius: 8px; border: 1px solid #cbd5e1; }}
+        .search-bar {{ flex-grow: 1; padding: 12px 16px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; min-width: 250px; }}
+        .filter-select {{ padding: 12px 16px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; background: white; min-width: 200px; }}
+        
+        /* Analysis Grid CSS */
+        .type-analysis-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }}
+        .type-card {{ background: #ffffff; border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; transition: box-shadow 0.2s; }}
+        .type-card:hover {{ box-shadow: 0 4px 8px rgba(0,0,0,0.08); }}
+        .type-card h4 {{ margin: 0 0 1rem 0; font-size: 1.1rem; color: var(--primary); border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; display: flex; align-items: center; flex-wrap: wrap; }}
+        .env-divergence {{ margin-bottom: 0.8rem; padding: 0.8rem; background: #f8fafc; border-left: 3px solid var(--warning); border-radius: 4px; }}
+        .env-header {{ font-weight: 700; color: var(--primary); margin-bottom: 0.4rem; font-size: 0.9rem; }}
+        .extra-groups {{ color: #1e40af; font-size: 0.85rem; }}
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div>
+            <h1>Dashboard Governança Maximo EAM</h1>
+            <p>Saneamento e Planejamento de Licenças MAS 9</p>
+        </div>
+        <div>
+            <p style="text-align: right; color: #cbd5e1;">Atualizado em:<br><strong>{datetime.now().strftime("%d/%m/%Y %H:%M")}</strong></p>
+        </div>
+    </div>
+    
+    <div class="tabs">
+        <button class="tab-button active" onclick="openTab(event, 'tab-painel')">1. Painel Operacional</button>
+        <button class="tab-button" onclick="openTab(event, 'tab-gov')">2. Governança & Saneamento</button>
+        <button class="tab-button" onclick="openTab(event, 'tab-apppoints')">3. Otimização AppPoints</button>
+    </div>
+
+    <!-- TAB 1: PAINEL -->
+    <div id="tab-painel" class="container tab-content active">
+        <div class="alert-box">
+            <strong>Visão de Negócio — Foco em MAS 9 AppPoints e Identidades Ativas</strong>
+            <p>Este Dashboard foca nativamente na visão de <strong>contas ativas</strong> para mapear o risco real e auxiliar no capacity planning do MAS 9. Lembre-se: O número de "Registros Ativos" (onde esilva repete na base A e B) é diferente do número de "Pessoas Únicas", onde o esilva conta como apenas 1 independente das bases em que estiver alocado.</p>
+        </div>
+
+        <div class="card">
+            <h2 class="card-header">Resumo Executivo Operacional</h2>
+            <div class="stats-grid">
+                <div class="stat-card border-success"><div class="stat-value" style="color: var(--success);">{fmt_br(summary['active_profiles_count'])}</div><div class="stat-title">Pessoas Únicas Ativas</div><div class="stat-subtitle">"Pessoas físicas" projetadas</div></div>
+                <div class="stat-card border-warning"><div class="stat-value" style="color: var(--warning);">{fmt_br(summary['title_divergence_count'])}</div><div class="stat-title">Cargos com Divergência</div><div class="stat-subtitle">Requer padronização de perfil</div></div>
+                <div class="stat-card border-accent"><div class="stat-value">{fmt_br(len(governance['cross_env']))}</div><div class="stat-title">Riscos de Reuso</div><div class="stat-subtitle">Logins ativos repetidos</div></div>
+                <div class="stat-card border-danger"><div class="stat-value" style="color: var(--danger);">{fmt_br(len([w for w in governance['worklist'] if w.get('HYPOTHESIS') == 'CONFIRMED_DIFFERENT_PERSON']))}</div><div class="stat-title">Colisões Críticas</div><div class="stat-subtitle">Nomes diferentes no mesmo login</div></div>
+            </div>
+            
+            <div class="charts-container" style="grid-template-columns: 1fr 2fr;">
+                <div class="chart-box" style="flex-direction: column;">
+                    <h3 style="margin-top:0; font-size: 1rem; color: var(--primary);">Distribuição por Domínio</h3>
+                    <canvas id="domainChart"></canvas>
+                </div>
+                <div class="chart-box" style="align-items: flex-start; padding: 2rem;">
+                    <div style="width: 100%;">
+                        <h3 style="margin-top:0; font-size: 1rem; color: var(--primary);">Entendimento da Segregação</h3>
+                        <p style="font-size: 0.9rem; color: var(--text); margin-bottom: 1rem;">
+                            A análise foca em segregar os usuários que são colaboradores diretos (Foresea) e parceiros integrados, dos terceiros ou temporários, para otimizar o consumo de licenças.
+                        </p>
+                        <div style="display: flex; justify-content: space-between; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border);">
+                            <div><strong style="color: #10b981; font-size: 1.2rem;">{fmt_br(domains.get('FORESEA', 0))}</strong> <br><span style="font-size: 0.8rem; color: #64748b;">FORESEA</span></div>
+                            <div><strong style="color: #2563eb; font-size: 1.2rem;">{fmt_br(domains.get('PARCEIRO', 0))}</strong> <br><span style="font-size: 0.8rem; color: #64748b;">PARCEIROS</span></div>
+                            <div><strong style="color: #f59e0b; font-size: 1.2rem;">{fmt_br(domains.get('TERCEIRO', 0))}</strong> <br><span style="font-size: 0.8rem; color: #64748b;">TERCEIROS</span></div>
+                            <div><strong style="color: #94a3b8; font-size: 1.2rem;">{fmt_br(domains.get('SEM DOMINIO', 0))}</strong> <br><span style="font-size: 0.8rem; color: #64748b;">S/ DOMÍNIO</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: GOVERNANÇA -->
+    <div id="tab-gov" class="container tab-content">
+        <!-- Search Filters -->
+        <div class="card" style="background-color: #ffffff; border-color: #cbd5e1;">
+            <h3 style="margin-top: 0; color: var(--primary);">🔍 Filtro Interativo (Aplica-se às tabelas abaixo)</h3>
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-bar" onkeyup="filterTable()" placeholder="Pesquisar por ID, Nome, Email...">
+                <select id="statusFilter" class="filter-select" onchange="filterTable()">
+                    <option value="ACTIVE" selected>🟢 Somente Ativos</option>
+                    <option value="">🟢/🔴 Todos os Status</option>
+                    <option value="INACTIVE">🔴 Inativos</option>
+                </select>
+                <select id="decFilter" class="filter-select" onchange="filterTable()">
+                    <option value="">⚖️ Todas as Decisões / Hipóteses</option>
+                    <option value="PESSOAS DIFERENTES">🔴 PESSOAS DIFERENTES</option>
+                    <option value="REQUER REVISÃO">🟡 REQUER REVISÃO</option>
+                    <option value="POSSÍVEL MESMA PESSOA">🟢 POSSÍVEL MESMA PESSOA</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="card-header">Amostra 1: Cargos com Divergência de Perfil (Fase 2)</h2>
+            <p style="color: #64748b; font-size: 0.95rem;">Comparativo de Grupos de Segurança atribuídos para um mesmo Tipo (TYPE/Cargo) entre as unidades. Fica fácil ver qual unidade está com grupos a mais (em azul) do que o padrão esperado.</p>
+            <div class="type-analysis-grid">
+                {''.join(title_divergence_html)}
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="card-header">Amostra 2: Reuso de USERID (Multi-Ambiente)</h2>
+            {render_table(['USERID', 'Bases Encontradas', 'Nomes de Exibição', 'Conclusão', 'Ação'], cross_env_rows, 'table-cross-env', 'filterable-table')}
+        </div>
+
+        <div class="card">
+            <h2 class="card-header">Amostra 3: Conflitos de LOGINID (AD)</h2>
+            {render_table(['LOGINID AD', 'Bases', 'USERIDs', 'Nomes', 'Ação Recomendada'], login_conflicts_rows, 'table-login-conflicts', 'filterable-table')}
+        </div>
+
+        <div class="card">
+            <h2 class="card-header">Amostra 4: Fila de Saneamento Completa</h2>
+            {render_table(['ID Bruto', 'Nome', 'Email/Login', 'Tipo Colisão', 'Hipótese', 'Ação'], worklist_rows, 'table-worklist', 'filterable-table')}
+        </div>
+    </div>
+
+    <!-- TAB 3: APPPOINTS -->
+    <div id="tab-apppoints" class="container tab-content">
+        <div class="alert-box" style="border-left-color: var(--success); background-color: #ecfdf5;">
+            <strong>🎯 Meta: Otimização de Licenciamento MAS 9</strong>
+            <p>Esta simulação processa apenas usuários dos domínios Foresea e Parceiros. A inteligência classifica usuários como <strong>AUTHORIZED</strong> se possuírem perfil de uso intenso (POWER) ou cargos críticos definidos pela gestão.</p>
+        </div>
+
+        <div class="card">
+            <h2 class="card-header">Resumo da Simulação de Custos</h2>
+            <div class="stats-grid">
+                <div class="stat-card border-danger">
+                    <div class="stat-value" style="color: var(--danger);">{fmt_br(total_estimated_cost)}</div>
+                    <div class="stat-title">Custo Total Estimado</div>
+                    <div class="stat-subtitle">Authorized + (Concurrent * 30%)</div>
+                </div>
+                <div class="stat-card border-warning">
+                    <div class="stat-value" style="color: var(--warning);">{fmt_br(len(premium_users))}</div>
+                    <div class="stat-title">Usuários Premium (O&G)</div>
+                    <div class="stat-subtitle">Acesso a módulos de indústria</div>
+                </div>
+                <div class="stat-card border-accent">
+                    <div class="stat-value">{fmt_br(len(auth_users))}</div>
+                    <div class="stat-title">Licenças Authorized</div>
+                    <div class="stat-subtitle">Cargos críticos ou Power users</div>
+                </div>
+                <div class="stat-card border-success">
+                    <div class="stat-value" style="color: var(--success);">{fmt_br(len(conc_users))}</div>
+                    <div class="stat-title">Licenças Concurrent</div>
+                    <div class="stat-subtitle">Pool compartilhado offshore/onshore</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="card-header">Detalhes da Simulação (Top 500 Maior Custo)</h2>
+            {render_table(['USERID', 'Nome', 'Entitlement', 'Licença Requerida', 'AppPoints', 'Perfil Uso', 'Cargos Mapeados'], app_points_rows, 'table-apppoints', 'filterable-table')}
+        </div>
+    </div>
+
+    <script>
+        function openTab(evt, tabName) {{
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {{ tabcontent[i].style.display = "none"; tabcontent[i].classList.remove("active"); }}
+            tablinks = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tablinks.length; i++) {{ tablinks[i].classList.remove("active"); }}
+            
+            var target = document.getElementById(tabName);
+            target.style.display = "block";
+            // slight delay to ensure display block is applied before adding opacity class
+            setTimeout(() => target.classList.add("active"), 10);
+            evt.currentTarget.classList.add("active");
+        }}
+
+        function filterTable() {{
+            var input = document.getElementById("searchInput").value.toUpperCase();
+            var statusFilter = document.getElementById("statusFilter").value.toUpperCase();
+            var decFilter = document.getElementById("decFilter").value.toUpperCase();
+            
+            var tables = document.querySelectorAll(".filterable-table");
+            tables.forEach(function(table) {{
+                var tr = table.getElementsByTagName("tr");
+                for (var i = 1; i < tr.length; i++) {{
+                    var rowText = tr[i].textContent || tr[i].innerText;
+                    var matchInput = input === "" || rowText.toUpperCase().indexOf(input) > -1;
+                    
+                    var statusSpan = tr[i].querySelector('.status-data');
+                    var statusContent = statusSpan ? statusSpan.innerText.toUpperCase() : "";
+                    var matchStatus = true;
+                    if (statusFilter !== "") {{
+                        if (statusFilter === "ACTIVE") matchStatus = statusContent.indexOf("ACTIVE") > -1;
+                        else if (statusFilter === "INACTIVE") matchStatus = statusContent.indexOf("ACTIVE") === -1;
+                    }}
+                    
+                    var matchDec = decFilter === "" || rowText.toUpperCase().indexOf(decFilter) > -1;
+                    
+                    tr[i].style.display = (matchInput && matchStatus && matchDec) ? "" : "none";
+                }}
+            }});
+        }}
+
+        const domainLabels = {list(domains.keys())};
+        const domainValues = {list(domains.values())};
+        new Chart(document.getElementById('domainChart'), {{
+            type: 'doughnut',
+            data: {{
+                labels: domainLabels,
+                datasets: [{{
+                    data: domainValues,
+                    backgroundColor: ['#10b981', '#2563eb', '#f59e0b', '#94a3b8'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }}]
+            }},
+            options: {{ responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: {{ legend: {{ position: 'right' }} }} }}
+        }});
+    </script>
+</body>
+</html>"""

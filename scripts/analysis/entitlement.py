@@ -1,35 +1,34 @@
-# -*- coding: utf-8 -*-
+# analysis/entitlement.py
+from scripts.config import get_app_points_config, get_entitlement_keywords
 
-"""
-Módulo do Motor de Entitlement
-
-Responsável por determinar o nível de licença requerido por um usuário
-com base nas aplicações que ele tem permissão para acessar.
-"""
-
-from ..config import get_entitlement_app_map
-
-def determine_user_entitlement(user_apps):
+def determine_user_entitlement(user_groups):
     """
-    Determina o entitlement (nível de licença) com base na regra do "nível mais alto".
-
-    Args:
-        user_apps (set): Um conjunto de strings com os nomes das aplicações
-                         que o usuário pode acessar.
-
-    Returns:
-        str: O nível de entitlement requerido ('PREMIUM', 'BASE', 'LIMITED', 'SELF FREE').
+    Determina o entitlement (nível de licença) com base na regra do "nível mais alto",
+    verificando palavras-chave em cada nome de grupo.
     """
-    app_map = get_entitlement_app_map()
-
+    keywords = get_entitlement_keywords()
+    
     # A ordem de verificação é crucial: do mais caro para o mais barato.
-    if any(app in user_apps for app in app_map['PREMIUM']):
-        return 'PREMIUM'
+    for group in user_groups:
+        group_upper = group.upper()
+        if any(keyword in group_upper for keyword in keywords['PREMIUM']):
+            return 'PREMIUM'
     
-    if any(app in user_apps for app in app_map['BASE']):
-        return 'BASE'
-    
-    if any(app in user_apps for app in app_map['LIMITED']):
-        return 'LIMITED'
-    
+    for group in user_groups:
+        group_upper = group.upper()
+        if any(keyword in group_upper for keyword in keywords['BASE']):
+            return 'BASE'
+
+    for group in user_groups:
+        group_upper = group.upper()
+        if any(keyword in group_upper for keyword in keywords['LIMITED']):
+            return 'LIMITED'
+            
     return 'SELF FREE'
+
+def calculate_app_points(entitlement, license_model):
+    """
+    Calcula o custo em AppPoints com base no entitlement e no modelo de licença.
+    """
+    config = get_app_points_config()
+    return config.get(entitlement, {}).get(license_model, 0)

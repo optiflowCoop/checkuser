@@ -89,7 +89,7 @@ tbody tr:last-child td { border-bottom: none; }
 <h1>Dashboard Governan├ºa Maximo EAM</h1>
 <p>Fase 2: Padroniza├º├úo de Baseline e Governan├ºa de Acessos</p>
 </div>
-<div><p style="text-align: right; color: #cbd5e1;">Atualizado em:<br><strong>22/06/2026 11:42</strong></p></div>
+<div><p style="text-align: right; color: #cbd5e1;">Atualizado em:<br><strong>22/06/2026 11:59</strong></p></div>
 </div>
 <div class="container">
 <div class="alert-box">
@@ -101,73 +101,20 @@ tbody tr:last-child td { border-bottom: none; }
 <p>An├ílise expandida com dados de <strong>Title</strong> (cargo funcional ex: Supervisor de El├®trica) e <strong>PersonGroup</strong> (departamento/equipe) para identificar diverg├¬ncias de perfil de acesso entre unidades. Todos os conflitos exibem <strong>motivo t├®cnico detalhado</strong> para acelerar saneamento e padroniza├º├úo.</p>
 </div>
 <div class="card">
-<h2 class="card-header" onclick="toggleSection('section1')">1. Resumo Executivo Operacional <span class="toggle-icon">Ôû╝</span></h2>
+<h2 class="card-header" onclick="toggleSection('section1')">1. Resumo Executivo Operacional (Contas Ativas) <span class="toggle-icon">Ôû╝</span></h2>
 <div id="section1" class="card-content">
-<h3 style="color: var(--primary); margin: 0 0 1rem 0; font-size: 1.1rem; border-left: 4px solid var(--accent); padding-left: 1rem;">­ƒôè M├®tricas de Governan├ºa de Identidades</h3>
 <div class="stats-grid">
-<div class="stat-card border-success"><div class="stat-value" id="stat-unique-active" style="color: var(--success);" data-active="1907" data-all="9758">1.907</div><div class="stat-title">Pessoas ├Ünicas <span id="stat-unique-scope">(Ativas)</span></div><div class="stat-subtitle">"Pessoas f├¡sicas" projetadas para o MAS 9</div></div>
-<div class="stat-card border-accent"><div class="stat-value" id="stat-records" data-active="2148" data-all="13286">2.148</div><div class="stat-title">Registros <span id="stat-records-scope">(Ativos)</span></div><div class="stat-subtitle">Contas log├íveis no Maximo</div></div>
-<div class="stat-card border-warning"><div class="stat-value" id="stat-reuse" style="color: var(--warning);" data-active="1831" data-all="1878">1.831</div><div class="stat-title">Riscos de Reuso <span id="stat-reuse-scope">(Ativos)</span></div><div class="stat-subtitle">Logins repetidos entre sondas</div></div>
-<div class="stat-card border-danger"><div class="stat-value" id="stat-critical" style="color: var(--danger);" data-active="0" data-all="8">0</div><div class="stat-title">Colis├Áes Cr├¡ticas <span id="stat-critical-scope">(Ativas)</span></div><div class="stat-subtitle">Nomes diferentes no mesmo login</div></div>
-</div>
-<h3 style="color: var(--primary); margin: 2rem 0 1rem 0; font-size: 1.1rem; border-left: 4px solid #2563eb; padding-left: 1rem;">🎯 Segregação de Usuários para Migração MAS 9</h3>
-<div class="stats-grid">
-<div class="stat-card border-success"><div class="stat-value" style="color: var(--success);">0</div><div class="stat-title">🏢 FORESEA (Migrar)</div><div class="stat-subtitle">0.0% - @foresea.com / @foresea-partner.com</div></div>
-<div class="stat-card border-warning"><div class="stat-value" style="color: var(--warning);">0</div><div class="stat-title">👷 TEMPORÁRIOS (Não Migrar)</div><div class="stat-subtitle">0.0% - Contratados terceirizados</div></div>
-<div class="stat-card border-neutral"><div class="stat-value" style="color: #64748b;">2.148</div><div class="stat-title">⚠️ Sem Email Cadastrado</div><div class="stat-subtitle">Requer investigação manual</div></div>
-</div>
-<h3 style="color: var(--primary); margin: 2rem 0 1rem 0; font-size: 1.1rem; border-left: 4px solid #10b981; padding-left: 1rem;">📋 Fase 2: Baseline Funcional</h3>
-<div class="stats-grid">
-<div class="stat-card border-accent"><div class="stat-value" style="color: #10b981;">278</div><div class="stat-title">Fun├º├Áes Distintas (TITLE)</div><div class="stat-subtitle">Cargos ├║nicos mapeados na organiza├º├úo</div></div>
-<div class="stat-card border-warning"><div class="stat-value" style="color: var(--warning);" id="stat-divergent">0</div><div class="stat-title">Fun├º├Áes com Diverg├¬ncia</div><div class="stat-subtitle">Cargos com TYPE ou grupos inconsistentes</div></div>
-<div class="stat-card border-success"><div class="stat-value" id="stat-profile" style="color: var(--accent);" data-active="176" data-all="811">176</div><div class="stat-title">Perfis Completos <span id="stat-profile-scope">(Ativos)</span></div><div class="stat-subtitle">Usu├írios com Title + PersonGroup</div></div>
-<div class="stat-card border-neutral"><div class="stat-value" style="color: #64748b;">5</div><div class="stat-title">Unidades com Dados</div><div class="stat-subtitle">Bases que possuem informa├º├Áes de perfil</div></div>
+<div class="stat-card border-success"><div class="stat-value" style="color: var(--success);">1.907</div><div class="stat-title">Pessoas ├Ünicas Ativas</div><div class="stat-subtitle">"Pessoas f├¡sicas" projetadas para o MAS 9</div></div>
+<div class="stat-card border-accent"><div class="stat-value">2.148</div><div class="stat-title">Registros Ativos</div><div class="stat-subtitle">Contas log├íveis no Maximo hoje</div></div>
+<div class="stat-card border-warning"><div class="stat-value" style="color: var(--warning);">1.831</div><div class="stat-title">Riscos de Reuso</div><div class="stat-subtitle">Logins ativos repetidos entre sondas</div></div>
+<div class="stat-card border-danger"><div class="stat-value" style="color: var(--danger);">0</div><div class="stat-title">Colis├Áes Cr├¡ticas</div><div class="stat-subtitle">Nomes diferentes no mesmo login</div></div>
+<div class="stat-card border-accent"><div class="stat-value" style="color: var(--accent);">176</div><div class="stat-title">Ativos com Perfil</div><div class="stat-subtitle">Usu├írios ativos com Title/PersonGroup</div></div>
+<div class="stat-card border-neutral"><div class="stat-value" style="color: #64748b;">13.286</div><div class="stat-title">Total Hist├│rico Legado</div><div class="stat-subtitle">Todos os registros brutos da tabela</div></div>
 </div>
 <div class="charts-container">
 <div class="chart-box"><canvas id="uniqueEnvChart"></canvas></div>
 <div class="chart-box"><canvas id="statusChart"></canvas></div>
 </div>
-</div></div>
-<div class="card">
-<h2 class="card-header" onclick="toggleSection('section_phase3')">2. 🎯 Otimização de AppPoints (Fase 3) <span class="toggle-icon">▼</span></h2>
-<div id="section_phase3" class="card-content">
-<div class="alert-box">
-<strong>🎯 Meta: Distribuir 1.200 AppPoints contratados de forma assertiva</strong>
-<p><strong>Status:</strong> 703 AppPoints estimados para 274 usuários FORESEA (permanentes).</p>
-<p><strong>Economia:</strong> 10 pts economizados excluindo 12 usuários TEMPORÁRIOS da migração.</p>
-<p style="color: var(--success);"><strong>✅ OK:</strong> Dentro da capacidade. Margem de 497 AppPoints disponível.</p>
-</div>
-<h3 style="color: var(--primary); margin: 1.5rem 0 1rem 0;">📊 Distribuição de Licenças (Usuários FORESEA)</h3>
-<div class="stats-grid">
-<div class="stat-card border-accent"><div class="stat-value">41</div><div class="stat-title">⛵ OFFSHORE</div><div class="stat-subtitle">Turnos 12h / Baixa simultaneidade</div></div>
-<div class="stat-card border-accent"><div class="stat-value">233</div><div class="stat-title">🏢 ONSHORE</div><div class="stat-subtitle">Administrativo / Alta simultaneidade</div></div>
-<div class="stat-card border-success"><div class="stat-value">79</div><div class="stat-title">🔑 AUTHORIZED</div><div class="stat-subtitle">28.8% - Uso intenso (>60 logins/90d)</div></div>
-<div class="stat-card border-accent"><div class="stat-value">50</div><div class="stat-title">🔄 CONCURRENT</div><div class="stat-subtitle">18.2% - Revezamento natural</div></div>
-<div class="stat-card border-warning"><div class="stat-value">0</div><div class="stat-title">🛢️ PREMIUM O&G</div><div class="stat-subtitle">Usam módulos Oil & Gas</div></div>
-<div class="stat-card border-success"><div class="stat-value">129</div><div class="stat-title">📦 BASE</div><div class="stat-subtitle">Módulos standard</div></div>
-</div>
-<h3 style="color: var(--primary); margin: 2rem 0 1rem 0;">🔝 Top 15 Usuários FORESEA (Maior Custo AppPoints)</h3>
-<div class="table-responsive"><table id="" class="">
-  <thead><tr><th>USERID</th><th>Nome</th><th>Presença</th><th>Logins 90d</th><th>Perfil</th><th>Licença</th><th>AppPoints</th></tr></thead>
-  <tbody>
-    <tr><td>RENATOLIMA</td><td>RENATO DA COSTA LIMA</td><td>OFFSHORE</td><td>5</td><td><span class="badge" style="background:#10b981;">OFFSHORE_STD</span></td><td>BASE_CONCURRENT</td><td><strong>10</strong></td></tr>
-    <tr><td>CLAUDIOFARIAS</td><td>CLAUDIO ROBERTO COSTA DE FARIA</td><td>ONSHORE</td><td>11</td><td><span class="badge" style="background:#10b981;">MEDIUM_STD</span></td><td>BASE_CONCURRENT</td><td><strong>10</strong></td></tr>
-    <tr><td>MAUROCUNHA</td><td>MAURO CUNHA DE CASTRO COSTA</td><td>OFFSHORE</td><td>61</td><td><span class="badge" style="background:#10b981;">OFFSHORE_STD</span></td><td>BASE_CONCURRENT</td><td><strong>10</strong></td></tr>
-    <tr><td>MARCOSNEVES</td><td>MARCOS AUGUSTO DO NASCIMENTO N</td><td>OFFSHORE</td><td>115</td><td><span class="badge" style="background:#10b981;">OFFSHORE_STD</span></td><td>BASE_CONCURRENT</td><td><strong>10</strong></td></tr>
-    <tr><td>CLARISSERODRIGUES</td><td>CLARISSE DA SILVA RODRIGUES</td><td>OFFSHORE</td><td>17</td><td><span class="badge" style="background:#10b981;">OFFSHORE_STD</span></td><td>BASE_CONCURRENT</td><td><strong>10</strong></td></tr>
-    <tr><td>JADERMIGUEL</td><td>Jader da Silva Cesar Miguel</td><td>ONSHORE</td><td>43</td><td><span class="badge" style="background:#10b981;">MEDIUM_STD</span></td><td>BASE_CONCURRENT</td><td><strong>10</strong></td></tr>
-    <tr><td>MARCIOMOLINARI</td><td>MARCIO MOLINARI DE ALMEIDA HOR</td><td>ONSHORE</td><td>54</td><td><span class="badge" style="background:#10b981;">MEDIUM_STD</span></td><td>BASE_CONCURRENT</td><td><strong>10</strong></td></tr>
-    <tr><td>MURILOBRAZ</td><td>MURILO PAIXAO BRAZ</td><td>ONSHORE</td><td>32</td><td><span class="badge" style="background:#10b981;">MEDIUM_STD</span></td><td>BASE_CONCURRENT</td><td><strong>10</strong></td></tr>
-    <tr><td>VICTORCOSTA</td><td>VICTOR LOURENCO COSTA</td><td>OFFSHORE</td><td>104</td><td><span class="badge" style="background:#10b981;">OFFSHORE_STD</span></td><td>BASE_CONCURRENT</td><td><strong>10</strong></td></tr>
-    <tr><td>JOSESILVA</td><td>JOSE MANOEL DA SILVA FILHO</td><td>ONSHORE</td><td>55</td><td><span class="badge" style="background:#10b981;">MEDIUM_STD</span></td><td>BASE_CONCURRENT</td><td><strong>10</strong></td></tr>
-    <tr><td>GUSTAVOCANARIO</td><td>GUSTAVO DE NOVAES CANARIO</td><td>ONSHORE</td><td>57</td><td><span class="badge" style="background:#10b981;">MEDIUM_STD</span></td><td>BASE_CONCURRENT</td><td><strong>10</strong></td></tr>
-    <tr><td>LUCASSOUZA</td><td>LUCAS DE OLIVEIRA SOUZA</td><td>OFFSHORE</td><td>26</td><td><span class="badge" style="background:#10b981;">OFFSHORE_STD</span></td><td>BASE_CONCURRENT</td><td><strong>10</strong></td></tr>
-    <tr><td>ERIVANLIMA</td><td>Erivan de Lima Carneiro</td><td>ONSHORE</td><td>32</td><td><span class="badge" style="background:#10b981;">MEDIUM_STD</span></td><td>BASE_CONCURRENT</td><td><strong>10</strong></td></tr>
-    <tr><td>SIDNEISCHOTT</td><td>SIDNEI DA SILVA SCHOTT</td><td>ONSHORE</td><td>27</td><td><span class="badge" style="background:#10b981;">MEDIUM_STD</span></td><td>BASE_CONCURRENT</td><td><strong>10</strong></td></tr>
-    <tr><td>DIEGOOTAVIO</td><td>DIEGO OTAVIO DE OLIVEIRA BAPTI</td><td>OFFSHORE</td><td>5</td><td><span class="badge" style="background:#10b981;">OFFSHORE_STD</span></td><td>BASE_CONCURRENT</td><td><strong>10</strong></td></tr>
-  </tbody>
-</table></div>
-
 </div></div>
 <div class="card" style="background-color: #ffffff; border-color: #cbd5e1;">
 <h3 style="margin-top: 0; color: var(--primary);">­ƒöì Filtro Global de Saneamento (Aplica-se em todas as tabelas)</h3>
@@ -1859,10 +1806,9 @@ tbody tr:last-child td { border-bottom: none; }
 </div>
 </div>
 </div>
-<script>document.getElementById("stat-divergent").innerHTML = "30";</script>
 </div></div>
 <div class="card">
-<h2 class="card-header" onclick="toggleSection('section5legacy')">6. ­ƒôè Vis├úo Legada: Auditoria de Perfis (Modo Comparativo) <span class="toggle-icon">Ôû╝</span></h2>
+<h2 class="card-header" onclick="toggleSection('section5legacy')">7. ­ƒôè Vis├úo Legada: Auditoria de Perfis (Modo Comparativo) <span class="toggle-icon">Ôû╝</span></h2>
 <div id="section5legacy" class="card-content collapsed">
 <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem;"><strong>Legenda:</strong> Comparativo de grupos por TYPE (classifica├º├úo gen├®rica). <span class="badge-grp common">Grupos comuns</span> = presentes em todas as unidades. <span class="badge-grp diff">Grupos locais</span> = adicionados apenas em algumas bases (destacados em azul por unidade). Escopo: <em>todas as contas</em>.</p>
 <div class="table-responsive"><table><thead><tr><th>Cargo / TYPE Funcional</th><th>An├ílise do Pacote de Grupos de Seguran├ºa</th></tr></thead><tbody>
@@ -1903,9 +1849,6 @@ tbody tr:last-child td { border-bottom: none; }
                 var envFilter = document.getElementById("envFilter").value.toUpperCase();
                 var statusFilter = document.getElementById("statusFilter").value.toUpperCase();
                 var decFilter = document.getElementById("decFilter").value.toUpperCase();
-                
-                // Atualizar cards baseado no filtro de status
-                updateStatCards(statusFilter);
                 
                 var tables = document.querySelectorAll(".filterable-table");
                 
@@ -1953,41 +1896,6 @@ tbody tr:last-child td { border-bottom: none; }
                     }
                 });
             }
-            
-            function updateStatCards(statusFilter) {
-                function formatBR(num) {
-                    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-                }
-                
-                var statUnique = document.getElementById("stat-unique-active");
-                var statRecords = document.getElementById("stat-records");
-                var statReuse = document.getElementById("stat-reuse");
-                var statCritical = document.getElementById("stat-critical");
-                var statProfile = document.getElementById("stat-profile");
-                
-                var scopeLabel = statusFilter === "ACTIVE" ? "(Ativas)" : statusFilter === "INACTIVE" ? "(Inativas)" : "(Todas)";
-                
-                if (statusFilter === "" || statusFilter === "ACTIVE") {
-                    statUnique.innerHTML = formatBR(statUnique.getAttribute('data-active'));
-                    statRecords.innerHTML = formatBR(statRecords.getAttribute('data-active'));
-                    statReuse.innerHTML = formatBR(statReuse.getAttribute('data-active'));
-                    statCritical.innerHTML = formatBR(statCritical.getAttribute('data-active'));
-                    statProfile.innerHTML = formatBR(statProfile.getAttribute('data-active'));
-                } else {
-                    statUnique.innerHTML = formatBR(statUnique.getAttribute('data-all'));
-                    statRecords.innerHTML = formatBR(statRecords.getAttribute('data-all'));
-                    statReuse.innerHTML = formatBR(statReuse.getAttribute('data-all'));
-                    statCritical.innerHTML = formatBR(statCritical.getAttribute('data-all'));
-                    statProfile.innerHTML = formatBR(statProfile.getAttribute('data-all'));
-                }
-                
-                document.getElementById("stat-unique-scope").innerHTML = scopeLabel;
-                document.getElementById("stat-records-scope").innerHTML = scopeLabel;
-                document.getElementById("stat-reuse-scope").innerHTML = scopeLabel;
-                document.getElementById("stat-critical-scope").innerHTML = scopeLabel;
-                document.getElementById("stat-profile-scope").innerHTML = scopeLabel;
-            }
-            
             
             // Graficos Chart.js
             

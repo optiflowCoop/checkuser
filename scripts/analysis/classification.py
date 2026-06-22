@@ -1,44 +1,27 @@
-# -*- coding: utf-8 -*-
-
-"""
-Módulo de Classificação de Perfis de Usuário
-
-Responsável por aplicar regras de negócio para categorizar usuários
-com base em seus atributos, como grupos de segurança e PersonGroups.
-"""
-
-from ..config import get_usage_profile_thresholds, get_operational_presence_keywords
+# analysis/classification.py
+from scripts.config import get_critical_titles
 
 def classify_usage_profile(group_count):
     """
     Classifica o perfil de uso (POWER, MEDIUM, LIGHT) com base na contagem de grupos.
-    
-    Args:
-        group_count (int): O número de grupos de segurança aos quais um usuário pertence.
-        
-    Returns:
-        str: A classificação do perfil ('POWER', 'MEDIUM', ou 'LIGHT').
     """
-    thresholds = get_usage_profile_thresholds()
-    if group_count > thresholds['POWER']:
+    if group_count > 8:
         return "POWER"
-    elif group_count > thresholds['MEDIUM']:
+    elif group_count > 4:
         return "MEDIUM"
     else:
         return "LIGHT"
 
-def classify_operational_presence(person_groups):
+def assign_license_model(usage_profile, user_titles):
     """
-    Classifica a presença operacional do usuário (OFFSHORE ou ONSHORE).
+    Atribui o modelo de licença (Authorized ou Concurrent) com base no perfil de uso
+    e na criticidade do cargo do usuário.
+    """
+    critical_titles = get_critical_titles()
+    user_titles_str = " ".join(user_titles).upper()
+    is_critical = any(crit_title in user_titles_str for crit_title in critical_titles)
     
-    Args:
-        person_groups (set): Um conjunto de strings contendo os PersonGroups do usuário.
-        
-    Returns:
-        str: A classificação da presença ('OFFSHORE' ou 'ONSHORE').
-    """
-    keywords = get_operational_presence_keywords()
-    for pg in person_groups:
-        if any(keyword in pg.lower() for keyword in keywords):
-            return "OFFSHORE"
-    return "ONSHORE"
+    if usage_profile == "POWER" or is_critical:
+        return "AUTHORIZED"
+    
+    return "CONCURRENT"
