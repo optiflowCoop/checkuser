@@ -30,6 +30,17 @@ if '--only-query' in sys.argv:
         print("❌ Erro: --only-query precisa de um nome de query. Ex: --only-query person")
         sys.exit(1)
 
+# Suporte para múltiplas queries (via --queries)
+if '--queries' in sys.argv:
+    try:
+        query_index = sys.argv.index('--queries') + 1
+        if query_index < len(sys.argv):
+            only_query = [q.strip() for q in sys.argv[query_index].split(',')]
+            print(f"🎯 Foco: Rodando queries: {', '.join(only_query)}")
+    except (ValueError, IndexError):
+        print("❌ Erro: --queries precisa de nomes separados por vírgula. Ex: --queries person,email")
+        sys.exit(1)
+
 queries_to_run = only_query if only_query else cfg.get('queries', [])
 # -----------------------------------------
 

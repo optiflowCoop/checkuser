@@ -46,7 +46,15 @@ PIPELINE_STEPS = [
         "cmd": [sys.executable, str(ROOT / "src" / "consolidate_license_footprint.py")]
     },
     {
-        "name": "9. Gerando Dashboards e Excel de Risco (generate_risk_report.py)",
+        "name": "9. [FASE 3] Analisando Histórico de Uso (analyze_usage.py)",
+        "cmd": [sys.executable, str(ROOT / "src" / "analyze_usage.py")]
+    },
+    {
+        "name": "10. [FASE 3] Detector de Otimização (license_optimizer.py)",
+        "cmd": [sys.executable, str(ROOT / "src" / "license_optimizer.py")]
+    },
+    {
+        "name": "11. Gerando Dashboards e Excel de Risco (generate_risk_report.py)",
         "cmd": [sys.executable, str(ROOT / "scripts" / "generate_risk_report.py")]
     }
 ]

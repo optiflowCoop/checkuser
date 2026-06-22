@@ -1,4 +1,4 @@
-from pathlib import Path
+﻿from pathlib import Path
 import csv
 from collections import Counter, defaultdict
 from datetime import datetime
@@ -41,6 +41,11 @@ def build_html():
     login_conflicts = load_csv(IN_DIR / 'login_conflicts.csv')
     worklist = load_csv(IN_DIR / 'identity_collisions_enriched.csv')
     access_rows = load_csv(IN_DIR / 'consolidated_user_access_normalized.csv') or load_csv(IN_DIR / 'consolidated_user_access.csv')
+    emails_data = load_csv(IN_DIR / 'consolidated_email.csv')
+    
+    # Phase 3: Usage and License Data
+    usage_phase3 = load_csv(IN_DIR / 'usage_analysis_phase3.csv')
+    license_recs = load_csv(IN_DIR / 'license_optimization_recommendations.csv')
 
     # Base Metrics
     total_records = len(identities)
@@ -116,6 +121,30 @@ def build_html():
         1 for p in raw_profile_map.values()
         if p['STATUS'] == 'ACTIVE' and (p['TITLE'] or p['PERSONGROUP'])
     )
+    
+    # Domain Segregation Metrics (FORESEA vs TEMPORARY)
+    email_map = {}
+    for e in emails_data:
+        userid = e.get('USERID', '').strip().upper()
+        email = e.get('PRIMARYEMAIL', '') or e.get('EMAILADDRESS', '')
+        if userid and email:
+            email_map[userid] = email.lower()
+    
+    foresea_domains = ['@foresea.com', '@foresea-partner.com']
+    foresea_active_count = 0
+    temp_active_count = 0
+    unknown_active_count = 0
+    
+    for r in identities:
+        if r.get('STATUS', '').upper() == 'ACTIVE':
+            userid = r.get('USERID', '').strip().upper()
+            email = email_map.get(userid, '')
+            if any(domain in email for domain in foresea_domains):
+                foresea_active_count += 1
+            elif email:
+                temp_active_count += 1
+            else:
+                unknown_active_count += 1
 
     html = [
         '<!DOCTYPE html>',
@@ -123,7 +152,7 @@ def build_html():
         '<head>',
         '<meta charset="utf-8">',
         '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
-        '<title>Maximo MAS 9 - Governança de Identidades</title>',
+        '<title>Maximo MAS 9 - Governan├ºa de Identidades</title>',
         '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>',
         '<style>',
         ':root { --primary: #0f172a; --secondary: #1e293b; --accent: #2563eb; --bg: #f8fafc; --card-bg: #ffffff; --text: #334155; --border: #e2e8f0; --danger: #ef4444; --warning: #f59e0b; --success: #10b981;}',
@@ -207,8 +236,8 @@ def build_html():
         
         '<div class="topbar">',
         '<div>',
-        '<h1>Dashboard Governança Maximo EAM</h1>',
-        '<p>Fase 2: Padronização de Baseline e Governança de Acessos</p>',
+        '<h1>Dashboard Governan├ºa Maximo EAM</h1>',
+        '<p>Fase 2: Padroniza├º├úo de Baseline e Governan├ºa de Acessos</p>',
         '</div>',
         f'<div><p style="text-align: right; color: #cbd5e1;">Atualizado em:<br><strong>{datetime.now().strftime("%d/%m/%Y %H:%M")}</strong></p></div>',
         '</div>',
@@ -217,41 +246,53 @@ def build_html():
     ]
     
     html.append('<div class="alert-box">')
-    html.append('<strong>📋 Apresentação: Escopo de Análise e Métrica de Negócio</strong>')
-    html.append('<p>Dashboard consolidado apresenta <strong>contas ativas</strong> de todas as unidades para mapeamento de risco e planejamento de licenças MAS 9. <strong>Métrica-chave:</strong> "Registros Ativos" contabiliza repetições entre bases (ex: esilva na base A + base B = 2 registros). "Pessoas Únicas" elimina duplicatas (esilva = 1 pessoa real, independente de onde esteja alocado).</p>')
+    html.append('<strong>­ƒôï Apresenta├º├úo: Escopo de An├ílise e M├®trica de Neg├│cio</strong>')
+    html.append('<p>Dashboard consolidado apresenta <strong>contas ativas</strong> de todas as unidades para mapeamento de risco e planejamento de licen├ºas MAS 9. <strong>M├®trica-chave:</strong> "Registros Ativos" contabiliza repeti├º├Áes entre bases (ex: esilva na base A + base B = 2 registros). "Pessoas ├Ünicas" elimina duplicatas (esilva = 1 pessoa real, independente de onde esteja alocado).</p>')
     html.append('</div>')
     html.append('<div class="alert-success">')
-    html.append('<strong>🎯 Fase 2: Baseline Funcional e Rastreabilidade de Conflitos</strong>')
-    html.append('<p>Análise expandida com dados de <strong>Title</strong> (cargo funcional ex: Supervisor de Elétrica) e <strong>PersonGroup</strong> (departamento/equipe) para identificar divergências de perfil de acesso entre unidades. Todos os conflitos exibem <strong>motivo técnico detalhado</strong> para acelerar saneamento e padronização.</p>')
+    html.append('<strong>­ƒÄ» Fase 2: Baseline Funcional e Rastreabilidade de Conflitos</strong>')
+    html.append('<p>An├ílise expandida com dados de <strong>Title</strong> (cargo funcional ex: Supervisor de El├®trica) e <strong>PersonGroup</strong> (departamento/equipe) para identificar diverg├¬ncias de perfil de acesso entre unidades. Todos os conflitos exibem <strong>motivo t├®cnico detalhado</strong> para acelerar saneamento e padroniza├º├úo.</p>')
     html.append('</div>')
 
     # --- Bloco 1: Executive Summary ---
     html.append('<div class="card">')
-    html.append('<h2 class="card-header" onclick="toggleSection(\'section1\')">1. Resumo Executivo Operacional <span class="toggle-icon">▼</span></h2>')
+    html.append('<h2 class="card-header" onclick="toggleSection(\'section1\')">1. Resumo Executivo Operacional <span class="toggle-icon">Ôû╝</span></h2>')
     html.append('<div id="section1" class="card-content">')
     
-    # Calcular métricas Fase 2
+    # Calcular m├®tricas Fase 2
     total_titles = len(set([r.get('TITLE', '').strip() for r in identities if r.get('TITLE', '').strip()]))
     units_with_profiles = len(set([r.get('ENV_DB', '').strip() for r in identities if (r.get('TITLE', '').strip() or r.get('PERSONGROUP', '').strip())]))
     total_profiles_with_data = sum(1 for r in identities if (r.get('TITLE', '').strip() or r.get('PERSONGROUP', '').strip()))
     
-    html.append('<h3 style="color: var(--primary); margin: 0 0 1rem 0; font-size: 1.1rem; border-left: 4px solid var(--accent); padding-left: 1rem;">📊 Métricas de Governança de Identidades</h3>')
+    html.append('<h3 style="color: var(--primary); margin: 0 0 1rem 0; font-size: 1.1rem; border-left: 4px solid var(--accent); padding-left: 1rem;">­ƒôè M├®tricas de Governan├ºa de Identidades</h3>')
     html.append('<div class="stats-grid">')
     
-    html.append(f'<div class="stat-card border-success"><div class="stat-value" id="stat-unique-active" style="color: var(--success);" data-active="{unique_active_logins}" data-all="{len(set([r.get('USERID', '').strip().upper() for r in identities if r.get('USERID', '').strip()]))}">{fmt_br(unique_active_logins)}</div><div class="stat-title">Pessoas Únicas <span id="stat-unique-scope">(Ativas)</span></div><div class="stat-subtitle">"Pessoas físicas" projetadas para o MAS 9</div></div>')
-    html.append(f'<div class="stat-card border-accent"><div class="stat-value" id="stat-records" data-active="{active_records}" data-all="{total_records}">{fmt_br(active_records)}</div><div class="stat-title">Registros <span id="stat-records-scope">(Ativos)</span></div><div class="stat-subtitle">Contas logáveis no Maximo</div></div>')
+    html.append(f'<div class="stat-card border-success"><div class="stat-value" id="stat-unique-active" style="color: var(--success);" data-active="{unique_active_logins}" data-all="{len(set([r.get('USERID', '').strip().upper() for r in identities if r.get('USERID', '').strip()]))}">{fmt_br(unique_active_logins)}</div><div class="stat-title">Pessoas ├Ünicas <span id="stat-unique-scope">(Ativas)</span></div><div class="stat-subtitle">"Pessoas f├¡sicas" projetadas para o MAS 9</div></div>')
+    html.append(f'<div class="stat-card border-accent"><div class="stat-value" id="stat-records" data-active="{active_records}" data-all="{total_records}">{fmt_br(active_records)}</div><div class="stat-title">Registros <span id="stat-records-scope">(Ativos)</span></div><div class="stat-subtitle">Contas log├íveis no Maximo</div></div>')
     html.append(f'<div class="stat-card border-warning"><div class="stat-value" id="stat-reuse" style="color: var(--warning);" data-active="{total_reused_active}" data-all="{len(cross_env) if cross_env else 0}">{fmt_br(total_reused_active)}</div><div class="stat-title">Riscos de Reuso <span id="stat-reuse-scope">(Ativos)</span></div><div class="stat-subtitle">Logins repetidos entre sondas</div></div>')
-    html.append(f'<div class="stat-card border-danger"><div class="stat-value" id="stat-critical" style="color: var(--danger);" data-active="{critical_diff_active}" data-all="{critical_diff_all}">{fmt_br(critical_diff_active)}</div><div class="stat-title">Colisões Críticas <span id="stat-critical-scope">(Ativas)</span></div><div class="stat-subtitle">Nomes diferentes no mesmo login</div></div>')
+    html.append(f'<div class="stat-card border-danger"><div class="stat-value" id="stat-critical" style="color: var(--danger);" data-active="{critical_diff_active}" data-all="{critical_diff_all}">{fmt_br(critical_diff_active)}</div><div class="stat-title">Colis├Áes Cr├¡ticas <span id="stat-critical-scope">(Ativas)</span></div><div class="stat-subtitle">Nomes diferentes no mesmo login</div></div>')
     
-    html.append('</div>')  # fecha stats-grid governança
+    html.append('</div>')  # fecha stats-grid governan├ºa
     
-    html.append('<h3 style="color: var(--primary); margin: 2rem 0 1rem 0; font-size: 1.1rem; border-left: 4px solid #10b981; padding-left: 1rem;">🎯 Fase 2: Baseline Funcional</h3>')
+    html.append('<h3 style="color: var(--primary); margin: 2rem 0 1rem 0; font-size: 1.1rem; border-left: 4px solid #2563eb; padding-left: 1rem;">🎯 Segregação de Usuários para Migração MAS 9</h3>')
     html.append('<div class="stats-grid">')
     
-    html.append(f'<div class="stat-card border-accent"><div class="stat-value" style="color: #10b981;">{fmt_br(total_titles)}</div><div class="stat-title">Funções Distintas (TITLE)</div><div class="stat-subtitle">Cargos únicos mapeados na organização</div></div>')
-    html.append(f'<div class="stat-card border-warning"><div class="stat-value" style="color: var(--warning);" id="stat-divergent">0</div><div class="stat-title">Funções com Divergência</div><div class="stat-subtitle">Cargos com TYPE ou grupos inconsistentes</div></div>')
-    html.append(f'<div class="stat-card border-success"><div class="stat-value" id="stat-profile" style="color: var(--accent);" data-active="{active_profiles_with_context}" data-all="{total_profiles_with_data}">{fmt_br(active_profiles_with_context)}</div><div class="stat-title">Perfis Completos <span id="stat-profile-scope">(Ativos)</span></div><div class="stat-subtitle">Usuários com Title + PersonGroup</div></div>')
-    html.append(f'<div class="stat-card border-neutral"><div class="stat-value" style="color: #64748b;">{fmt_br(units_with_profiles)}</div><div class="stat-title">Unidades com Dados</div><div class="stat-subtitle">Bases que possuem informações de perfil</div></div>')
+    foresea_pct = (foresea_active_count / active_records * 100) if active_records > 0 else 0
+    temp_pct = (temp_active_count / active_records * 100) if active_records > 0 else 0
+    
+    html.append(f'<div class="stat-card border-success"><div class="stat-value" style="color: var(--success);">{fmt_br(foresea_active_count)}</div><div class="stat-title">🏢 FORESEA (Migrar)</div><div class="stat-subtitle">{foresea_pct:.1f}% - @foresea.com / @foresea-partner.com</div></div>')
+    html.append(f'<div class="stat-card border-warning"><div class="stat-value" style="color: var(--warning);">{fmt_br(temp_active_count)}</div><div class="stat-title">👷 TEMPORÁRIOS (Não Migrar)</div><div class="stat-subtitle">{temp_pct:.1f}% - Contratados terceirizados</div></div>')
+    html.append(f'<div class="stat-card border-neutral"><div class="stat-value" style="color: #64748b;">{fmt_br(unknown_active_count)}</div><div class="stat-title">⚠️ Sem Email Cadastrado</div><div class="stat-subtitle">Requer investigação manual</div></div>')
+    
+    html.append('</div>')  # fecha stats-grid segregação
+    
+    html.append('<h3 style="color: var(--primary); margin: 2rem 0 1rem 0; font-size: 1.1rem; border-left: 4px solid #10b981; padding-left: 1rem;">📋 Fase 2: Baseline Funcional</h3>')
+    html.append('<div class="stats-grid">')
+    
+    html.append(f'<div class="stat-card border-accent"><div class="stat-value" style="color: #10b981;">{fmt_br(total_titles)}</div><div class="stat-title">Fun├º├Áes Distintas (TITLE)</div><div class="stat-subtitle">Cargos ├║nicos mapeados na organiza├º├úo</div></div>')
+    html.append(f'<div class="stat-card border-warning"><div class="stat-value" style="color: var(--warning);" id="stat-divergent">0</div><div class="stat-title">Fun├º├Áes com Diverg├¬ncia</div><div class="stat-subtitle">Cargos com TYPE ou grupos inconsistentes</div></div>')
+    html.append(f'<div class="stat-card border-success"><div class="stat-value" id="stat-profile" style="color: var(--accent);" data-active="{active_profiles_with_context}" data-all="{total_profiles_with_data}">{fmt_br(active_profiles_with_context)}</div><div class="stat-title">Perfis Completos <span id="stat-profile-scope">(Ativos)</span></div><div class="stat-subtitle">Usu├írios com Title + PersonGroup</div></div>')
+    html.append(f'<div class="stat-card border-neutral"><div class="stat-value" style="color: #64748b;">{fmt_br(units_with_profiles)}</div><div class="stat-title">Unidades com Dados</div><div class="stat-subtitle">Bases que possuem informa├º├Áes de perfil</div></div>')
     
     html.append('</div>')  # fecha stats-grid fase 2
     
@@ -261,50 +302,111 @@ def build_html():
     html.append('</div>')
     html.append('</div></div>')
 
+    # --- SEÇÃO 2: PHASE 3 - APPPOINTS OPTIMIZATION ---
+    if usage_phase3:
+        html.append('<div class="card">')
+        html.append('<h2 class="card-header" onclick="toggleSection(\'section_phase3\')">2. 🎯 Otimização de AppPoints (Fase 3) <span class="toggle-icon">▼</span></h2>')
+        html.append('<div id="section_phase3" class="card-content">')
+        
+        # Calcular métricas
+        foresea_users = [u for u in usage_phase3 if u.get('USER_CATEGORY') == 'FORESEA']
+        temp_users = [u for u in usage_phase3 if u.get('USER_CATEGORY') == 'TEMPORARY']
+        offshore_users = [u for u in foresea_users if u.get('OPERATIONAL_PRESENCE') == 'OFFSHORE']
+        onshore_users = [u for u in foresea_users if u.get('OPERATIONAL_PRESENCE') == 'ONSHORE']
+        
+        authorized_users = [u for u in foresea_users if 'AUTHORIZED' in u.get('REQUIRED_LICENSE', '')]
+        concurrent_users = [u for u in foresea_users if 'CONCURRENT' in u.get('REQUIRED_LICENSE', '')]
+        
+        premium_users = [u for u in foresea_users if 'PREMIUM' in u.get('REQUIRED_LICENSE', '')]
+        base_users = [u for u in foresea_users if 'BASE' in u.get('REQUIRED_LICENSE', '')]
+        limited_users = [u for u in foresea_users if u.get('USER_TIER') == 'VERY_LIGHT']
+        idle_users = [u for u in foresea_users if u.get('USER_TIER') == 'IDLE']
+        
+        foresea_cost = sum(float(u.get('APP_POINTS_COST', 0) or 0) for u in foresea_users)
+        temp_cost_avoided = sum(float(u.get('APP_POINTS_COST', 0) or 0) for u in temp_users)
+        
+        html.append('<div class="alert-box">')
+        html.append('<strong>🎯 Meta: Distribuir 1.200 AppPoints contratados de forma assertiva</strong>')
+        html.append(f'<p><strong>Status:</strong> {foresea_cost:.0f} AppPoints estimados para {len(foresea_users)} usuários FORESEA (permanentes).</p>')
+        html.append(f'<p><strong>Economia:</strong> {temp_cost_avoided:.0f} pts economizados excluindo {len(temp_users)} usuários TEMPORÁRIOS da migração.</p>')
+        if foresea_cost > 1200:
+            html.append(f'<p style="color: var(--danger);"><strong>⚠️ ATENÇÃO:</strong> Estimativa acima da capacidade contratada. Necessário otimização adicional!</p>')
+        else:
+            html.append(f'<p style="color: var(--success);"><strong>✅ OK:</strong> Dentro da capacidade. Margem de {1200-foresea_cost:.0f} AppPoints disponível.</p>')
+        html.append('</div>')
+        
+        html.append('<h3 style="color: var(--primary); margin: 1.5rem 0 1rem 0;">📊 Distribuição de Licenças (Usuários FORESEA)</h3>')
+        html.append('<div class="stats-grid">')
+        html.append(f'<div class="stat-card border-accent"><div class="stat-value">{fmt_br(len(offshore_users))}</div><div class="stat-title">⛵ OFFSHORE</div><div class="stat-subtitle">Turnos 12h / Baixa simultaneidade</div></div>')
+        html.append(f'<div class="stat-card border-accent"><div class="stat-value">{fmt_br(len(onshore_users))}</div><div class="stat-title">🏢 ONSHORE</div><div class="stat-subtitle">Administrativo / Alta simultaneidade</div></div>')
+        html.append(f'<div class="stat-card border-success"><div class="stat-value">{fmt_br(len(authorized_users))}</div><div class="stat-title">🔑 AUTHORIZED</div><div class="stat-subtitle">{len(authorized_users)/len(foresea_users)*100:.1f}% - Uso intenso (>60 logins/90d)</div></div>')
+        html.append(f'<div class="stat-card border-accent"><div class="stat-value">{fmt_br(len(concurrent_users))}</div><div class="stat-title">🔄 CONCURRENT</div><div class="stat-subtitle">{len(concurrent_users)/len(foresea_users)*100:.1f}% - Revezamento natural</div></div>')
+        html.append(f'<div class="stat-card border-warning"><div class="stat-value">{fmt_br(len(premium_users))}</div><div class="stat-title">🛢️ PREMIUM O&G</div><div class="stat-subtitle">Usam módulos Oil & Gas</div></div>')
+        html.append(f'<div class="stat-card border-success"><div class="stat-value">{fmt_br(len(base_users))}</div><div class="stat-title">📦 BASE</div><div class="stat-subtitle">Módulos standard</div></div>')
+        html.append('</div>')
+        
+        html.append('<h3 style="color: var(--primary); margin: 2rem 0 1rem 0;">🔝 Top 15 Usuários FORESEA (Maior Custo AppPoints)</h3>')
+        top15 = sorted(foresea_users, key=lambda u: float(u.get('APP_POINTS_COST', 0) or 0), reverse=True)[:15]
+        top15_rows = []
+        for u in top15:
+            tier_badge = f'<span class="badge" style="background:{"#ef4444" if "PREMIUM" in u.get("REQUIRED_LICENSE","") else "#10b981"};">{u.get("USER_TIER", "")}</span>'
+            top15_rows.append([
+                u.get('USERID', ''),
+                u.get('DISPLAYNAME', '')[:30],
+                u.get('OPERATIONAL_PRESENCE', ''),
+                u.get('LOGIN_COUNT_90D', '0'),
+                tier_badge,
+                u.get('REQUIRED_LICENSE', ''),
+                f'<strong>{u.get("APP_POINTS_COST", "0")}</strong>'
+            ])
+        html.append(render_table(['USERID', 'Nome', 'Presença', 'Logins 90d', 'Perfil', 'Licença', 'AppPoints'], top15_rows))
+        
+        html.append('</div></div>')
+
     # --- Filtro Global ---
     html.append('<div class="card" style="background-color: #ffffff; border-color: #cbd5e1;">')
-    html.append('<h3 style="margin-top: 0; color: var(--primary);">🔍 Filtro Global de Saneamento (Aplica-se em todas as tabelas)</h3>')
-    html.append('<p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1rem;">O Dashboard foca em contas Ativas por padrão. Use os filtros abaixo para refinar a análise conforme necessário.</p>')
+    html.append('<h3 style="margin-top: 0; color: var(--primary);">­ƒöì Filtro Global de Saneamento (Aplica-se em todas as tabelas)</h3>')
+    html.append('<p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1rem;">O Dashboard foca em contas Ativas por padr├úo. Use os filtros abaixo para refinar a an├ílise conforme necess├írio.</p>')
     html.append('<div class="search-container">')
-    html.append('<input type="text" id="searchInput" class="search-bar" onkeyup="filterTable()" placeholder="🔍 Pesquisar por ID, Nome, Email...">')
+    html.append('<input type="text" id="searchInput" class="search-bar" onkeyup="filterTable()" placeholder="­ƒöì Pesquisar por ID, Nome, Email...">')
     
     html.append('<select id="envFilter" class="filter-select" onchange="filterTable()">')
-    html.append('<option value="">🌎 Todas as Unidades</option>')
+    html.append('<option value="">­ƒîÄ Todas as Unidades</option>')
     for env in env_labels:
         html.append(f'<option value="{env}">{env}</option>')
     html.append('</select>')
 
     html.append('<select id="statusFilter" class="filter-select" onchange="filterTable()">')
-    html.append('<option value="ACTIVE" selected>🟢 Somente Ativos (Foco AppPoints)</option>')
-    html.append('<option value="">🟢/🔴 Todos os Status Históricos</option>')
-    html.append('<option value="INACTIVE">🔴 Inativos / Bloqueados</option>')
+    html.append('<option value="ACTIVE" selected>­ƒƒó Somente Ativos (Foco AppPoints)</option>')
+    html.append('<option value="">­ƒƒó/­ƒö┤ Todos os Status Hist├│ricos</option>')
+    html.append('<option value="INACTIVE">­ƒö┤ Inativos / Bloqueados</option>')
     html.append('</select>')
     
     html.append('<select id="decFilter" class="filter-select" onchange="filterTable()">')
-    html.append('<option value="">⚖️ Todas as Decisões</option>')
-    html.append('<option value="PESSOAS DIFERENTES">🔴 PESSOAS DIFERENTES (Crítico)</option>')
-    html.append('<option value="REQUER REVISÃO">🟡 REQUER REVISÃO (Alerta)</option>')
-    html.append('<option value="POSSÍVEL MESMA PESSOA">🟢 POSSÍVEL MESMA PESSOA (Pendente AD)</option>')
-    html.append('<option value="DO_NOT_MERGE">Ação: DO_NOT_MERGE</option>')
-    html.append('<option value="MANUAL_REVIEW_REQUIRED">Ação: MANUAL_REVIEW_REQUIRED</option>')
-    html.append('<option value="AWAITING_AD_MATCH">Ação: AWAITING_AD_MATCH</option>')
+    html.append('<option value="">ÔÜû´©Å Todas as Decis├Áes</option>')
+    html.append('<option value="PESSOAS DIFERENTES">­ƒö┤ PESSOAS DIFERENTES (Cr├¡tico)</option>')
+    html.append('<option value="REQUER REVIS├âO">­ƒƒí REQUER REVIS├âO (Alerta)</option>')
+    html.append('<option value="POSS├ìVEL MESMA PESSOA">­ƒƒó POSS├ìVEL MESMA PESSOA (Pendente AD)</option>')
+    html.append('<option value="DO_NOT_MERGE">A├º├úo: DO_NOT_MERGE</option>')
+    html.append('<option value="MANUAL_REVIEW_REQUIRED">A├º├úo: MANUAL_REVIEW_REQUIRED</option>')
+    html.append('<option value="AWAITING_AD_MATCH">A├º├úo: AWAITING_AD_MATCH</option>')
     html.append('</select>')
     html.append('</div>')
     
     html.append('''
     <div class="legend-box">
-        <div class="legend-item"><span class="badge badge-critical">PESSOAS DIFERENTES</span> O mesmo login (USERID) foi usado para nomes/pessoas diferentes. Bloqueado para unificação.</div>
-        <div class="legend-item"><span class="badge badge-medium">REQUER REVISÃO</span> Inconsistências de status, classe ou login corporativo cruzado.</div>
-        <div class="legend-item"><span class="badge badge-low">POSSÍVEL MESMA PESSOA</span> Nomes batem perfeitamente. Liberação final aguarda checagem com o AD.</div>
+        <div class="legend-item"><span class="badge badge-critical">PESSOAS DIFERENTES</span> O mesmo login (USERID) foi usado para nomes/pessoas diferentes. Bloqueado para unifica├º├úo.</div>
+        <div class="legend-item"><span class="badge badge-medium">REQUER REVIS├âO</span> Inconsist├¬ncias de status, classe ou login corporativo cruzado.</div>
+        <div class="legend-item"><span class="badge badge-low">POSS├ìVEL MESMA PESSOA</span> Nomes batem perfeitamente. Libera├º├úo final aguarda checagem com o AD.</div>
     </div>
     ''')
     html.append('</div>')
 
-    # --- Bloco 2: Catálogo Fase 2 (Title/PersonGroup) ---
+    # --- Bloco 2: Cat├ílogo Fase 2 (Title/PersonGroup) ---
     html.append('<div class="card">')
-    html.append('<h2 class="card-header" onclick="toggleSection(\'section2phase2\')">2. 📋 Catálogo Fase 2: Title + PersonGroup por Usuário <span class="toggle-icon">▼</span></h2>')
+    html.append('<h2 class="card-header" onclick="toggleSection(\'section2phase2\')">2. ­ƒôï Cat├ílogo Fase 2: Title + PersonGroup por Usu├írio <span class="toggle-icon">Ôû╝</span></h2>')
     html.append('<div id="section2phase2" class="card-content">')
-    html.append('<p style="color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem;"><strong>Legenda:</strong> <em>Title</em> = Cargo funcional (ex: Supervisor de Elétrica). <em>PersonGroup</em> = Departamento/time. <em>Tipo Funcional</em> = Classificação TYPE do Maximo. Exibindo até 500 registros de contas ativas com perfil completo.</p>')
+    html.append('<p style="color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem;"><strong>Legenda:</strong> <em>Title</em> = Cargo funcional (ex: Supervisor de El├®trica). <em>PersonGroup</em> = Departamento/time. <em>Tipo Funcional</em> = Classifica├º├úo TYPE do Maximo. Exibindo at├® 500 registros de contas ativas com perfil completo.</p>')
     profile_rows = []
     for raw_id, p in sorted(
         raw_profile_map.items(),
@@ -327,14 +429,14 @@ def build_html():
     if profile_rows:
         html.append(render_table(['ID Bruto', 'Nome', 'Tipo Funcional', 'Title', 'PersonGroup', 'Status'], profile_rows, "profileTable", "filterable-table"))
     else:
-        html.append('<p>Nenhum registro com Title/PersonGroup encontrado para exibição.</p>')
+        html.append('<p>Nenhum registro com Title/PersonGroup encontrado para exibi├º├úo.</p>')
     html.append('</div></div>')
 
     # --- Bloco 3: Fila Consolidada de Saneamento (Cross-Env + Worklist Unificados) ---
     html.append('<div class="card">')
-    html.append('<h2 class="card-header" onclick="toggleSection(\'section3unified\')">3. 🔄 Fila Completa de Governança e Saneamento <span class="toggle-icon">▼</span></h2>')
+    html.append('<h2 class="card-header" onclick="toggleSection(\'section3unified\')">3. ­ƒöä Fila Completa de Governan├ºa e Saneamento <span class="toggle-icon">Ôû╝</span></h2>')
     html.append('<div id="section3unified" class="card-content">')
-    html.append('<p style="color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem;"><strong>Legenda:</strong> <span class="badge badge-critical">PESSOAS DIFERENTES</span> = login reusado para pessoas distintas (bloqueado). <span class="badge badge-medium">REQUER REVISÃO</span> = inconsistências detectadas. <span class="badge badge-low">POSSÍVEL MESMA PESSOA</span> = candidato à unificação (validar AD). <em>Escopo de Análise</em>: (Multi) = login presente em várias bases. (Single) = conflito em base única. <em>Motivo</em> detalha tecnicamente cada caso.</p>')
+    html.append('<p style="color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem;"><strong>Legenda:</strong> <span class="badge badge-critical">PESSOAS DIFERENTES</span> = login reusado para pessoas distintas (bloqueado). <span class="badge badge-medium">REQUER REVIS├âO</span> = inconsist├¬ncias detectadas. <span class="badge badge-low">POSS├ìVEL MESMA PESSOA</span> = candidato ├á unifica├º├úo (validar AD). <em>Escopo de An├ílise</em>: (Multi) = login presente em v├írias bases. (Single) = conflito em base ├║nica. <em>Motivo</em> detalha tecnicamente cada caso.</p>')
     
     if worklist:
         unified_rows = []
@@ -344,17 +446,17 @@ def build_html():
             userid = w.get('USERID', '')
             raw_id = w.get('RAW_ID', '')
             
-            # Verificar se é cross-environment
+            # Verificar se ├® cross-environment
             is_multi_env = any(c.get('USERID') == userid for c in cross_env) if cross_env else False
-            scope_flag = '🌐 Multi' if is_multi_env else '📍 Single'
+            scope_flag = '­ƒîÉ Multi' if is_multi_env else '­ƒôì Single'
             
             prio = w.get('REVIEW_PRIORITY', 'LOW')
             badge = "badge-critical" if prio == 'CRITICAL' else "badge-high" if prio == 'HIGH' else "badge-medium" if prio == 'MEDIUM' else "badge-low"
             
             hypo = w.get('HYPOTHESIS', 'UNKNOWN')
             if hypo == 'CONFIRMED_DIFFERENT_PERSON': hypo_pt = 'PESSOAS DIFERENTES'
-            elif hypo == 'POTENTIAL_SAME_PERSON': hypo_pt = 'POSSÍVEL MESMA PESSOA'
-            elif hypo == 'REQUIRES_REVIEW': hypo_pt = 'REQUER REVISÃO'
+            elif hypo == 'POTENTIAL_SAME_PERSON': hypo_pt = 'POSS├ìVEL MESMA PESSOA'
+            elif hypo == 'REQUIRES_REVIEW': hypo_pt = 'REQUER REVIS├âO'
             else: hypo_pt = hypo
             
             # Buscar dados complementares se multi-ambiente
@@ -398,11 +500,11 @@ def build_html():
             conflict_reason = w.get('CONFLICT_REASON', w.get('COLLISION_TYPE', ''))
             if not conflict_reason:
                 if hypo == 'CONFIRMED_DIFFERENT_PERSON':
-                    conflict_reason = 'Dados biométricos divergentes entre ambientes'
+                    conflict_reason = 'Dados biom├®tricos divergentes entre ambientes'
                 elif hypo == 'REQUIRES_REVIEW':
-                    conflict_reason = 'Inconsistências detectadas que requerem análise humana'
+                    conflict_reason = 'Inconsist├¬ncias detectadas que requerem an├ílise humana'
                 else:
-                    conflict_reason = 'Compatível, aguardando validação Active Directory'
+                    conflict_reason = 'Compat├¡vel, aguardando valida├º├úo Active Directory'
             
             unified_rows.append([
                 f"<span style='font-size:0.7rem;color:#64748b;'>{scope_flag}</span> <strong>{userid}</strong>",
@@ -418,7 +520,7 @@ def build_html():
             
             if len(unified_rows) >= 500: break
         
-        html.append(render_table(['USERID / Login', 'Bases', 'Nomes de Exibição', 'E-mails', 'Title', 'PersonGroup', 'Conclusão', 'Motivo/Detalhes', 'Ação MAS 9'], unified_rows, "unifiedTable", "filterable-table"))
+        html.append(render_table(['USERID / Login', 'Bases', 'Nomes de Exibi├º├úo', 'E-mails', 'Title', 'PersonGroup', 'Conclus├úo', 'Motivo/Detalhes', 'A├º├úo MAS 9'], unified_rows, "unifiedTable", "filterable-table"))
     else:
         html.append('<p>Nenhum conflito detectado para saneamento.</p>')
     
@@ -426,10 +528,10 @@ def build_html():
 
     # --- Bloco 4: Login Conflicts (LOGINID AD) ---
     html.append('<div class="card">')
-    html.append('<h2 class="card-header" onclick="toggleSection(\'section4loginid\')">4. ⚠️ Conflitos de LOGINID (Login Corporativo AD) <span class="toggle-icon">▼</span></h2>')
+    html.append('<h2 class="card-header" onclick="toggleSection(\'section4loginid\')">4. ÔÜá´©Å Conflitos de LOGINID (Login Corporativo AD) <span class="toggle-icon">Ôû╝</span></h2>')
     html.append('<div id="section4loginid" class="card-content">')
     if login_conflicts:
-        html.append('<p style="color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem;"><strong>Legenda:</strong> LoginID AD = login corporativo do Active Directory. Situação: mesmo login corporativo vinculado a múltiplos USERIDs/Pessoas no Maximo — impacto em SSO e auditoria.</p>')
+        html.append('<p style="color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem;"><strong>Legenda:</strong> LoginID AD = login corporativo do Active Directory. Situa├º├úo: mesmo login corporativo vinculado a m├║ltiplos USERIDs/Pessoas no Maximo ÔÇö impacto em SSO e auditoria.</p>')
         l_rows = []
         for l in login_conflicts[:300]:
             lid_status = '; '.join(login_statuses.get(l.get('LOGINID'), set()))
@@ -446,18 +548,18 @@ def build_html():
                 l.get('USERID_LIST'), 
                 l.get('DISPLAYNAME_LIST'),
                 f"<span class='reason-cell'>{reason}</span>",
-                f"<span class='dec-data' style='font-weight:600; color: #f59e0b;'>{dec}</span><span class='hyp-data' style='display:none;'>REQUER REVISÃO</span>"
+                f"<span class='dec-data' style='font-weight:600; color: #f59e0b;'>{dec}</span><span class='hyp-data' style='display:none;'>REQUER REVIS├âO</span>"
             ])
-        html.append(render_table(['LOGINID AD', 'Bases', 'UserIDs do Maximo', 'Nomes Atribuídos', 'Motivo', 'Ação Recomendada'], l_rows, "loginTable", "filterable-table"))
+        html.append(render_table(['LOGINID AD', 'Bases', 'UserIDs do Maximo', 'Nomes Atribu├¡dos', 'Motivo', 'A├º├úo Recomendada'], l_rows, "loginTable", "filterable-table"))
     else:
         html.append('<p>Nenhum conflito de LOGINID detectado.</p>')
     html.append('</div></div>')
 
     # --- Bloco 5: Baseline de Perfis por TITLE ---
     html.append('<div class="card">')
-    html.append('<h2 class="card-header" onclick="toggleSection(\'section5\')">5. 🎯 Análise de Baseline Funcional: Divergências por TITLE (Cargo Real) <span class="toggle-icon">▼</span></h2>')
+    html.append('<h2 class="card-header" onclick="toggleSection(\'section5\')">5. ­ƒÄ» An├ílise de Baseline Funcional: Diverg├¬ncias por TITLE (Cargo Real) <span class="toggle-icon">Ôû╝</span></h2>')
     html.append('<div id="section5" class="card-content collapsed">')
-    html.append('<p style="color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem;"><strong>Legenda:</strong> Agrupa usuários por cargo (TITLE). <span class="badge" style="background:#ef4444;">⚠️ TYPE divergente</span> = na mesma base, pessoas com o mesmo cargo têm TYPEs diferentes (ex: 2 Chefes de Mecânica, um TYPE 4 outro TYPE 5). <span class="badge" style="background:#f59e0b;">🔸 Grupos divergentes</span> = mesmo cargo, grupos de acesso distintos entre unidades. <strong>Padrão esperado:</strong> todos que ocupam o mesmo cargo devem ter TYPE e grupos idênticos. Escopo: <strong>ATIVAS</strong>.</p>')
+    html.append('<p style="color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem;"><strong>Legenda:</strong> Agrupa usu├írios por cargo (TITLE). <span class="badge" style="background:#ef4444;">ÔÜá´©Å TYPE divergente</span> = na mesma base, pessoas com o mesmo cargo t├¬m TYPEs diferentes (ex: 2 Chefes de Mec├ónica, um TYPE 4 outro TYPE 5). <span class="badge" style="background:#f59e0b;">­ƒö© Grupos divergentes</span> = mesmo cargo, grupos de acesso distintos entre unidades. <strong>Padr├úo esperado:</strong> todos que ocupam o mesmo cargo devem ter TYPE e grupos id├¬nticos. Escopo: <strong>ATIVAS</strong>.</p>')
     
     # Agrupar por TITLE + ENV
     title_patterns = defaultdict(lambda: {
@@ -481,7 +583,7 @@ def build_html():
                 if group:
                     title_patterns[title]['groups'][env].add(group)
     
-    # Construir análise detalhada por TITLE
+    # Construir an├ílise detalhada por TITLE
     title_analysis = []
     for title, data in sorted(title_patterns.items()):
         types_by_env = data['types']
@@ -491,13 +593,13 @@ def build_html():
         if len(all_envs) <= 1:
             continue
         
-        # Verificar divergência de TYPE
+        # Verificar diverg├¬ncia de TYPE
         all_types = set()
         for types_set in types_by_env.values():
             all_types.update(types_set)
         has_type_divergence = len(all_types) > 1
         
-        # Verificar divergência de grupos
+        # Verificar diverg├¬ncia de grupos
         if groups_by_env:
             common_groups = set.intersection(*groups_by_env.values()) if len(groups_by_env) > 1 else set()
             has_group_divergence = not all(s == list(groups_by_env.values())[0] for s in groups_by_env.values())
@@ -560,45 +662,45 @@ def build_html():
             
             html.append(f'<h4><span class="tooltip">{ta["title"]} {" ".join(alerts)}<span class="tooltiptext">Este cargo aparece em {len(ta["envs"])} unidades: {", ".join(ta["envs"])}</span></span></h4>')
             
-            # Divergências de TYPE
+            # Diverg├¬ncias de TYPE
             if ta['has_type_divergence'] and ta['type_details']:
                 html.append(f'<div style="margin-bottom: 1rem; padding: 0.6rem; background: #fef2f2; border-left: 3px solid #ef4444; border-radius: 4px;">')
-                html.append(f'<div style="font-weight: 600; color: #991b1b; font-size: 0.85rem; margin-bottom: 0.3rem;">⚠️ Inconsistência de TYPE — {len(ta["all_types"])} classificações para o mesmo cargo:</div>')
+                html.append(f'<div style="font-weight: 600; color: #991b1b; font-size: 0.85rem; margin-bottom: 0.3rem;">ÔÜá´©Å Inconsist├¬ncia de TYPE ÔÇö {len(ta["all_types"])} classifica├º├Áes para o mesmo cargo:</div>')
                 for td in ta['type_details']:
                     types_list = ', '.join([f"{t}" for t in sorted(td['types'])])
-                    html.append(f'<div style="font-size: 0.8rem; color: #7f1d1d; margin-left: 0.5rem;">📍 <strong>{td["env"]}</strong>: {types_list} <span style="color:#991b1b;">({td["count"]} usuário{"s" if td["count"] > 1 else ""} neste cargo com TYPE{"s" if td["count"] > 1 else ""} diferente{"s" if td["count"] > 1 else ""})</span></div>')
+                    html.append(f'<div style="font-size: 0.8rem; color: #7f1d1d; margin-left: 0.5rem;">­ƒôì <strong>{td["env"]}</strong>: {types_list} <span style="color:#991b1b;">({td["count"]} usu├írio{"s" if td["count"] > 1 else ""} neste cargo com TYPE{"s" if td["count"] > 1 else ""} diferente{"s" if td["count"] > 1 else ""})</span></div>')
                 html.append('</div>')
             
-            # Baseline e Divergências de Grupos
+            # Baseline e Diverg├¬ncias de Grupos
             if ta['has_group_divergence'] and ta['group_details']:
                 if ta['common_groups']:
                     html.append(f'<div style="margin-bottom: 0.8rem; padding: 0.6rem; background: #f0fdf4; border-left: 3px solid #10b981; border-radius: 4px;">')
-                    html.append(f'<div style="font-weight: 600; color: #166534; font-size: 0.85rem; margin-bottom: 0.3rem;">✓ Baseline Comum ({len(ta["common_groups"])} grupos):</div>')
+                    html.append(f'<div style="font-weight: 600; color: #166534; font-size: 0.85rem; margin-bottom: 0.3rem;">Ô£ô Baseline Comum ({len(ta["common_groups"])} grupos):</div>')
                     html.append(f'<div style="font-size: 0.75rem; color: #166534;">{", ".join(ta["common_groups"][:8])}{"..." if len(ta["common_groups"]) > 8 else ""}</div>')
                     html.append('</div>')
                 
                 for gd in ta['group_details']:
                     if gd['extra']:
                         html.append(f'<div class="env-divergence">')
-                        html.append(f'<div class="env-header">🔸 {gd["env"]} — {gd["total"]} grupos (+{len(gd["extra"])} extras)</div>')
-                        html.append(f'<div class="extra-groups"><strong>Adições locais:</strong> {", ".join(gd["extra"][:10])}{"..." if len(gd["extra"]) > 10 else ""}</div>')
+                        html.append(f'<div class="env-header">­ƒö© {gd["env"]} ÔÇö {gd["total"]} grupos (+{len(gd["extra"])} extras)</div>')
+                        html.append(f'<div class="extra-groups"><strong>Adi├º├Áes locais:</strong> {", ".join(gd["extra"][:10])}{"..." if len(gd["extra"]) > 10 else ""}</div>')
                         html.append('</div>')
             
             html.append('</div>')
         html.append('</div>')
     else:
-        html.append('<div class="alert-success" style="margin-top:0;"><strong>✅ Baseline Perfeito!</strong> Não há divergências detectadas. Todos os cargos (TITLEs) possuem TYPE e grupos consistentes entre unidades.</div>')
+        html.append('<div class="alert-success" style="margin-top:0;"><strong>Ô£à Baseline Perfeito!</strong> N├úo h├í diverg├¬ncias detectadas. Todos os cargos (TITLEs) possuem TYPE e grupos consistentes entre unidades.</div>')
     
-    # Atualizar card de divergências
+    # Atualizar card de diverg├¬ncias
     html.append(f'<script>document.getElementById("stat-divergent").innerHTML = "{fmt_br(len(title_analysis))}";</script>')
     
     html.append('</div></div>')
     
     # --- Legacy Baseline View (Mantido para compatibilidade) ---
     html.append('<div class="card">')
-    html.append('<h2 class="card-header" onclick="toggleSection(\'section5legacy\')">6. 📊 Visão Legada: Auditoria de Perfis (Modo Comparativo) <span class="toggle-icon">▼</span></h2>')
+    html.append('<h2 class="card-header" onclick="toggleSection(\'section5legacy\')">6. ­ƒôè Vis├úo Legada: Auditoria de Perfis (Modo Comparativo) <span class="toggle-icon">Ôû╝</span></h2>')
     html.append('<div id="section5legacy" class="card-content collapsed">')
-    html.append('<p style="color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem;"><strong>Legenda:</strong> Comparativo de grupos por TYPE (classificação genérica). <span class="badge-grp common">Grupos comuns</span> = presentes em todas as unidades. <span class="badge-grp diff">Grupos locais</span> = adicionados apenas em algumas bases (destacados em azul por unidade). Escopo: <em>todas as contas</em>.</p>')
+    html.append('<p style="color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem;"><strong>Legenda:</strong> Comparativo de grupos por TYPE (classifica├º├úo gen├®rica). <span class="badge-grp common">Grupos comuns</span> = presentes em todas as unidades. <span class="badge-grp diff">Grupos locais</span> = adicionados apenas em algumas bases (destacados em azul por unidade). Escopo: <em>todas as contas</em>.</p>')
     
     type_group_patterns_legacy = defaultdict(lambda: defaultdict(set))
     if access_rows:
@@ -624,18 +726,18 @@ def build_html():
         
         html_str = "<div class='baseline-compare'>"
         if common_groups:
-            html_str += "<div class='common-groups'><span class='grp-label'>Padrão Comum a todas as bases envolvidas:</span>"
+            html_str += "<div class='common-groups'><span class='grp-label'>Padr├úo Comum a todas as bases envolvidas:</span>"
             html_str += "".join([f"<span class='badge-grp common'>{g}</span>" for g in sorted(common_groups)])
             html_str += "</div>"
         
-        html_str += "<div class='diff-groups'><span class='grp-label'>Divergências (Grupos a mais adicionados localmente):</span>"
+        html_str += "<div class='diff-groups'><span class='grp-label'>Diverg├¬ncias (Grupos a mais adicionados localmente):</span>"
         for env in sorted(all_envs):
             diff = envs_data[env] - common_groups
             html_str += f"<div class='env-row'><span class='env-name'>{env}</span> "
             if diff:
                 html_str += "".join([f"<span class='badge-grp diff'>{g}</span>" for g in sorted(diff)])
             else:
-                html_str += "<span class='badge-grp diff-none'>Mesmo do padrão comum</span>"
+                html_str += "<span class='badge-grp diff-none'>Mesmo do padr├úo comum</span>"
             html_str += "</div>"
         html_str += "</div></div>"
         
@@ -647,17 +749,17 @@ def build_html():
         for env in sorted(all_envs):
             diff = envs_data[env] - common_groups
             if diff:
-                xl_str += f"Diferença em {env} (+): " + ", ".join(sorted(diff)) + "\n"
+                xl_str += f"Diferen├ºa em {env} (+): " + ", ".join(sorted(diff)) + "\n"
         divergences_excel.append([t, xl_str.strip()])
 
     if divergences_html:
         # Manually build the table to avoid escaping HTML
-        html.append('<div class="table-responsive"><table><thead><tr><th>Cargo / TYPE Funcional</th><th>Análise do Pacote de Grupos de Segurança</th></tr></thead><tbody>')
+        html.append('<div class="table-responsive"><table><thead><tr><th>Cargo / TYPE Funcional</th><th>An├ílise do Pacote de Grupos de Seguran├ºa</th></tr></thead><tbody>')
         for row in divergences_html[:30]:
             html.append(f'<tr><td>{row[0]}</td><td>{row[1]}</td></tr>')
         html.append('</tbody></table></div>')
     else:
-        html.append('<div class="alert-success" style="margin-top:0;"><strong>✅ Padrão Perfeito!</strong> Não há divergências de grupos de segurança mapeados nas funções atuais.</div>')
+        html.append('<div class="alert-success" style="margin-top:0;"><strong>Ô£à Padr├úo Perfeito!</strong> N├úo h├í diverg├¬ncias de grupos de seguran├ºa mapeados nas fun├º├Áes atuais.</div>')
         
     html.append('</div></div>')
 
@@ -783,7 +885,7 @@ def build_html():
                 data: {
                     labels: ''' + str(env_labels) + ''',
                     datasets: [{
-                        label: 'Contas Ativas (Logins Únicos por Sonda)',
+                        label: 'Contas Ativas (Logins ├Ünicos por Sonda)',
                         data: ''' + str(unique_active_env_data) + ''',
                         backgroundColor: '#10b981',
                         borderRadius: 4
@@ -791,7 +893,7 @@ def build_html():
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, title: { display: true, text: 'Mapeamento AppPoints: Pessoas Únicas por Base', font: {size: 14} } },
+                    plugins: { legend: { display: false }, title: { display: true, text: 'Mapeamento AppPoints: Pessoas ├Ünicas por Base', font: {size: 14} } },
                     scales: { y: { beginAtZero: true } }
                 }
             });
@@ -809,7 +911,7 @@ def build_html():
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { position: 'right' }, title: { display: true, text: 'Status Global da Base Histórica', font: {size: 14} } }
+                    plugins: { legend: { position: 'right' }, title: { display: true, text: 'Status Global da Base Hist├│rica', font: {size: 14} } }
                 }
             });
         </script>
@@ -871,20 +973,20 @@ def build_excel(divergences_excel):
 
     # 1. ExecutiveSummary
     ws = wb.create_sheet('1_VisaoExecutiva')
-    ws.append(['Métrica', 'Valor'])
+    ws.append(['M├®trica', 'Valor'])
     
     unique_logins_all = len(set([r.get('USERID', '').strip().upper() for r in identities if r.get('USERID', '').strip()]))
     unique_active_logins = len(set([r.get('USERID', '').strip().upper() for r in identities if r.get('USERID', '').strip() and r.get('STATUS', '').upper() == 'ACTIVE']))
     
-    ws.append(['Total de Usuários (Base Histórica Bruta)', len(identities) if identities else 0])
-    ws.append(['Pessoas Únicas Identificadas (Apenas Ativos para AppPoints)', unique_active_logins])
-    ws.append(['Registros Ativos no Maximo (Não Tratados)', sum(1 for r in identities if r.get('STATUS', '').upper() == 'ACTIVE') if identities else 0])
+    ws.append(['Total de Usu├írios (Base Hist├│rica Bruta)', len(identities) if identities else 0])
+    ws.append(['Pessoas ├Ünicas Identificadas (Apenas Ativos para AppPoints)', unique_active_logins])
+    ws.append(['Registros Ativos no Maximo (N├úo Tratados)', sum(1 for r in identities if r.get('STATUS', '').upper() == 'ACTIVE') if identities else 0])
     
     # Baseado na view ATIVA:
     active_worklist = [w for w in worklist if w.get('STATUS', '').upper() == 'ACTIVE']
     ws.append(['USERIDs Repetidos (Risco de Reuso Ativo)', len(set([w.get('USERID') for w in active_worklist])) if active_worklist else 0])
-    ws.append(['Colisões Críticas (Pessoas Diferentes Ativas)', sum(1 for c in active_worklist if c.get('HYPOTHESIS') == 'CONFIRMED_DIFFERENT_PERSON') if active_worklist else 0])
-    ws.append(['Pendentes Validação AD (Ativos)', sum(1 for c in active_worklist if c.get('MERGE_DECISION') in ('AWAITING_AD_MATCH', 'MERGE_AFTER_AD_MATCH')) if active_worklist else 0])
+    ws.append(['Colis├Áes Cr├¡ticas (Pessoas Diferentes Ativas)', sum(1 for c in active_worklist if c.get('HYPOTHESIS') == 'CONFIRMED_DIFFERENT_PERSON') if active_worklist else 0])
+    ws.append(['Pendentes Valida├º├úo AD (Ativos)', sum(1 for c in active_worklist if c.get('MERGE_DECISION') in ('AWAITING_AD_MATCH', 'MERGE_AFTER_AD_MATCH')) if active_worklist else 0])
     
     for cell in ws[1]:
         cell.font = header_font
