@@ -34,6 +34,8 @@ def main():
                 'LOGINID_LIST': '; '.join(sorted(set(m.get('LOGINID','') for m in members if m.get('LOGINID')))),
                 'DISPLAYNAME_LIST': '; '.join(sorted(set(m.get('DISPLAYNAME','') for m in members if m.get('DISPLAYNAME')))),
                 'EMAIL_LIST': '; '.join(sorted(set(m.get('PRIMARYEMAIL','') for m in members if m.get('PRIMARYEMAIL')))),
+                'TITLE_LIST': '; '.join(sorted(set(m.get('TITLE','') for m in members if m.get('TITLE')))),
+                'PERSONGROUP_LIST': '; '.join(sorted(set(m.get('PERSONGROUP','') for m in members if m.get('PERSONGROUP')))),
                 'STATUS_LIST': '; '.join(sorted(set(m.get('STATUS','') for m in members if m.get('STATUS')))),
                 'ACCOUNT_CLASS_LIST': '; '.join(sorted(set(m.get('ACCOUNT_CLASS','') for m in members if m.get('ACCOUNT_CLASS')))),
                 'GROUPS_COUNT_LIST': '; '.join(sorted(set(m.get('TOTAL_GROUPS','') for m in members if m.get('TOTAL_GROUPS')))),

@@ -47,42 +47,49 @@ def main():
         rules_triggered = []
         
         # O Ponto Cego Resolvido: DisplayName ou Email divergentes são PROVAS HUMANAS de colisão
+        conflict_reason = ''
         if envs_count > 1 and len(dnames) > 1:
             col_type = 'DISPLAYNAME_CONFLICT'
             hypothesis = 'CONFIRMED_DIFFERENT_PERSON'
             merge_decision = 'DO_NOT_MERGE'
             review_prio = 'CRITICAL'
             rules_triggered.append('displayname_conflict')
+            conflict_reason = f'Nomes diferentes detectados: {"; ".join(sorted(dnames))}'
         elif envs_count > 1 and len(emails) > 1:
             col_type = 'EMAIL_CONFLICT'
             hypothesis = 'CONFIRMED_DIFFERENT_PERSON'
             merge_decision = 'DO_NOT_MERGE'
             review_prio = 'CRITICAL'
             rules_triggered.append('email_conflict')
+            conflict_reason = f'E-mails diferentes: {"; ".join(sorted(emails))}'
         elif envs_count > 1 and len(pids) > 1:
             col_type = 'PERSONID_CONFLICT'
             hypothesis = 'CONFIRMED_DIFFERENT_PERSON'
             merge_decision = 'DO_NOT_MERGE'
             review_prio = 'HIGH'
             rules_triggered.append('personid_conflict')
+            conflict_reason = f'PersonIDs diferentes: {"; ".join(sorted(pids))}'
         elif envs_count > 1 and len(lids) > 1:
             col_type = 'LOGINID_CONFLICT'
             hypothesis = 'REQUIRES_REVIEW'
             merge_decision = 'MANUAL_REVIEW_REQUIRED'
             review_prio = 'MEDIUM'
             rules_triggered.append('loginid_conflict')
+            conflict_reason = f'LoginIDs corporativos distintos: {"; ".join(sorted(lids))}'
         elif envs_count > 1 and len(stats) > 1:
             col_type = 'STATUS_CONFLICT'
             hypothesis = 'REQUIRES_REVIEW'
             merge_decision = 'MANUAL_REVIEW_REQUIRED'
             review_prio = 'MEDIUM'
             rules_triggered.append('status_conflict')
+            conflict_reason = f'Status inconsistentes: {"; ".join(sorted(stats))}'
         elif envs_count > 1 and len(acls) > 1 and 'HUMAN' in acls:
             col_type = 'ACCOUNT_CLASS_CONFLICT'
             hypothesis = 'REQUIRES_REVIEW'
             merge_decision = 'MANUAL_REVIEW_REQUIRED'
             review_prio = 'MEDIUM'
             rules_triggered.append('account_class_conflict')
+            conflict_reason = f'Classes de conta mistas: {"; ".join(sorted(acls))}'
             
         # 2. Score Match (Soft Rules) se não for hard conflict
         if col_type == 'NO_CONFLICT':
@@ -115,6 +122,12 @@ def main():
 
             col_type = 'CROSS_ENV_USERID_REUSE'
             rules_triggered.append('score_bands')
+            if score <= 0:
+                conflict_reason = f'Score negativo ({score}): inconsistências múltiplas detectadas'
+            elif 1 <= score <= 49:
+                conflict_reason = f'Score baixo ({score}): dados parcialmente compatíveis, requer revisão humana'
+            else:
+                conflict_reason = f'Score adequado ({score}): aguardando validação Active Directory'
 
         # Create Worklist rows for each raw id in the cluster
         for raw_id in raw_ids:
@@ -130,6 +143,8 @@ def main():
                 'STATUS': ident.get('STATUS',''),
                 'DEFSITE': ident.get('DEFSITE',''),
                 'TYPE': ident.get('TYPE',''),
+                'TITLE': ident.get('TITLE',''),
+                'PERSONGROUP': ident.get('PERSONGROUP',''),
                 'ACCOUNT_CLASS': ident.get('ACCOUNT_CLASS',''),
                 'COLLISION_TYPE': col_type,
                 'MATCH_SCORE': score,
@@ -138,6 +153,7 @@ def main():
                 'MERGE_DECISION': merge_decision,
                 'REVIEW_PRIORITY': review_prio,
                 'MATCH_RULES_TRIGGERED': '; '.join(rules_triggered),
+                'CONFLICT_REASON': conflict_reason,
                 'COMMENTS': ''
             })
             

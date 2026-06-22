@@ -88,12 +88,18 @@ def main():
                 'STATUS': r.get('STATUS',''),
                 'DEFSITE': r.get('DEFSITE',''),
                 'TYPE': r.get('TYPE',''),
+                'TITLE': r.get('TITLE',''),
+                'PERSONGROUP': r.get('PERSONGROUP',''),
                 'TOTAL_GROUPS': 0,
                 'ACCOUNT_CLASS': r.get('ACCOUNT_CLASS','')
             }
         agg[key]['TOTAL_GROUPS'] += 1
+        if not agg[key].get('TITLE') and r.get('TITLE'):
+            agg[key]['TITLE'] = r.get('TITLE','')
+        if not agg[key].get('PERSONGROUP') and r.get('PERSONGROUP'):
+            agg[key]['PERSONGROUP'] = r.get('PERSONGROUP','')
 
-    id_fields = ['RAW_ID', 'ENV_DB','USERID','PERSONID','LOGINID','FIRSTNAME','LASTNAME','DISPLAYNAME','PRIMARYEMAIL','STATUS','DEFSITE','TYPE','TOTAL_GROUPS','ACCOUNT_CLASS']
+    id_fields = ['RAW_ID', 'ENV_DB','USERID','PERSONID','LOGINID','FIRSTNAME','LASTNAME','DISPLAYNAME','PRIMARYEMAIL','STATUS','DEFSITE','TYPE','TITLE','PERSONGROUP','TOTAL_GROUPS','ACCOUNT_CLASS']
     with open(IDENTITY, 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=id_fields)
         writer.writeheader()

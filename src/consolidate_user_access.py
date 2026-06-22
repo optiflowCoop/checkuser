@@ -25,22 +25,20 @@ def main():
     email_f = os.path.join(OUTDIR, "consolidated_email.csv")
     groupuser_f = os.path.join(OUTDIR, "consolidated_groupuser.csv")
     maxgroup_f = os.path.join(OUTDIR, "consolidated_maxgroup.csv")
-    persongroupview_f = os.path.join(OUTDIR, "consolidated_persongroupview.csv") # Nova view
+    persongroupview_f = os.path.join(OUTDIR, "consolidated_persongroupview.csv")
 
     maxusers = read_csv(maxuser_f)
     persons = read_csv(person_f)
     emails = read_csv(email_f)
     groupusers = read_csv(groupuser_f)
     maxgroups = read_csv(maxgroup_f)
-    persongroupviews = read_csv(persongroupview_f) # Lendo a nova view
+    persongroupviews = read_csv(persongroupview_f)
 
-    # env canonicalization map
     env_alias = {'N06': 'NORBE06', 'N08': 'NORBE08', 'N09': 'NORBE09'}
     def canon_env(v):
         v = (v or '').strip()
         return env_alias.get(v, v)
 
-    # index emails
     email_index = {}
     for e in emails:
         env = canon_env(e.get('ENVIRONMENT', ''))
@@ -48,7 +46,6 @@ def main():
         if env and pid:
             email_index[f"{env}|{pid}"] = e.get('EMAILADDRESS', '')
 
-    # index persons by ENVIRONMENT + PERSONID
     person_index = {}
     for p in persons:
         env = canon_env(p.get('ENVIRONMENT', ''))
@@ -57,22 +54,19 @@ def main():
             p['PRIMARYEMAIL'] = email_index.get(f"{env}|{pid}", "")
             person_index[f"{env}|{pid}"] = p
 
-    # index persongroupview by ENVIRONMENT + PERSONID
     persongroupview_index = defaultdict(list)
     for pgv in persongroupviews:
         env = canon_env(pgv.get('ENVIRONMENT', ''))
-        pid = pgv.get('PERSONID', '').strip()
+        pid = pgv.get('personid', '').strip() # Note: DDL shows lowercase
         if env and pid:
             persongroupview_index[f"{env}|{pid}"].append(pgv)
 
-    # index users by ENVIRONMENT + USERID
     user_index = {}
     for r in maxusers:
         env = canon_env(r.get('ENVIRONMENT', ''))
         userid = r.get('USERID', '').strip()
         if not env or not userid: continue
         
-        # Merge person data into user record if available
         pid = r.get('PERSONID', '').strip()
         pdata = person_index.get(f"{env}|{pid}", {})
         
@@ -80,24 +74,22 @@ def main():
         r['LASTNAME'] = pdata.get('LASTNAME', '').strip()
         r['PRIMARYEMAIL'] = pdata.get('PRIMARYEMAIL', '').strip()
         
-        # Fallback inteligente para o DisplayName
         disp = pdata.get('DISPLAYNAME', '').strip()
         if not disp and (r['FIRSTNAME'] or r['LASTNAME']):
             disp = f"{r['FIRSTNAME']} {r['LASTNAME']}".strip()
         r['DISPLAYNAME'] = disp
 
-        # Merge persongroupview data (e.g., responsibilities)
-        pgv_data = persongroupview_index.get(f"{env}|{pid}", [])
-        if pgv_data:
-            r['RESPPARTYGROUPS'] = '; '.join(sorted(list(set(pgv.get('RESPPARTYGROUP', '') for pgv in pgv_data if pgv.get('RESPPARTYGROUP')))))
-            r['PERSONGROUPS'] = '; '.join(sorted(list(set(pgv.get('PERSONGROUP', '') for pgv in pgv_data if pgv.get('PERSONGROUP')))))
+        pgv_data_list = persongroupview_index.get(f"{env}|{pid}", [])
+        if pgv_data_list:
+            pgv_data = pgv_data_list[0]
+            r['TITLE'] = pgv_data.get('title', '')
+            r['PERSONGROUP'] = '; '.join(sorted(list(set(pgv.get('persongroup', '') for pgv in pgv_data_list if pgv.get('persongroup')))))
         else:
-            r['RESPPARTYGROUPS'] = ''
-            r['PERSONGROUPS'] = ''
+            r['TITLE'] = ''
+            r['PERSONGROUP'] = ''
         
         user_index[f"{env}|{userid}"] = r
 
-    # index groups by GROUPNAME
     group_index = {g.get('GROUPNAME', '').strip(): g for g in maxgroups if g.get('GROUPNAME')}
 
     group_flag_cols = [
@@ -109,7 +101,7 @@ def main():
     header = [
         'ENV_DB','USERID','PERSONID','LOGINID','STATUS','DEFSITE','TYPE',
         'FIRSTNAME','LASTNAME','DISPLAYNAME','PRIMARYEMAIL',
-        'RESPPARTYGROUPS','PERSONGROUPS', # Novas colunas da view
+        'TITLE', 'PERSONGROUP',
         'GROUPNAME','GROUP_DESCRIPTION','GROUP_FLAGS','SOURCE_FILE','LOAD_TIMESTAMP'
     ] + group_flag_cols
 
@@ -128,17 +120,10 @@ def main():
             
             user = user_index.get(f"{env}|{userid}")
             if user:
-                row['PERSONID'] = user.get('PERSONID','')
-                row['LOGINID'] = user.get('LOGINID','')
-                row['STATUS'] = user.get('STATUS','')
-                row['DEFSITE'] = user.get('DEFSITE','')
-                row['TYPE'] = user.get('TYPE','')
-                row['FIRSTNAME'] = user.get('FIRSTNAME','')
-                row['LASTNAME'] = user.get('LASTNAME','')
-                row['DISPLAYNAME'] = user.get('DISPLAYNAME','')
-                row['PRIMARYEMAIL'] = user.get('PRIMARYEMAIL','')
-                row['RESPPARTYGROUPS'] = user.get('RESPPARTYGROUPS','') # Nova coluna
-                row['PERSONGROUPS'] = user.get('PERSONGROUPS','') # Nova coluna
+                # Copia apenas as chaves que existem no header
+                for key in header:
+                    if key in user:
+                        row[key] = user[key]
                 row['SOURCE_FILE'] = maxuser_f
             else:
                 row['SOURCE_FILE'] = source
@@ -160,21 +145,10 @@ def main():
             out_rows.append(row)
     else:
         for key, user in user_index.items():
-            env, userid = key.split('|', 1)
             row = {k: '' for k in header}
-            row['ENV_DB'] = env
-            row['USERID'] = userid
-            row['PERSONID'] = user.get('PERSONID','')
-            row['LOGINID'] = user.get('LOGINID','')
-            row['STATUS'] = user.get('STATUS','')
-            row['DEFSITE'] = user.get('DEFSITE','')
-            row['TYPE'] = user.get('TYPE','')
-            row['FIRSTNAME'] = user.get('FIRSTNAME','')
-            row['LASTNAME'] = user.get('LASTNAME','')
-            row['DISPLAYNAME'] = user.get('DISPLAYNAME','')
-            row['PRIMARYEMAIL'] = user.get('PRIMARYEMAIL','')
-            row['RESPPARTYGROUPS'] = user.get('RESPPARTYGROUPS','') # Nova coluna
-            row['PERSONGROUPS'] = user.get('PERSONGROUPS','') # Nova coluna
+            for k in header:
+                if k in user:
+                    row[k] = user[k]
             row['SOURCE_FILE'] = maxuser_f
             out_rows.append(row)
 
@@ -182,8 +156,7 @@ def main():
     with open(out_path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=header)
         writer.writeheader()
-        for r in out_rows:
-            writer.writerow(r)
+        writer.writerows(out_rows)
 
     print(f"WROTE {out_path} ({len(out_rows)} rows)")
 
