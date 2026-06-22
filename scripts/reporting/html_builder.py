@@ -29,7 +29,7 @@ def get_recommendation_badge(rec):
 
 
 def build_html_structure(summary, governance, app_points, domains):
-    # --- Cálculo de Resumos e Cenários Previsionais de AppPoints ---
+    # --- Cálculo de Resumos e Cenários Previsionais (DATA-DRIVEN) ---
     custo_atual = 0
     custo_saneado = 0
     custo_otimizado = 0
@@ -37,41 +37,77 @@ def build_html_structure(summary, governance, app_points, domains):
     downgrade_count = 0
     concurrent_count = 0
 
+    final_prem_auth = 0
+    final_prem_conc_users = 0
+    final_base_auth = 0
+    final_base_conc_users = 0
+
+    # Analítica de fatores para o simulador
+    sum_concurrent_factors = 0
+    count_concurrent_users = 0
+
     for u in app_points:
         pts = u['APP_POINTS']
         lic = u['LICENSE_MODEL']
+        ent = u['ENTITLEMENT']
         rec = u['OPTIMIZATION_REC']
+        real_factor = u.get('REAL_FACTOR', 0.3333)
 
-        # 1. Custo Atual Base (com rácio concurrent assumido de ~1:3 para turmas offshore)
-        val_atual = pts if lic == 'AUTHORIZED' else pts * 0.3
+        # 1. Custo Atual Base (Multiplica pela CONCORRÊNCIA REAL e não mais pela média)
+        val_atual = pts if lic == 'AUTHORIZED' else pts * real_factor
         custo_atual += val_atual
 
-        # Contagem para métricas executivas
-        if rec == 'INATIVO (>90d)': inativos_count += 1
+        if rec == 'INATIVO (>90d)':
+            inativos_count += 1
+            continue
+
         if rec == 'DOWNGRADE_CANDIDATE': downgrade_count += 1
         if rec == 'MOVE_TO_CONCURRENT': concurrent_count += 1
 
-        # 2. Custo Pós-Saneamento (remove inativos > 90d)
-        if rec != 'INATIVO (>90d)':
-            custo_saneado += val_atual
+        custo_saneado += val_atual
 
-            # 3. Custo Pós-Otimização
-            val_otimizado = val_atual
-            if rec == 'DOWNGRADE_CANDIDATE':
-                if u['ENTITLEMENT'] == 'PREMIUM':
-                    # Downgrade Premium para Base oficial: 3 Auth ou 10 Conc
-                    pts_novo = 3 if lic == 'AUTHORIZED' else 10
-                    val_otimizado = pts_novo if lic == 'AUTHORIZED' else pts_novo * 0.3
-            elif rec == 'MOVE_TO_CONCURRENT':
-                val_otimizado = pts * 0.3
+        # --- Determinação do Perfil Final Pós-Otimização (To-Be) ---
+        final_ent = 'BASE' if (rec == 'DOWNGRADE_CANDIDATE' and ent == 'PREMIUM') else ent
+        final_lic = 'CONCURRENT' if rec == 'MOVE_TO_CONCURRENT' else lic
 
-            custo_otimizado += val_otimizado
+        # Calcula Custo Otimizado com Tabela IBM MAS 9 Oficial e Fator Real
+        if final_ent == 'PREMIUM':
+            pts_novo = 5 if final_lic == 'AUTHORIZED' else 15
+        else:
+            pts_novo = 3 if final_lic == 'AUTHORIZED' else 10
 
-    # --- Cálculos de ROI (Pontos Salvos) ---
+        val_otimizado = pts_novo if final_lic == 'AUTHORIZED' else pts_novo * real_factor
+        custo_otimizado += val_otimizado
+
+        # Popula os baldes para o Simulador e calcula a média do fator real
+        if final_ent == 'PREMIUM':
+            if final_lic == 'AUTHORIZED':
+                final_prem_auth += 1
+            else:
+                final_prem_conc_users += 1
+                sum_concurrent_factors += real_factor
+                count_concurrent_users += 1
+        else:
+            if final_lic == 'AUTHORIZED':
+                final_base_auth += 1
+            else:
+                final_base_conc_users += 1
+                sum_concurrent_factors += real_factor
+                count_concurrent_users += 1
+
+    # --- Cálculos de ROI e Simulador ---
     pontos_salvos_saneamento = custo_atual - custo_saneado
     pontos_salvos_inteligencia = custo_saneado - custo_otimizado
 
-    # --- Build Governance Table Rows ---
+    # O Simulador agora usa a média da concorrência REAL do logintracking
+    avg_real_factor = (sum_concurrent_factors / count_concurrent_users) if count_concurrent_users > 0 else 0.3333
+
+    sim_prem_auth = final_prem_auth
+    sim_prem_conc = int(final_prem_conc_users * avg_real_factor)
+    sim_base_auth = final_base_auth
+    sim_base_conc = int(final_base_conc_users * avg_real_factor)
+
+    # --- Build Tables ---
     cross_env_rows = [[f"<strong>{c.get('USERID')}</strong>", c.get('ENV_LIST'), c.get('DISPLAYNAME_LIST'),
                        get_recommendation_badge(c.get('HYPOTHESIS', ''))] for c in governance['cross_env'][:200]]
     login_conflicts_rows = [[f"<strong>{l.get('LOGINID')}</strong>", l.get('USERID_LIST'), l.get('DISPLAYNAME_LIST'),
@@ -95,15 +131,18 @@ def build_html_structure(summary, governance, app_points, domains):
         title_divergence_html.append(f'<div class="type-card"><h4>{title} {" ".join(alerts)}</h4>')
         if len(all_types) > 1:
             title_divergence_html.append(
-                '<div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div>')
+                '<div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE nas Sondas</div>')
             for env, types in sorted(data['types'].items()):
                 title_divergence_html.append(f'<div>📍 {env}: {", ".join(sorted(t for t in types if t))}</div>')
             title_divergence_html.append('</div>')
         title_divergence_html.append('</div>')
 
-    # --- Build AppPoints Table ---
+    # Na tabela de AppPoints, adicionamos o campo "Fator Escala" para provar a matemática
     app_points_rows = []
-    for s in sorted(app_points, key=lambda x: x['APP_POINTS'], reverse=True)[:500]:
+    for s in sorted(app_points, key=lambda x: x['APP_POINTS'], reverse=True)[:1000]:
+        fator_display = f"{s.get('REAL_FACTOR', 0.3333) * 100:.1f}%" if s[
+                                                                            'LICENSE_MODEL'] == 'CONCURRENT' else "100% (Fixo)"
+
         app_points_rows.append([
             f"<strong>{s['USERID']}</strong>",
             s['DISPLAYNAME'][:30],
@@ -111,17 +150,17 @@ def build_html_structure(summary, governance, app_points, domains):
             f"<span class='badge' style='background:#f1f5f9;'>{s['ENTITLEMENT']}</span>",
             f"<span style='font-weight:600;'>{s['LICENSE_MODEL']}</span>",
             f"<strong>{s['APP_POINTS']}</strong>",
-            s['LOGIN_COUNT_90D'],
+            f"<span style='color:var(--accent); font-weight:600;'>{fator_display}</span>",
+            # NOVO: Exibe a concorrência exata
             s['TITLES'][:40] + ("..." if len(s['TITLES']) > 40 else "")
         ])
 
-    # --- Final HTML Assembly ---
     return f"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Maximo Unificado</title>
+    <title>Dashboard Maximo Unificado - Foresea</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {{ --primary: #0f172a; --secondary: #1e293b; --accent: #2563eb; --bg: #f8fafc; --card-bg: #ffffff; --text: #334155; --border: #e2e8f0; --danger: #ef4444; --warning: #f59e0b; --success: #10b981; --neutral:#64748b}}
@@ -181,14 +220,12 @@ def build_html_structure(summary, governance, app_points, domains):
         .btn-export {{ background-color: #10b981; color: white; border: none; padding: 12px 20px; border-radius: 6px; font-size: 0.95rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s; }}
         .btn-export:hover {{ background-color: #059669; }}
 
-        /* Analysis Grid CSS */
         .type-analysis-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }}
         .type-card {{ background: #ffffff; border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; transition: box-shadow 0.2s; }}
         .type-card h4 {{ margin: 0 0 1rem 0; font-size: 1.1rem; color: var(--primary); border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; display: flex; align-items: center; flex-wrap: wrap; }}
         .env-divergence {{ margin-bottom: 0.8rem; padding: 0.8rem; background: #f8fafc; border-left: 3px solid var(--warning); border-radius: 4px; }}
         .env-header {{ font-weight: 700; color: var(--primary); margin-bottom: 0.4rem; font-size: 0.9rem; }}
 
-        /* Calculator Elements CSS */
         .calc-input-group {{ margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 0.5rem; }}
         .calc-input-group label {{ font-weight: 600; color: var(--text); font-size: 0.95rem; }}
         .calc-input-group input {{ width: 100px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 1.1rem; text-align: center; color: var(--primary); font-weight: bold; }}
@@ -196,7 +233,6 @@ def build_html_structure(summary, governance, app_points, domains):
         .financial-box {{ background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 1rem; text-align: center; margin-top: 1rem; }}
         .financial-value {{ font-size: 1.8rem; font-weight: 800; color: #047857; margin: 0.5rem 0; }}
 
-        /* Legend Cards CSS */
         .legend-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }}
         .legend-box {{ background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }}
         .legend-box h3 {{ margin-top: 0; color: var(--primary); font-size: 1.05rem; border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 6px;}}
@@ -208,7 +244,7 @@ def build_html_structure(summary, governance, app_points, domains):
     <div class="topbar">
         <div>
             <h1>Dashboard Gerencial MAS 9.1 | Foresea</h1>
-            <p>Capacity Planning, ROI de Otimização e Saneamento de Identidades</p>
+            <p>Saneamento e Capacity Planning Baseado em Dados (Logintracking Analytics)</p>
         </div>
         <div>
             <p style="text-align: right; color: #cbd5e1;">Gerado em:<br><strong>{datetime.now().strftime("%d/%m/%Y %H:%M")}</strong></p>
@@ -216,7 +252,7 @@ def build_html_structure(summary, governance, app_points, domains):
     </div>
 
     <div class="tabs">
-        <button class="tab-button active" onclick="openTab(event, 'tab-painel')">1. Resumo Executivo</button>
+        <button class="tab-button active" onclick="openTab(event, 'tab-painel')">1. Resumo Consolidador (7 Bases)</button>
         <button class="tab-button" onclick="openTab(event, 'tab-apppoints')">2. Otimização e ROI (Financeiro)</button>
         <button class="tab-button" onclick="openTab(event, 'tab-gov')">3. Matriz de Risco e Saneamento</button>
     </div>
@@ -224,16 +260,16 @@ def build_html_structure(summary, governance, app_points, domains):
     <div id="tab-painel" class="container tab-content active">
         <div class="alert-box">
             <strong>🎯 Visão de Diretoria — Oportunidade de Redução de Custos (Opex)</strong>
-            <p>O foco do projeto é preparar o terreno financeiro para o MAS 9. Identificamos {fmt_br(inativos_count)} acessos inativos e {fmt_br(downgrade_count + concurrent_count)} oportunidades diretas de otimização contratual.</p>
+            <p>O algoritmo consolidou as identidades de Sondas e Base, extraiu o <i>logintracking</i> e mapeou fisicamente as equipes. Detectamos {fmt_br(inativos_count)} inativos e {fmt_br(downgrade_count + concurrent_count)} elegíveis a partilha de turnos/downgrade.</p>
         </div>
 
         <div class="card">
             <h2 class="card-header">Radar Operacional de Identidades</h2>
             <div class="stats-grid">
-                <div class="stat-card border-success"><div class="stat-value" style="color: var(--success);">{fmt_br(summary['active_profiles_count'])}</div><div class="stat-title">Pessoas Únicas</div><div class="stat-subtitle">Efetivo real detectado</div></div>
+                <div class="stat-card border-success"><div class="stat-value" style="color: var(--success);">{fmt_br(summary['active_profiles_count'])}</div><div class="stat-title">Pessoas Únicas</div><div class="stat-subtitle">Efetivo consolidado real</div></div>
                 <div class="stat-card border-neutral"><div class="stat-value" style="color: var(--neutral);">{fmt_br(inativos_count)}</div><div class="stat-title">Contas Zumbi</div><div class="stat-subtitle">Sem login há > 90 dias</div></div>
                 <div class="stat-card border-warning"><div class="stat-value" style="color: var(--warning);">{fmt_br(downgrade_count)}</div><div class="stat-title">Elegíveis Downgrade</div><div class="stat-subtitle">Premium ocioso -> Base</div></div>
-                <div class="stat-card border-accent"><div class="stat-value" style="color: var(--accent);">{fmt_br(concurrent_count)}</div><div class="stat-title">Migração Offshore</div><div class="stat-subtitle">De Authorized para Concurrent</div></div>
+                <div class="stat-card border-accent"><div class="stat-value" style="color: var(--accent);">{fmt_br(concurrent_count)}</div><div class="stat-title">Migração Offshore</div><div class="stat-subtitle">Escalas alocadas em Concurrent</div></div>
             </div>
 
             <div class="charts-container" style="grid-template-columns: 1fr 2fr;">
@@ -245,7 +281,7 @@ def build_html_structure(summary, governance, app_points, domains):
                     <div style="width: 100%;">
                         <h3 style="margin-top:0; font-size: 1rem; color: var(--primary);">Entendimento Financeiro da Segregação</h3>
                         <p style="font-size: 0.9rem; color: var(--text); margin-bottom: 1rem;">
-                            Terceiros e contas genéricas (sem domínio) representam um passivo. A recomendação da arquitetura é transferir terceiros esporádicos para integrações externas via API, liberando AppPoints caros para a operação fim.
+                            Terceiros e contas genéricas representam um passivo. A recomendação arquitetural é transferir terceiros esporádicos para integrações API, libertando AppPoints para a operação-fim da Foresea.
                         </p>
                         <div style="display: flex; justify-content: space-between; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border);">
                             <div style="text-align:center"><strong style="color: #10b981; font-size: 1.4rem;">{fmt_br(domains.get('FORESEA', 0))}</strong> <br><span style="font-size: 0.8rem; font-weight:bold; color: #64748b;">FORESEA</span></div>
@@ -264,8 +300,8 @@ def build_html_structure(summary, governance, app_points, domains):
         <div class="card" style="border-left: 4px solid var(--success); background-image: linear-gradient(to right, #ffffff, #f8fafc);">
             <div class="card-header" style="border-bottom:none; margin-bottom:0;">
                 <div>
-                    <h2 style="margin:0; font-size:1.5rem; color:var(--success);">🧮 Simulador Gerencial de Custos (AppPoints O&G)</h2>
-                    <p style="font-size: 0.9rem; color: #64748b; font-weight: normal; margin-top: 4px;">Traduza o esforço técnico de otimização em impacto financeiro real (Estimativa Opex).</p>
+                    <h2 style="margin:0; font-size:1.5rem; color:var(--success);">🧮 Simulador Pós-Migração (Fatores Reais da Base de Dados)</h2>
+                    <p style="font-size: 0.9rem; color: #64748b; font-weight: normal; margin-top: 4px;">Ao invés da média (1 para 3), a inteligência calculou o pico máximo diário de acessos cruzando as tabelas LOGINTRACKING e TITLES da Foresea.</p>
                 </div>
             </div>
 
@@ -280,30 +316,30 @@ def build_html_structure(summary, governance, app_points, domains):
                     </div>
 
                     <div class="calc-input-group">
-                        <label>Premium Authorized <span class="calc-badge-pts">5 pts</span></label>
-                        <input type="number" id="inpPremAuth" value="30" oninput="updateCalculator()">
+                        <label>Premium Auth (Onshore/Fixos) <span class="calc-badge-pts">5 pts</span></label>
+                        <input type="number" id="inpPremAuth" value="{sim_prem_auth}" oninput="updateCalculator()">
                     </div>
                     <div class="calc-input-group">
-                        <label>Premium Concurrent <span class="calc-badge-pts">15 pts</span></label>
-                        <input type="number" id="inpPremConc" value="5" oninput="updateCalculator()">
+                        <label>Premium Conc (Fator Calculado: {avg_real_factor * 100:.1f}%) <span class="calc-badge-pts">15 pts</span></label>
+                        <input type="number" id="inpPremConc" value="{sim_prem_conc}" oninput="updateCalculator()">
                     </div>
                     <div class="calc-input-group">
-                        <label>Base Authorized <span class="calc-badge-pts">3 pts</span></label>
-                        <input type="number" id="inpBaseAuth" value="40" oninput="updateCalculator()">
+                        <label>Base Auth (Onshore) <span class="calc-badge-pts">3 pts</span></label>
+                        <input type="number" id="inpBaseAuth" value="{sim_base_auth}" oninput="updateCalculator()">
                     </div>
                     <div class="calc-input-group" style="border-bottom:none; margin-bottom:0; padding-bottom:0;">
-                        <label>Base Concurrent <span class="calc-badge-pts">10 pts</span></label>
-                        <input type="number" id="inpBaseConc" value="15" oninput="updateCalculator()">
+                        <label>Base Conc (Fator Calculado: {avg_real_factor * 100:.1f}%) <span class="calc-badge-pts">10 pts</span></label>
+                        <input type="number" id="inpBaseConc" value="{sim_base_conc}" oninput="updateCalculator()">
                     </div>
                 </div>
 
                 <div style="flex: 1; min-width: 250px; text-align: center; display: flex; flex-direction: column; justify-content: center;">
-                    <h3 style="margin: 0; font-size: 1rem; color: var(--secondary); text-transform: uppercase; letter-spacing: 1px;">Projeção de AppPoints</h3>
+                    <h3 style="margin: 0; font-size: 1rem; color: var(--secondary); text-transform: uppercase; letter-spacing: 1px;">Projeção Real Otimizada</h3>
                     <div id="calcTotalDisplay" style="font-size: 4rem; font-weight: 800; color: var(--success); line-height: 1.2;">0</div>
                     <div style="font-size: 0.95rem; color: #64748b; font-weight: 600;">Teto do Orçamento: 1.200 AppPoints</div>
 
                     <div class="financial-box">
-                        <div style="font-size: 0.85rem; text-transform: uppercase; font-weight: bold; color: #065f46;">Custo Anual de Licenciamento Projetado</div>
+                        <div style="font-size: 0.85rem; text-transform: uppercase; font-weight: bold; color: #065f46;">Custo Anual de Licenças Projetado</div>
                         <div id="calcFinancialTotal" class="financial-value">$ 0</div>
                     </div>
 
@@ -319,79 +355,66 @@ def build_html_structure(summary, governance, app_points, domains):
         </div>
 
         <div class="card" style="border-top: 4px solid var(--primary); background-color: #ffffff;">
-            <h2 class="card-header" style="border-bottom: none; margin-bottom: 0.5rem; color: var(--primary);">🧠 Motor de Decisão: Critérios de Classificação</h2>
-            <p style="font-size: 0.95rem; color: #64748b; margin-top: 0; margin-bottom: 1.5rem;">Como a inteligência define qual usuário consumirá qual licença no MAS 9.</p>
+            <h2 class="card-header" style="border-bottom: none; margin-bottom: 0.5rem; color: var(--primary);">🧠 Motor de Decisão: Como o Algoritmo Classificou</h2>
+            <p style="font-size: 0.95rem; color: #64748b; margin-top: 0; margin-bottom: 1.5rem;">Os valores injetados no simulador acima basearam-se na leitura do <i>logintracking</i> e segurança de todas as 7 instâncias.</p>
 
             <div class="legend-grid">
                 <div class="legend-box" style="border-left: 3px solid #1e3a8a;">
-                    <h3><span style="font-size:1.2rem;">🔰</span> Nível de Acesso (Entitlement)</h3>
+                    <h3><span style="font-size:1.2rem;">🔰</span> Nível (Entitlement)</h3>
                     <ul class="legend-list">
-                        <li><strong>PREMIUM:</strong> Obrigatório para usuários que acessam módulos críticos de <b>Óleo & Gás (Foresea)</b>, como Permissão de Trabalho (PTW) e HSE.</li>
-                        <li><strong>BASE:</strong> Atribuído a usuários da gestão de manutenção padrão (Ex: PCM, Ordens de Serviço, Almoxarifado).</li>
-                        <li><strong>LIMITED:</strong> Acessos restritos, focado apenas na visualização ou em apontamentos rápidos.</li>
+                        <li><strong>PREMIUM:</strong> Obrigatório a todo o corpo O&G da Foresea que toca em Permissão de Trabalho (PTW) e HSE.</li>
+                        <li><strong>BASE / LIMITED:</strong> Alocado à equipa estrita de backoffice ou visualizadores, após triagem de módulos.</li>
                     </ul>
                 </div>
 
                 <div class="legend-box" style="border-left: 3px solid #f59e0b;">
-                    <h3><span style="font-size:1.2rem;">🔑</span> Modelo (Auth vs Conc)</h3>
+                    <h3><span style="font-size:1.2rem;">🔑</span> Modelo e Data-Driven</h3>
                     <ul class="legend-list">
-                        <li><strong>AUTHORIZED:</strong> Licença fixa nominal. Atribuída a <b>Cargos Críticos / Liderança</b> ou usuários Onshore que ficam logados o tempo todo ("Power Users").</li>
-                        <li><strong>CONCURRENT:</strong> Licença em *Pool* (Simultânea). Atribuída ao grosso da tripulação das <b>Sondas (Offshore)</b> para otimizar os AppPoints durante os revezamentos de turno.</li>
-                    </ul>
-                </div>
-
-                <div class="legend-box" style="border-left: 3px solid #10b981;">
-                    <h3><span style="font-size:1.2rem;">📊</span> Perfil de Uso (Grupos)</h3>
-                    <ul class="legend-list">
-                        <li>O perfil mede o "peso" das permissões lógicas de cada usuário na base de dados (Quantidade de <i>Security Groups</i>).</li>
-                        <li><strong>POWER:</strong> Mais de 8 Grupos.</li>
-                        <li><strong>MEDIUM:</strong> Entre 5 e 8 Grupos.</li>
-                        <li><strong>LIGHT:</strong> 4 Grupos ou menos.</li>
+                        <li><strong>AUTHORIZED:</strong> Lideranças e Pessoal da Base. 1 utilizador = 1 Licença nominal fixa.</li>
+                        <li><strong>CONCURRENT (Por Cargo):</strong> Ao invés de usar uma média plana (33%), o Python agrupa o <b>LOGINTRACKING</b> pelo cargo (Ex: Eletricista) e extrai o pico real de concorrência na Sonda, refletindo fielmente a operação.</li>
                     </ul>
                 </div>
 
                 <div class="legend-box" style="border-left: 3px solid #64748b;">
-                    <h3><span style="font-size:1.2rem;">🪙</span> Custo (Tabela IBM MAS 9)</h3>
-                    <p style="font-size: 0.85rem; color: #64748b; margin-top:-0.5rem; margin-bottom: 0.8rem;">Matriz oficial de conversão.</p>
+                    <h3><span style="font-size:1.2rem;">🪙</span> Pesos (MAS 9)</h3>
+                    <p style="font-size: 0.85rem; color: #64748b; margin-top:-0.5rem; margin-bottom: 0.8rem;">Matriz IBM utilizada nos cálculos.</p>
                     <table style="width: 100%; font-size: 0.85rem; text-align: left; border-collapse: collapse; background: white;">
                         <tr style="background: #f1f5f9;"><th style="padding: 6px;">Nível</th><th style="padding: 6px;">Authorized</th><th style="padding: 6px;">Concurrent</th></tr>
                         <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 6px;"><b>Premium</b></td><td style="padding: 6px; font-weight:bold;">5 pts</td><td style="padding: 6px; font-weight:bold;">15 pts</td></tr>
                         <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 6px;"><b>Base</b></td><td style="padding: 6px;">3 pts</td><td style="padding: 6px;">10 pts</td></tr>
-                        <tr><td style="padding: 6px;"><b>Limited</b></td><td style="padding: 6px;">2 pts</td><td style="padding: 6px;">5 pts</td></tr>
                     </table>
                 </div>
             </div>
         </div>
 
         <div class="card">
-            <h2 class="card-header">Impacto Real da Inteligência de Dados no Parque Atual</h2>
+            <h2 class="card-header">Impacto de Saneamento e Algoritmo na Base Real</h2>
             <div class="stats-grid">
                 <div class="stat-card border-danger">
                     <div class="stat-value" style="color: var(--danger);">{fmt_br(custo_atual)}</div>
-                    <div class="stat-title">Cenário Base (As-Is)</div>
-                    <div class="stat-subtitle">"Migração cega" do Maximo 7.6</div>
+                    <div class="stat-title">As-Is (Migração Cega)</div>
+                    <div class="stat-subtitle">Custaria caro sem análise</div>
                 </div>
                 <div class="stat-card border-warning">
                     <div class="stat-value" style="color: var(--warning);">{fmt_br(custo_saneado)}</div>
-                    <div class="stat-title">Pós-Saneamento (Lógica)</div>
-                    <div class="stat-subtitle">Economia com remoção de inativos</div>
+                    <div class="stat-title">Pós-Saneamento</div>
+                    <div class="stat-subtitle">Apenas remoção de zumbis</div>
                 </div>
                 <div class="stat-card border-success">
                     <div class="stat-value" style="color: var(--success);">{fmt_br(custo_otimizado)}</div>
-                    <div class="stat-title">Cenário "To-Be" Otimizado</div>
-                    <div class="stat-subtitle">Com Downgrades e Turnos Offshore</div>
+                    <div class="stat-title">Otimizado pelas Escalas</div>
+                    <div class="stat-subtitle">Concorrência Extraída do Tracking</div>
                 </div>
             </div>
             <div style="text-align:center; margin-top: 1.5rem; font-size: 1.1rem; font-weight: bold; color: var(--primary);">
-                A estratégia de dados apresentada gera uma economia técnica de <span style="color: var(--success); font-size: 1.3rem;">{fmt_br(pontos_salvos_saneamento + pontos_salvos_inteligencia)} AppPoints</span> frente a uma migração tradicional.
+                Graças à análise de logintracking e partilha de sondas, estamos a recuperar tecnicamente <span style="color: var(--success); font-size: 1.3rem;">{fmt_br(pontos_salvos_saneamento + pontos_salvos_inteligencia)} AppPoints virtuais</span> face ao modelo fixo.
             </div>
         </div>
 
         <div class="card" style="background-color: #ffffff; border-color: #cbd5e1;">
             <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3 style="margin: 0; color: var(--primary);">📋 Plano de Ação: Tabela Dinâmica de Usuários</h3>
+                <h3 style="margin: 0; color: var(--primary);">📋 Plano de Ação: Tabela de Escala por Cargo</h3>
                 <button class="btn-export" onclick="exportTableToCSV('table-apppoints', 'Plano_Saneamento_Maximo.csv')">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                     Exportar Lista Atual para CSV
                 </button>
             </div>
@@ -413,14 +436,14 @@ def build_html_structure(summary, governance, app_points, domains):
                 </select>
             </div>
 
-            {render_table(['USERID', 'Nome', 'Recomendação', 'Entitlement', 'Licença', 'Custo', 'Logins 90d', 'Cargos (Origem)'], app_points_rows, 'table-apppoints', 'filterable-table')}
+            {render_table(['USERID', 'Nome', 'Recomendação', 'Entitlement', 'Licença Atual', 'AppPoints Ref.', 'Fator Escala (Real)', 'Cargos Unificados'], app_points_rows, 'table-apppoints', 'filterable-table')}
         </div>
     </div>
 
     <div id="tab-gov" class="container tab-content">
         <div class="alert-box" style="border-left-color: var(--warning); background-color: #fffbeb;">
-            <strong style="color: #b45309;">⚠️ Gestão de Passivo Lógico (Active Directory vs MAS)</strong>
-            <p style="color: #92400e;">Usuários clonados em diferentes sondas com e-mails errados ou logins colidindo representam brecha de auditoria SOX.</p>
+            <strong style="color: #b45309;">⚠️ Gestão de Passivo Multi-Sonda</strong>
+            <p style="color: #92400e;">Detetámos utilizadores com logins ativos repetidos em diferentes bases, gerando colisão de identidades e duplicação de consumo.</p>
         </div>
 
         <div class="card" style="background-color: #ffffff; border-color: #cbd5e1;">
@@ -429,23 +452,23 @@ def build_html_structure(summary, governance, app_points, domains):
                 <input type="text" id="searchInput" class="search-bar" onkeyup="filterTable()" placeholder="Buscar por ID ou Nome...">
                 <select id="decFilter" class="filter-select" onchange="filterTable()">
                     <option value="">Nível de Gravidade</option>
-                    <option value="PESSOAS DIFERENTES">🔴 ALTO - Colisão de Identidade (Nomes Divergentes)</option>
-                    <option value="REQUER REVISÃO">🟡 MÉDIO - Requer Análise Manual</option>
-                    <option value="POSSÍVEL MESMA PESSOA">🟢 BAIXO - Duplicidade Normal de Sonda</option>
+                    <option value="PESSOAS DIFERENTES">🔴 ALTO - Colisão (Nomes Divergentes no mesmo Login)</option>
+                    <option value="REQUER REVISÃO">🟡 MÉDIO - Requer Análise de RH</option>
+                    <option value="POSSÍVEL MESMA PESSOA">🟢 BAIXO - Duplicidade Padrão de Revezamento</option>
                 </select>
             </div>
         </div>
 
         <div class="card">
             <div style="display:flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem; padding-bottom: 0.75rem;">
-                <h2 style="margin:0; color: var(--secondary); font-size: 1.4rem; font-weight: 600;">Fila de Resolução (Worklist Consolidada)</h2>
+                <h2 style="margin:0; color: var(--secondary); font-size: 1.4rem; font-weight: 600;">Fila de Resolução (Cross-Environment)</h2>
                 <button class="btn-export" style="background-color: var(--secondary);" onclick="exportTableToCSV('table-worklist', 'Conflitos_Identidade_Foresea.csv')">Exportar Backlog</button>
             </div>
-            {render_table(['ID Bruto', 'Nome', 'Email/Login AD', 'Tipo Colisão', 'Gravidade (Motor AI)', 'Ação'], worklist_rows, 'table-worklist', 'filterable-table')}
+            {render_table(['ID Bruto', 'Nome', 'Login AD', 'Tipo Colisão', 'Gravidade', 'Ação'], worklist_rows, 'table-worklist', 'filterable-table')}
         </div>
 
         <div class="card">
-            <h2 class="card-header">Top 30: Cargos com Divergência de Matriz de Segurança</h2>
+            <h2 class="card-header">Top 30: Permissões de Segurança Divergentes (Base vs Sondas)</h2>
             <div class="type-analysis-grid">
                 {''.join(title_divergence_html)}
             </div>
@@ -466,7 +489,6 @@ def build_html_structure(summary, governance, app_points, domains):
             evt.currentTarget.classList.add("active");
         }}
 
-        // Módulo 1: Gráfico de Domínios
         const domainLabels = {list(domains.keys())};
         const domainValues = {list(domains.values())};
         new Chart(document.getElementById('domainChart'), {{
@@ -478,7 +500,6 @@ def build_html_structure(summary, governance, app_points, domains):
             options: {{ responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: {{ legend: {{ position: 'right' }} }} }}
         }});
 
-        // Módulo 2: Simulador Financeiro
         let simChartInstance = null;
         function formatMoney(amount) {{
             return "$" + amount.toLocaleString('pt-BR', {{minimumFractionDigits: 2, maximumFractionDigits: 2}});
@@ -491,7 +512,6 @@ def build_html_structure(summary, governance, app_points, domains):
             const bConc = parseInt(document.getElementById('inpBaseConc').value) || 0;
             const unitCost = parseFloat(document.getElementById('inpCustoUnitario').value) || 0;
 
-            // Pesos Oficiais IBM MAS 9
             const costPAuth = pAuth * 5;
             const costPConc = pConc * 15;
             const costBAuth = bAuth * 3;
@@ -525,7 +545,7 @@ def build_html_structure(summary, governance, app_points, domains):
                 simChartInstance = new Chart(ctxSim, {{
                     type: 'doughnut',
                     data: {{
-                        labels: ['Premium Auth (5)', 'Premium Conc (15)', 'Base Auth (3)', 'Base Conc (10)'],
+                        labels: ['Premium Auth', 'Premium Conc', 'Base Auth', 'Base Conc'],
                         datasets: [{{ data: simData, backgroundColor: ['#1e3a8a', '#3b82f6', '#047857', '#10b981'], borderWidth: 2, borderColor: '#ffffff' }}]
                     }},
                     options: {{ responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: {{ legend: {{ position: 'bottom' }} }} }}
@@ -534,7 +554,6 @@ def build_html_structure(summary, governance, app_points, domains):
         }}
         document.addEventListener('DOMContentLoaded', updateCalculator);
 
-        // Módulo 3: Lógica de Filtros
         function filterTable() {{
             var input = document.getElementById("searchInput").value.toUpperCase();
             var decFilter = document.getElementById("decFilter").value.toUpperCase();
@@ -572,7 +591,6 @@ def build_html_structure(summary, governance, app_points, domains):
             }}
         }}
 
-        // Módulo 4: Exportação Nativa para CSV
         function downloadCSV(csv, filename) {{
             var csvFile;
             var downloadLink;
@@ -593,7 +611,6 @@ def build_html_structure(summary, governance, app_points, domains):
 
             for (var i = 0; i < rows.length; i++) {{
                 if(rows[i].style.display === "none") continue;
-
                 var row = [], cols = rows[i].querySelectorAll("td, th");
                 for (var j = 0; j < cols.length; j++) {{
                     var data = cols[j].innerText.replace(/(\\r\\n|\\n|\\r)/gm, " ").replace(/"/g, '""');
