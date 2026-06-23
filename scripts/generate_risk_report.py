@@ -16,7 +16,8 @@ from scripts.domain.user import build_user_profiles, get_user_domain_category
 from scripts.services.analysis import analyze_governance, analyze_title_divergences
 from scripts.services.app_points import simulate_app_points
 from scripts.services.usage_analyzer import analyze_usage
-from scripts.reporting.html_builder import build_html_structure, fmt_br, render_table
+from scripts.reporting.html_builder import build_html_structure
+from scripts.reporting.html_helpers import fmt_br, render_table
 
 # --- Constants ---
 IN_DIR = ROOT / 'output' / 'consolidated'

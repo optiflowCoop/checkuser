@@ -1,7 +1,8 @@
 # scripts/services/app_points.py
 import pandas as pd
 import numpy as np
-from scripts.analysis.classification import classify_usage_profile, assign_license_model
+from scripts.analysis.classification import classify_usage_profile
+from scripts.analysis.licensing import assign_license_model
 from scripts.analysis.entitlement import determine_user_entitlement, calculate_app_points
 
 
@@ -21,29 +22,30 @@ def calculate_statistical_concurrency():
         track_df['ATTEMPTDATE'] = pd.to_datetime(track_df['ATTEMPTDATE'])
         track_df['LOGIN_DAY'] = track_df['ATTEMPTDATE'].dt.date
 
+        # FIX: Use 'TITLE' instead of 'TITLES'
         merged_df = pd.merge(track_df, user_df, on='USERID', how='inner')
 
         # 1. Contagem de logins únicos POR DIA POR CARGO
-        daily_active = merged_df.groupby(['LOGIN_DAY', 'TITLES'])['USERID'].nunique().reset_index()
+        daily_active = merged_df.groupby(['LOGIN_DAY', 'TITLE'])['USERID'].nunique().reset_index()
         daily_active.rename(columns={'USERID': 'ACTIVE_USERS'}, inplace=True)
 
         # 2. Contagem do passivo físico total POR CARGO
-        total_users = user_df.groupby('TITLES')['USERID'].nunique().reset_index()
+        total_users = user_df.groupby('TITLE')['USERID'].nunique().reset_index()
         total_users.rename(columns={'USERID': 'TOTAL_USERS'}, inplace=True)
 
         # 3. Cruzamento para achar a Taxa de Concorrência Diária
-        stats_df = pd.merge(daily_active, total_users, on='TITLES')
+        stats_df = pd.merge(daily_active, total_users, on='TITLE')
         stats_df['DAILY_RATIO'] = stats_df['ACTIVE_USERS'] / stats_df['TOTAL_USERS']
 
         # 4. Cálculo dos Percentis Estatísticos
-        percentiles = stats_df.groupby('TITLES')['DAILY_RATIO'].agg(
+        percentiles = stats_df.groupby('TITLE')['DAILY_RATIO'].agg(
             p50=lambda x: np.percentile(x, 50),
             p95=lambda x: np.percentile(x, 95),
             p100='max'
         ).reset_index()
 
         # Converte para dicionário aninhado: { 'Cargo': {'p50': 0.2, 'p95': 0.4, 'p100': 0.8} }
-        return percentiles.set_index('TITLES').to_dict('index')
+        return percentiles.set_index('TITLE').to_dict('index')
     except Exception as e:
         print(f"[Aviso Data Science] Fallback ativado. Erro no logintracking: {e}")
         return {}
