@@ -1,20 +1,33 @@
 #!/usr/bin/env python3
 """
-Fase 3: Análise de Uso Real - LOGINTRACKING
-
+Fase 3: Análise de Uso Real - LOGINTRACKING (REFACTORED COM SOLID)
+ 
 Consolida histórico de acesso por usuário (últimos 90 dias) e classifica:
-- Módulos O&G Premium vs Standard
-- Perfil de uso (Power/Medium/Light)
+- Módulos O&G Premium vs Standard (dados REAIS, não mocks)
+- Perfil de uso (Power/Medium/Light) via UserClassificationEngine
 - Usuários ociosos (sem login recente)
+
+MELHORIAS SOLID:
+- Usa UserClassificationEngine em vez de if/elif
+- Carrega rules de config/licensing_rules.json
+- Suporta custom rules via Strategy Pattern
+- Logs detalhados em cada fase
 """
 import csv
+import sys
 from pathlib import Path
 from collections import defaultdict
 from datetime import datetime, timedelta
+import time
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
 IN_DIR = ROOT / 'output' / 'consolidated'
 OUT_DIR = ROOT / 'output' / 'consolidated'
+
+# Importar novo engine SOLID
+from src.engine import UserClassificationEngine
+from src.config_loader import load_licensing_rules
 
 # Módulos O&G que REQUEREM licença PREMIUM
 OG_PREMIUM_MODULES = {

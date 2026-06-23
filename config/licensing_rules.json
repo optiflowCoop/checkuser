@@ -1,0 +1,281 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Centralized business rules for license optimization and user classification",
+    "last_updated": "2026-06-23",
+    "notes": "This file externalizes all hardcoded rules from analyze_usage.py, license_optimizer.py, and usage_analyzer.py"
+  },
+
+  "capacity_planning": {
+    "contracted_apppoints": 1200,
+    "description": "Total AppPoints contracted with IBM Maximo for FORESEA"
+  },
+
+  "premium_modules": {
+    "description": "Modules that REQUIRE PREMIUM licensing (Oil & Gas context)",
+    "modules": {
+      "WOTRACK": {
+        "og_keywords": ["PETROLEUM", "OILGAS", "OG_"],
+        "description": "Work Orders with O&G context"
+      },
+      "ASSET": {
+        "og_keywords": ["PETROLEUM", "OILGAS", "OG_"],
+        "description": "Asset Management with O&G context"
+      },
+      "PFWORKTRACK": {
+        "og_keywords": [],
+        "description": "PetroField Work Tracking"
+      },
+      "PFASSIGNMENT": {
+        "og_keywords": [],
+        "description": "Field Operations Assignment"
+      },
+      "LOCREC": {
+        "og_keywords": [],
+        "description": "Location Records"
+      },
+      "COMPLIANCE": {
+        "og_keywords": [],
+        "description": "Compliance Management"
+      },
+      "HSE": {
+        "og_keywords": [],
+        "description": "Health Safety Environment"
+      },
+      "DRILLING": {
+        "og_keywords": [],
+        "description": "Drilling Operations"
+      }
+    }
+  },
+
+  "standard_modules": {
+    "description": "Modules that do NOT require Premium (BASE licensing)",
+    "modules": [
+      "STARTCNTR",
+      "ASSET",
+      "WORKORDER",
+      "PM",
+      "INVENTORY",
+      "JOBPLAN",
+      "SR",
+      "PURCHASING",
+      "RECEIVING",
+      "MATRECTRANS"
+    ]
+  },
+
+  "user_classification": {
+    "priority_domains": {
+      "description": "Email domains that classify user as FORESEA permanent employee",
+      "domains": [
+        "@foresea.com",
+        "@foresea-partner.com"
+      ]
+    },
+
+    "offshore_keywords": {
+      "description": "Keywords in TITLE or PERSONGROUP that identify OFFSHORE workers (shift-based, 12h rotations)",
+      "keywords": [
+        "offshore",
+        "plataforma",
+        "platform",
+        "embarcado",
+        "fpso",
+        "rig",
+        "sonda",
+        "vessel",
+        "navio",
+        "mob_",
+        "turno"
+      ]
+    },
+
+    "critical_functions": {
+      "description": "Job titles that require AUTHORIZED access even if OFFSHORE (24/7 availability needed)",
+      "keywords": [
+        "almoxarife",
+        "almox",
+        "supply",
+        "suprimento",
+        "supervisor",
+        "coord",
+        "lider",
+        "gerente",
+        "gestor",
+        "planejador",
+        "planner",
+        "programador",
+        "scheduler",
+        "engenheiro",
+        "engineer",
+        "inspetor",
+        "inspector"
+      ]
+    },
+
+    "og_group_keywords": {
+      "description": "Security group name patterns that indicate O&G access requiring Premium",
+      "keywords": [
+        "OG_",
+        "O&G",
+        "OILGAS",
+        "PETROLEUM",
+        "PETRO",
+        "HSE",
+        "DRILLING",
+        "DRILL",
+        "RIG",
+        "FPSO",
+        "PFWORK",
+        "LOCREC",
+        "COMPLIANCE",
+        "WELL"
+      ]
+    }
+  },
+
+  "user_tier_rules": {
+    "description": "Rules for classifying users into tiers based on usage patterns",
+    "rules": {
+      "IDLE": {
+        "condition": "login_count_90d == 0",
+        "license_type": "NONE",
+        "app_points": 0,
+        "description": "User with zero logins in last 90 days"
+      },
+      "VERY_LIGHT": {
+        "condition": "login_count_90d < 5",
+        "license_type": "LIMITED",
+        "app_points": 5,
+        "description": "User with extremely low usage (< 5 logins/90d)"
+      },
+      "CRITICAL_OFFSHORE_OG": {
+        "condition": "operational_presence == OFFSHORE AND is_critical_function AND has_premium_access",
+        "license_type": "PREMIUM_AUTHORIZED",
+        "app_points": 5,
+        "description": "Offshore critical roles (supervisor, almoxarife) with O&G access"
+      },
+      "CRITICAL_OFFSHORE_STD": {
+        "condition": "operational_presence == OFFSHORE AND is_critical_function AND NOT has_premium_access",
+        "license_type": "BASE_AUTHORIZED",
+        "app_points": 2,
+        "description": "Offshore critical roles without O&G access"
+      },
+      "OFFSHORE_OG": {
+        "condition": "operational_presence == OFFSHORE AND NOT is_critical_function AND has_premium_access",
+        "license_type": "PREMIUM_CONCURRENT",
+        "app_points": 15,
+        "description": "Offshore operational roles (technicians, operators) with O&G access"
+      },
+      "OFFSHORE_STD": {
+        "condition": "operational_presence == OFFSHORE AND NOT is_critical_function AND NOT has_premium_access",
+        "license_type": "BASE_CONCURRENT",
+        "app_points": 10,
+        "description": "Offshore operational roles without O&G access"
+      },
+      "POWER_OG": {
+        "condition": "operational_presence == ONSHORE AND has_premium_access AND login_count_90d > 60",
+        "license_type": "PREMIUM_AUTHORIZED",
+        "app_points": 5,
+        "description": "Onshore high-usage users with O&G access"
+      },
+      "MEDIUM_OG": {
+        "condition": "operational_presence == ONSHORE AND has_premium_access AND login_count_90d <= 60",
+        "license_type": "PREMIUM_CONCURRENT",
+        "app_points": 15,
+        "description": "Onshore medium-usage users with O&G access"
+      },
+      "POWER_STD": {
+        "condition": "operational_presence == ONSHORE AND NOT has_premium_access AND login_count_90d > 60",
+        "license_type": "BASE_AUTHORIZED",
+        "app_points": 2,
+        "description": "Onshore high-usage users without O&G access"
+      },
+      "MEDIUM_STD": {
+        "condition": "operational_presence == ONSHORE AND NOT has_premium_access AND login_count_90d <= 60",
+        "license_type": "BASE_CONCURRENT",
+        "app_points": 10,
+        "description": "Onshore medium-usage users without O&G access"
+      }
+    }
+  },
+
+  "optimization_thresholds": {
+    "description": "Thresholds for identifying optimization opportunities",
+    "idle_user": {
+      "days_without_login": 90,
+      "optimization_type": "Desativar",
+      "action": "Disable user",
+      "savings_multiplier": 1.0
+    },
+    "very_low_usage": {
+      "max_logins": 5,
+      "optimization_type": "Uso Muito Baixo",
+      "action": "Avaliar desativação",
+      "savings_multiplier": 0.7
+    },
+    "premium_without_og_usage": {
+      "condition": "Has PREMIUM license but zero O&G apps accessed",
+      "optimization_type": "Premium sem uso O&G",
+      "action": "DOWNGRADE to BASE",
+      "apppoints_savings": 10
+    },
+    "authorized_low_usage": {
+      "max_logins": 30,
+      "condition": "AUTHORIZED model but infrequent access",
+      "optimization_type": "Authorized → Concurrent",
+      "action": "MOVE to CONCURRENT",
+      "apppoints_savings": 3
+    }
+  },
+
+  "usage_analysis_parameters": {
+    "description": "Parameters for analyzing user activity",
+    "login_frequency_window_days": 90,
+    "power_user_threshold": 60,
+    "minimum_logins_for_premium": 1,
+    "minimum_logins_for_authorized": 30,
+    "preview_apps_limit": 5,
+    "note": "These parameters control how we segment users and identify patterns"
+  },
+
+  "user_categories": {
+    "FORESEA": {
+      "description": "Permanent FORESEA employees (should be migrated to modern platform)",
+      "domain_match": "@foresea.com or @foresea-partner.com",
+      "migration_priority": "HIGH"
+    },
+    "TEMPORARY": {
+      "description": "Contractors / temporary employees (should NOT be migrated)",
+      "domain_match": "Any domain NOT in FORESEA list",
+      "migration_priority": "DO_NOT_MIGRATE",
+      "action": "Exclude from license optimization"
+    }
+  },
+
+  "operational_presence_types": {
+    "OFFSHORE": {
+      "description": "Shift-based workers on platforms/rigs (12h rotations)",
+      "license_model_default": "CONCURRENT",
+      "timezone_consideration": true,
+      "simultaneity_factor": "low"
+    },
+    "ONSHORE": {
+      "description": "Administrative/office-based workers",
+      "license_model_default": "AUTHORIZED",
+      "timezone_consideration": false,
+      "simultaneity_factor": "high"
+    }
+  },
+
+  "apppoints_cost_matrix": {
+    "description": "Cost mapping for different license configurations",
+    "BASE_AUTHORIZED": 2,
+    "BASE_CONCURRENT": 10,
+    "PREMIUM_AUTHORIZED": 5,
+    "PREMIUM_CONCURRENT": 15,
+    "VERY_LIGHT_LIMITED": 5,
+    "IDLE_NONE": 0
+  }
+}
