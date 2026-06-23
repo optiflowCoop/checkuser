@@ -65,10 +65,8 @@ class ExcludeTemporaryStrategy(OptimizationStrategy):
         return {
             'type': 'EXCLUSAO_TEMPORARIO',
             'action': 'Excluir da migração',
-            'icon': '🔵',
             'description': 'Usuário temporário/contratado - não migrar',
-            'potential_savings': app_points,
-            'savings_type': 'exclusion',
+            'apppoints_saved': app_points,
             'priority': 'CRITICAL'
         }
     
@@ -92,10 +90,8 @@ class DisableIdleUserStrategy(OptimizationStrategy):
         return {
             'type': 'USUARIO_OCIOSO',
             'action': 'Desativar',
-            'icon': '🔴',
             'description': 'Sem uso há 90 dias',
-            'potential_savings': app_points,
-            'savings_type': 'idle',
+            'apppoints_saved': app_points,
             'priority': 'HIGH'
         }
     
@@ -123,10 +119,8 @@ class EvaluateVeryLowUsageStrategy(OptimizationStrategy):
         return {
             'type': 'USO_MUITO_BAIXO',
             'action': 'Avaliar desativação',
-            'icon': '🟠',
             'description': f'Uso extremamente baixo ({user_data.get("LOGIN_COUNT_90D", 0)} logins/90d)',
-            'potential_savings': int(potential_savings),
-            'savings_type': 'conditional',
+            'apppoints_saved': int(potential_savings),
             'priority': 'MEDIUM',
             'validation_required': 'HR'
         }
@@ -158,12 +152,10 @@ class DowngradePremiumStrategy(OptimizationStrategy):
         return {
             'type': 'DOWNGRADE_PREMIUM_PARA_BASE',
             'action': 'Mudar para BASE',
-            'icon': '🟡',
             'description': 'Licença Premium sem uso de módulos O&G',
-            'potential_savings': 5,
             'apppoints_current': 15,
             'apppoints_new': 10,
-            'savings_type': 'downgrade',
+            'apppoints_saved': 5,
             'priority': 'MEDIUM'
         }
     
@@ -192,12 +184,10 @@ class MoveAuthorizedToConcurrentStrategy(OptimizationStrategy):
         return {
             'type': 'AUTHORIZED_PARA_CONCURRENT',
             'action': 'Mudar para CONCURRENT',
-            'icon': '🟡',
             'description': f'Uso baixo não justifica Authorized ({user_data.get("LOGIN_COUNT_90D", 0)} logins/90d)',
-            'potential_savings': 3,
             'apppoints_current': 5,
             'apppoints_new': 2,
-            'savings_type': 'optimization',
+            'apppoints_saved': 3,
             'priority': 'MEDIUM'
         }
     
@@ -221,10 +211,8 @@ class ValidateOkStrategy(OptimizationStrategy):
         return {
             'type': 'OK',
             'action': 'Manter',
-            'icon': '🟢',
             'description': 'Licença alinhada com padrão de uso',
-            'potential_savings': 0,
-            'savings_type': 'none',
+            'apppoints_saved': 0,
             'priority': 'LOW'
         }
     
@@ -337,17 +325,13 @@ class LicenseOptimizer:
         temp_users = sum(1 for u in user_list if u.get('USER_CATEGORY') == 'TEMPORARY')
         
         total_current_apppoints = sum(u.get('APP_POINTS_COST', 0) for u in user_list if u.get('USER_CATEGORY') == 'FORESEA')
-        total_savings = sum(o.get('potential_savings', 0) for o in optimizations)
+        total_savings = sum(o.get('apppoints_saved', 0) for o in optimizations)
         total_after_optimization = total_current_apppoints - total_savings
         
         idle_count = sum(1 for o in optimizations if o.get('type') == 'USUARIO_OCIOSO')
         downgrade_count = sum(1 for o in optimizations if 'DOWNGRADE' in o.get('type', ''))
         concurrent_switch = sum(1 for o in optimizations if 'CONCURRENT' in o.get('type', ''))
         temp_exclusion = temp_users
-        
-        within_budget = total_after_optimization <= self.contracted_apppoints
-        budget_status = 'DENTRO' if within_budget else 'ACIMA'
-        margin = abs(self.contracted_apppoints - total_after_optimization)
         
         return {
             'total_users': total_users,
@@ -357,9 +341,6 @@ class LicenseOptimizer:
             'apppoints_current': total_current_apppoints,
             'apppoints_potential_savings': int(total_savings),
             'apppoints_after_optimization': int(total_after_optimization),
-            'savings_percentage': (total_savings / total_current_apppoints * 100) if total_current_apppoints > 0 else 0,
-            'budget_status': budget_status,
-            'budget_margin': int(margin),
             'idle_users_count': idle_count,
             'downgrade_candidates': downgrade_count,
             'concurrent_switches': concurrent_switch,

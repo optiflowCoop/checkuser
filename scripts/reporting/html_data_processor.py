@@ -2,12 +2,14 @@
 import json
 from .html_helpers import get_recommendation_badge
 
+
 class DataProcessor:
-    def __init__(self, summary, governance, app_points, domains):
+    def __init__(self, summary, governance, app_points, domains, identity_analytics):
         self.summary = summary
         self.governance = governance
         self.app_points = app_points
         self.domains = domains
+        self.identity_analytics = identity_analytics
 
     def process_app_points_analytics(self):
         inativos_count = 0
@@ -19,7 +21,7 @@ class DataProcessor:
             'saneado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0},
             'otimizado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}
         }
-        
+
         scenario_points = {'p50': 0, 'p95': 0, 'p100': 0, 'blackout': 0}
 
         opt_auth_points = 0
@@ -29,7 +31,7 @@ class DataProcessor:
             lic = u['LICENSE_MODEL']
             ent = u['ENTITLEMENT']
             rec = u['OPTIMIZATION_REC']
-            
+
             is_prem = (ent == 'PREMIUM')
             is_auth = (lic == 'AUTHORIZED')
 
@@ -55,10 +57,10 @@ class DataProcessor:
             # 3. Otimizado Scenario (Logic for final calculation)
             final_ent = 'BASE' if (rec == 'DOWNGRADE_CANDIDATE' and ent == 'PREMIUM') else ent
             final_lic = 'CONCURRENT' if rec == 'MOVE_TO_CONCURRENT' else lic
-            
+
             f_is_prem = (final_ent == 'PREMIUM')
             f_is_auth = (final_lic == 'AUTHORIZED')
-            
+
             # **FIX**: Populate 'otimizado' with PHYSICAL user counts for the UI
             if f_is_prem:
                 scenarios_data['otimizado']['pA' if f_is_auth else 'pC'] += 1
@@ -82,23 +84,25 @@ class DataProcessor:
         scenario_points['p95'] = opt_auth_points + sum(user['points'] * user['f_p95'] for user in opt_conc_users)
         scenario_points['p100'] = opt_auth_points + sum(user['points'] * user['f_p100'] for user in opt_conc_users)
         scenario_points['blackout'] = opt_auth_points + sum(user['points'] for user in opt_conc_users)
-        
+
         return {
             'inativos_count': inativos_count,
             'downgrade_count': downgrade_count,
             'concurrent_count': concurrent_count,
-            'scenarios_data': scenarios_data, # Contains physical counts for UI
-            'scenario_points': scenario_points # Contains precise factored totals for display
+            'scenarios_data': scenarios_data,  # Contains physical counts for UI
+            'scenario_points': scenario_points  # Contains precise factored totals for display
         }
 
     def prepare_governance_tables(self):
         cross_env_rows = [[f"<strong>{c.get('USERID')}</strong>", c.get('ENV_LIST'), c.get('DISPLAYNAME_LIST'),
-                           get_recommendation_badge(c.get('HYPOTHESIS', ''))] for c in self.governance['cross_env'][:200]]
-        
-        login_conflicts_rows = [[f"<strong>{l.get('LOGINID')}</strong>", l.get('USERID_LIST'), l.get('DISPLAYNAME_LIST'),
-                                 get_recommendation_badge(l.get('MERGE_DECISION', ''))] for l in
-                                self.governance['login_conflicts'][:200]]
-        
+                           get_recommendation_badge(c.get('HYPOTHESIS', ''))] for c in
+                          self.governance['cross_env'][:200]]
+
+        login_conflicts_rows = [
+            [f"<strong>{l.get('LOGINID')}</strong>", l.get('USERID_LIST'), l.get('DISPLAYNAME_LIST'),
+             get_recommendation_badge(l.get('MERGE_DECISION', ''))] for l in
+            self.governance['login_conflicts'][:200]]
+
         worklist_rows = [[w.get('RAW_ID'), w.get('DISPLAYNAME'), w.get('HYPOTHESIS'), w.get('MERGE_DECISION')] for w in
                          self.governance['worklist'][:200]]
 
@@ -133,12 +137,38 @@ class DataProcessor:
         app_points_rows = []
         for s in sorted(self.app_points, key=lambda x: x.get('APP_POINTS', 0), reverse=True)[:1000]:
             points = s.get('APP_POINTS', 0)
-            fator_display = f"Med: {s.get('FACTOR_P50', 0) * 100:.0f}% | Pico: {s.get('FACTOR_P95', 0) * 100:.0f}%" if s.get('LICENSE_MODEL') == 'CONCURRENT' else "100% Fixo"
-            
+            rec_code = s.get('OPTIMIZATION_REC')
+
+            # --- LÓGICA DE RECOMENDAÇÃO ENRIQUECIDA E CORRIGIDA ---
+            recommendation_badge_html = ''
+            recommendation_text = ''
+
+            if rec_code == 'INATIVO (>90d)':
+                recommendation_badge_html = get_recommendation_badge(rec_code)
+                recommendation_text = "Desativar conta por inatividade."
+            elif rec_code == 'DOWNGRADE_CANDIDATE':
+                recommendation_badge_html = get_recommendation_badge(rec_code)
+                recommendation_text = "Mover de Premium para Base (não usa módulos O&G)."
+            elif rec_code == 'MOVE_TO_CONCURRENT':
+                recommendation_badge_html = get_recommendation_badge(rec_code)
+                recommendation_text = "Mover de Authorized para Concurrent (baixa frequência de uso)."
+            elif rec_code == 'CONFIRMED_AUTHORIZED':
+                recommendation_badge_html = get_recommendation_badge(rec_code)
+                recommendation_text = "Manter Authorized (alto uso confirmado)."
+            else:
+                recommendation_badge_html = get_recommendation_badge('OK')
+                recommendation_text = "Licença atual adequada ao perfil de uso."
+
+            # Combina o badge com o texto descritivo
+            full_recommendation_html = f"{recommendation_badge_html}<br><small>{recommendation_text}</small>"
+
+            fator_display = f"Med: {s.get('FACTOR_P50', 0) * 100:.0f}% | Pico: {s.get('FACTOR_P95', 0) * 100:.0f}%" if s.get(
+                'LICENSE_MODEL') == 'CONCURRENT' else "100% Fixo"
+
             app_points_rows.append([
                 f"<strong>{s.get('USERID')}</strong>",
                 s.get('DISPLAYNAME', 'N/A')[:30],
-                get_recommendation_badge(s.get('OPTIMIZATION_REC')),
+                full_recommendation_html,  # Coluna de recomendação enriquecida
                 f"<span class='badge' style='background:#f1f5f9; color:var(--primary);'>{s.get('ENTITLEMENT')}</span>",
                 f"<strong>{s.get('LICENSE_MODEL')}</strong>",
                 f"<strong>{points}</strong>",
@@ -158,5 +188,6 @@ class DataProcessor:
             'gov_tables': gov_tables,
             'app_points_rows': app_points_rows,
             'summary': self.summary,
-            'domains': self.domains
+            'domains': self.domains,
+            'identity_analytics': self.identity_analytics
         }

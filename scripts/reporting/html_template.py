@@ -3,6 +3,7 @@ from datetime import datetime
 import json
 from .html_helpers import fmt_br, render_table
 
+
 # --- Private Component Functions ---
 
 def _render_styles():
@@ -61,9 +62,11 @@ def _render_styles():
         .type-card h4 { margin: 0 0 1rem 0; font-size: 1.1rem; color: var(--primary); border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
         .env-divergence { margin-bottom: 0.8rem; padding: 0.8rem; background: #f8fafc; border-left: 3px solid var(--warning); border-radius: 4px; }
         .env-header { font-weight: 700; color: var(--primary); margin-bottom: 0.4rem; font-size: 0.9rem; }
-        .preset-btn { background: white; border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; font-size: 0.9rem; font-weight: 600; cursor: pointer; color: var(--secondary); transition: all 0.2s; }
+        .preset-btn-group { display: flex; flex-direction: column; }
+        .preset-btn { background: white; border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; font-size: 0.9rem; font-weight: 600; cursor: pointer; color: var(--secondary); transition: all 0.2s; text-align: left; }
         .preset-btn:hover { background: #f1f5f9; }
         .preset-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .preset-btn p { margin: 2px 0 0 0; font-size: 0.8rem; font-weight: normal; opacity: 0.8; }
         .calc-input-group { margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 0.5rem; }
         .calc-input-group label { font-weight: 600; color: var(--text); font-size: 0.95rem; }
         .calc-input-group input { width: 100px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 1.1rem; text-align: center; color: var(--primary); font-weight: bold; }
@@ -80,13 +83,14 @@ def _render_styles():
     </style>
     """
 
+
 def _render_header_and_tabs():
     """Returns the top bar and tab buttons."""
     return f"""
     <div class="topbar">
         <div>
             <h1>Dashboard Gerencial MAS 9.1 | Foresea</h1>
-            <p>Capacity Planning Avançado, Saneamento e Simulação de ROI</p>
+            <p>Capacity Planning Avançado e Saneamento de Identidades</p>
         </div>
         <div>
             <p style="text-align: right; color: #cbd5e1;">Gerado em:<br><strong>{datetime.now().strftime("%d/%m/%Y %H:%M")}</strong></p>
@@ -95,44 +99,52 @@ def _render_header_and_tabs():
     <div class="tabs">
         <button class="tab-button active" onclick="openTab(event, 'tab-painel')">1. Painel Operacional</button>
         <button class="tab-button" onclick="openTab(event, 'tab-gov')">2. Governança & Saneamento</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-apppoints')" style="color:#60a5fa;">3. Cenários & ROI</button>
+        <button class="tab-button" onclick="openTab(event, 'tab-apppoints')" style="color:#60a5fa;">3. Cenários de AppPoints</button>
         <button class="tab-button" onclick="openTab(event, 'tab-eventos')" style="color:var(--warning);">4. Eventos Críticos</button>
         <button class="tab-button" onclick="openTab(event, 'tab-tabela')">5. Plano de Ação</button>
     </div>
     """
 
-def _render_tab_painel(summary, analytics, domains):
-    """Renders the 'Painel Operacional' tab content."""
+
+def _render_tab_painel(identity_analytics, analytics):
+    """Renders the 'Painel Operacional' tab content using the new identity data."""
+    total_unique = identity_analytics.get('total_unique_users', 0)
+    active_unique = identity_analytics.get('total_active_unique', 0)
+    status_counts = identity_analytics.get('status_counts', {})
+    domain_counts = identity_analytics.get('domain_counts', {})
+    downgrade_count = analytics.get('downgrade_count', 0)
+    concurrent_count = analytics.get('concurrent_count', 0)
+
     return f"""
     <div id="tab-painel" class="container tab-content active">
         <div class="alert-box">
-            <strong>🎯 Resumo Consolidador (Base de Dados Real)</strong>
-            <p>A inteligência mapeou as 7 instâncias. Detetamos {fmt_br(analytics['inativos_count'])} inativos e {fmt_br(analytics['downgrade_count'] + analytics['concurrent_count'])} elegíveis para partilha de turnos/downgrade de licenças.</p>
+            <strong>🎯 Resumo Consolidado (Base de Dados Real e Deduplicada)</strong>
+            <p>A inteligência mapeou as 7 instâncias, identificando {fmt_br(total_unique)} usuários únicos. Deste total, {fmt_br(status_counts.get('INACTIVE', 0))} estão inativos e {fmt_br(downgrade_count + concurrent_count)} são elegíveis para otimização de licença.</p>
         </div>
         <div class="card">
-            <h2 class="card-header">Radar Operacional (As-Is)</h2>
+            <h2 class="card-header">Radar de Identidade e Acesso (Visão Única)</h2>
             <div class="stats-grid">
-                <div class="stat-card border-success"><div class="stat-value" style="color: var(--success);">{fmt_br(summary['active_profiles_count'])}</div><div class="stat-title">Pessoas Únicas</div></div>
-                <div class="stat-card border-neutral"><div class="stat-value" style="color: var(--neutral);">{fmt_br(analytics['inativos_count'])}</div><div class="stat-title">Contas Zumbi</div><div class="stat-subtitle">Sem login há > 90d</div></div>
-                <div class="stat-card border-warning"><div class="stat-value" style="color: var(--warning);">{fmt_br(analytics['downgrade_count'])}</div><div class="stat-title">Elegíveis Downgrade</div></div>
-                <div class="stat-card border-accent"><div class="stat-value" style="color: var(--accent);">{fmt_br(analytics['concurrent_count'])}</div><div class="stat-title">Migração Offshore</div></div>
+                <div class="stat-card border-success"><div class="stat-value" style="color: var(--success);">{fmt_br(active_unique)}</div><div class="stat-title">Usuários Únicos Ativos</div></div>
+                <div class="stat-card border-neutral"><div class="stat-value" style="color: var(--neutral);">{fmt_br(status_counts.get('INACTIVE', 0))}</div><div class="stat-title">Usuários Inativos</div><div class="stat-subtitle">Sem login há > 90d</div></div>
+                <div class="stat-card border-warning"><div class="stat-value" style="color: var(--warning);">{fmt_br(downgrade_count)}</div><div class="stat-title">Elegíveis Downgrade</div></div>
+                <div class="stat-card border-accent"><div class="stat-value" style="color: var(--accent);">{fmt_br(concurrent_count)}</div><div class="stat-title">Elegíveis p/ Concorrência</div></div>
             </div>
             <div class="charts-container" style="grid-template-columns: 1fr 2fr;">
                 <div class="chart-box" style="flex-direction: column;">
-                    <h3 style="margin-top:0; font-size: 1rem; color: var(--primary);">Distribuição Contratual (Domínio)</h3>
+                    <h3 style="margin-top:0; font-size: 1rem; color: var(--primary);">Distribuição de Domínios (Ativos)</h3>
                     <canvas id="domainChart"></canvas>
                 </div>
                 <div class="chart-box" style="align-items: flex-start; padding: 2rem;">
                     <div style="width: 100%;">
-                        <h3 style="margin-top:0; font-size: 1rem; color: var(--primary);">Segregação Operacional</h3>
+                        <h3 style="margin-top:0; font-size: 1rem; color: var(--primary);">Segregação por Vínculo Contratual</h3>
                         <p style="font-size: 0.9rem; color: var(--text); margin-bottom: 1rem;">
-                            Terceiros representam passivo. Recomenda-se migrar acessos esporádicos de parceiros para integrações via API, otimizando AppPoints.
+                            Usuários de outros domínios ou sem domínio devem ser revisados para desativação ou migração para integrações via API, visando otimizar custos.
                         </p>
                         <div style="display: flex; justify-content: space-between; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border);">
-                            <div style="text-align:center"><strong style="color: #10b981; font-size: 1.4rem;">{fmt_br(domains.get('FORESEA', 0))}</strong> <br><span style="font-size: 0.8rem; font-weight:bold; color: #64748b;">FORESEA</span></div>
-                            <div style="text-align:center"><strong style="color: #2563eb; font-size: 1.4rem;">{fmt_br(domains.get('PARCEIRO', 0))}</strong> <br><span style="font-size: 0.8rem; font-weight:bold; color: #64748b;">PARCEIROS</span></div>
-                            <div style="text-align:center"><strong style="color: #f59e0b; font-size: 1.4rem;">{fmt_br(domains.get('TERCEIRO', 0))}</strong> <br><span style="font-size: 0.8rem; font-weight:bold; color: #64748b;">TERCEIROS</span></div>
-                            <div style="text-align:center"><strong style="color: #ef4444; font-size: 1.4rem;">{fmt_br(domains.get('SEM DOMINIO', 0))}</strong> <br><span style="font-size: 0.8rem; font-weight:bold; color: #64748b;">S/ DOMÍNIO</span></div>
+                            <div style="text-align:center"><strong style="color: #10b981; font-size: 1.4rem;">{fmt_br(domain_counts.get('foresea', 0))}</strong> <br><span style="font-size: 0.8rem; font-weight:bold; color: #64748b;">FORESEA</span></div>
+                            <div style="text-align:center"><strong style="color: #2563eb; font-size: 1.4rem;">{fmt_br(domain_counts.get('foresea_partner', 0))}</strong> <br><span style="font-size: 0.8rem; font-weight:bold; color: #64748b;">PARCEIROS</span></div>
+                            <div style="text-align:center"><strong style="color: #f59e0b; font-size: 1.4rem;">{fmt_br(domain_counts.get('other', 0))}</strong> <br><span style="font-size: 0.8rem; font-weight:bold; color: #64748b;">OUTROS</span></div>
+                            <div style="text-align:center"><strong style="color: #ef4444; font-size: 1.4rem;">{fmt_br(domain_counts.get('no_domain', 0))}</strong> <br><span style="font-size: 0.8rem; font-weight:bold; color: #64748b;">S/ DOMÍNIO</span></div>
                         </div>
                     </div>
                 </div>
@@ -140,6 +152,7 @@ def _render_tab_painel(summary, analytics, domains):
         </div>
     </div>
     """
+
 
 def _render_tab_gov(gov_tables):
     """Renders the 'Governança & Saneamento' tab content."""
@@ -179,44 +192,51 @@ def _render_tab_gov(gov_tables):
     </div>
     """
 
-def _render_tab_apppoints():
-    """Renders the 'Cenários & ROI' tab content."""
-    return """
+
+def _render_tab_apppoints(analytics):
+    """Renders the 'Cenários de AppPoints' tab content."""
+    return f"""
     <div id="tab-apppoints" class="container tab-content">
         <div class="card" style="border-left: 4px solid var(--success); background-image: linear-gradient(to right, #ffffff, #f8fafc);">
             <div class="card-header" style="border:none; margin-bottom:0.5rem;">
                 <div>
-                    <h2 style="margin:0; color:var(--success);">🧮 Simulador Financeiro (Comparativo de ROI)</h2>
-                    <p style="font-size: 0.9rem; color: #64748b; font-weight: normal; margin-top: 4px;">Utilize os filtros abaixo para comprovar a poupança gerada pela inteligência de dados perante a Diretoria.</p>
+                    <h2 style="margin:0; color:var(--success);">🧮 Simulador de Cenários de AppPoints</h2>
+                    <p style="font-size: 0.9rem; color: #64748b; font-weight: normal; margin-top: 4px;">Selecione um cenário para ver o impacto no consumo de AppPoints ou edite os campos para uma simulação manual.</p>
                 </div>
             </div>
-            <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: #f1f5f9; border-radius: 8px; flex-wrap:wrap;">
-                <button class="preset-btn" id="btnAsIs" onclick="loadScenario('asis', this)">1. Migração Cega (As-Is)</button>
-                <button class="preset-btn" id="btnSaneado" onclick="loadScenario('saneado', this)">2. Saneamento (Remove >90d)</button>
-                <button class="preset-btn active" id="btnOtimizado" onclick="loadScenario('otimizado', this)">3. Otimizado (P95)</button>
-                <button class="preset-btn" id="btnOtimizadoP50" onclick="loadScenario('otimizado_p50', this)">4. Cotidiano (P50)</button>
-            </div>
-            <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 300px; background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border);">
-                    <div style="margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom:1rem;">
-                        <label style="font-weight: bold; color: var(--primary);">💵 Custo Estimado por AppPoint/Ano:</label>
-                        <input type="number" id="inpCustoUnitario" value="500" min="0" oninput="updateCalculator()" style="width: 100%; padding: 8px; margin-top: 4px; font-weight: bold; border: 1px solid var(--border); border-radius: 6px;">
-                    </div>
-                    <div class="calc-input-group"><label>Premium Auth <span class="calc-badge-pts">5 pts</span></label><input type="number" id="inpPremAuth" oninput="updateCalculator()"></div>
-                    <div class="calc-input-group"><label>Premium Conc <span class="calc-badge-pts">15 pts</span></label><input type="number" id="inpPremConc" oninput="updateCalculator()"></div>
-                    <div class="calc-input-group"><label>Base Auth <span class="calc-badge-pts">3 pts</span></label><input type="number" id="inpBaseAuth" oninput="updateCalculator()"></div>
-                    <div class="calc-input-group" style="border:none; margin:0; padding:0;"><label>Base Conc <span class="calc-badge-pts">10 pts</span></label><input type="number" id="inpBaseConc" oninput="updateCalculator()"></div>
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: start;">
+                <div class="preset-btn-group">
+                    <button class="preset-btn" id="btnAsIs" onclick="loadScenario('asis', this)">
+                        <strong>1. Cenário Atual (As-Is)</strong>
+                        <p>Simula o consumo se todos os usuários atuais fossem migrados sem nenhuma otimização.</p>
+                    </button>
+                    <button class="preset-btn" id="btnSaneado" onclick="loadScenario('saneado', this)">
+                        <strong>2. Pós-Saneamento</strong>
+                        <p>Simula o consumo após a desativação de usuários inativos (> 90 dias).</p>
+                    </button>
+                    <button class="preset-btn active" id="btnOtimizado" onclick="loadScenario('otimizado_p95', this)">
+                        <strong>3. Otimizado (Pico P95)</strong>
+                        <p>Aplica todas as otimizações (inativos, downgrades, concorrência) usando o fator de pico (P95).</p>
+                    </button>
+                    <button class="preset-btn" id="btnOtimizadoP50" onclick="loadScenario('otimizado_p50', this)">
+                        <strong>4. Otimizado (Mediana P50)</strong>
+                        <p>Aplica todas as otimizações usando o fator de uso mediano (P50) para um dia comum.</p>
+                    </button>
                 </div>
-                <div style="flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: center;">
-                    <h3 style="margin: 0; font-size: 1rem; color: var(--secondary);">AppPoints Requeridos</h3>
-                    <div id="calcTotalDisplay" style="font-size: 4.5rem; font-weight: 800; color: var(--success); line-height:1;">0</div>
-                    <div style="margin-top: 1.5rem; padding: 1rem; background:#ecfdf5; border: 1px solid #a7f3d0; border-radius:8px;">
-                        <div style="font-size: 0.85rem; font-weight: bold; color: #065f46; text-transform:uppercase;">Custo Anual Contratual</div>
-                        <div id="calcFinancialTotal" style="font-size: 1.8rem; font-weight: 800; color: #047857;">$ 0</div>
+                <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                    <div style="flex: 2; min-width: 300px; background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <div class="calc-input-group"><label>Premium Auth <span class="calc-badge-pts">5 pts</span></label><input type="number" id="inpPremAuth" oninput="updateCalculator()"></div>
+                        <div class="calc-input-group"><label>Premium Conc <span class="calc-badge-pts">15 pts</span></label><input type="number" id="inpPremConc" oninput="updateCalculator()"></div>
+                        <div class="calc-input-group"><label>Base Auth <span class="calc-badge-pts">3 pts</span></label><input type="number" id="inpBaseAuth" oninput="updateCalculator()"></div>
+                        <div class="calc-input-group" style="border:none; margin:0; padding:0;"><label>Base Conc <span class="calc-badge-pts">10 pts</span></label><input type="number" id="inpBaseConc" oninput="updateCalculator()"></div>
                     </div>
-                    <div id="calcAlertBox" style="margin-top: 1rem; padding: 0.75rem; background: var(--danger); color:white; font-weight:bold; border-radius:6px; display:none; font-size:1.1rem;">⚠️ TETO EXCEDIDO (>1200)</div>
+                    <div style="flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: center;">
+                        <h3 style="margin: 0; font-size: 1rem; color: var(--secondary);">AppPoints Requeridos</h3>
+                        <div id="calcTotalDisplay" style="font-size: 4.5rem; font-weight: 800; color: var(--success); line-height:1;">0</div>
+                        <div id="calcAlertBox" style="margin-top: 1rem; padding: 0.75rem; background: var(--danger); color:white; font-weight:bold; border-radius:6px; display:none; font-size:1.1rem;">⚠️ TETO EXCEDIDO (>1200)</div>
+                    </div>
+                    <div style="flex: 2; min-width: 300px; height: 260px;"><canvas id="simChart"></canvas></div>
                 </div>
-                <div style="flex: 1; min-width: 300px; height: 260px;"><canvas id="simChart"></canvas></div>
             </div>
         </div>
         <div class="card" style="border-top: 4px solid var(--primary);">
@@ -248,14 +268,15 @@ def _render_tab_apppoints():
     </div>
     """
 
+
 def _render_tab_eventos(analytics):
     """Renders the 'Eventos Críticos' tab content."""
     scenario_points = analytics['scenario_points']
     return f"""
     <div id="tab-eventos" class="container tab-content">
         <div class="alert-box" style="border-left-color: var(--warning); background-color: #fffbeb;">
-            <strong style="color: #b45309;">📊 Simulador de Teto Orçamentário Diário (Eventos de Sonda)</strong>
-            <p style="color: #92400e;">Teste a resistência da arquitetura. O que acontece com o consumo se houver um evento atípico na Foresea?</p>
+            <strong style="color: #b45309;">📊 Simulador de Teto de AppPoints (Eventos de Sonda)</strong>
+            <p style="color: #92400e;">Teste a resistência da arquitetura de licenciamento. O que acontece com o consumo se houver um evento atípico na Foresea?</p>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
             <div>
@@ -280,7 +301,7 @@ def _render_tab_eventos(analytics):
                 </div>
             </div>
             <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
-                <h3 style="margin-top:0; font-size:1.2rem; color:var(--secondary);">Termômetro de Impacto Orçamental (Limite: 1.200)</h3>
+                <h3 style="margin-top:0; font-size:1.2rem; color:var(--secondary);">Termômetro de Impacto (Limite: 1.200)</h3>
                 <div style="height: 280px; position: relative;">
                     <canvas id="eventChart"></canvas>
                 </div>
@@ -291,6 +312,7 @@ def _render_tab_eventos(analytics):
         </div>
     </div>
     """
+
 
 def _render_tab_tabela(app_points_rows):
     """Renders the 'Plano de Ação' tab content."""
@@ -324,12 +346,14 @@ def _render_tab_tabela(app_points_rows):
     </div>
     """
 
-def _render_scripts(analytics, domains):
+
+def _render_scripts(analytics, identity_analytics):
     """Renders the JavaScript for the report."""
     scenarios_json = json.dumps(analytics['scenarios_data'])
     points_json = json.dumps(analytics['scenario_points'])
-    domain_keys = json.dumps(list(domains.keys()))
-    domain_values = json.dumps(list(domains.values()))
+
+    domain_keys = json.dumps(list(identity_analytics['domain_counts'].keys()))
+    domain_values = json.dumps(list(identity_analytics['domain_counts'].values()))
 
     return f"""
     <script>
@@ -361,44 +385,46 @@ def _render_scripts(analytics, domains):
             document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
             if(btnElement) btnElement.classList.add('active');
 
-            const physicalCountsKey = (scenarioKey === 'otimizado' || scenarioKey === 'otimizado_p50') ? 'otimizado' : scenarioKey;
+            const isFactoredScenario = scenarioKey === 'otimizado_p95' || scenarioKey === 'otimizado_p50';
+            const physicalCountsKey = isFactoredScenario ? 'otimizado' : scenarioKey;
             const data = rawScenarios[physicalCountsKey];
-            
+
             document.getElementById('inpPremAuth').value = data.pA;
             document.getElementById('inpPremConc').value = data.pC;
             document.getElementById('inpBaseAuth').value = data.bA;
             document.getElementById('inpBaseConc').value = data.bC;
 
-            if (scenarioKey === 'otimizado') {{
-                const totalPoints = Math.round(scenarioPoints.p95);
-                document.getElementById('calcTotalDisplay').innerText = totalPoints.toLocaleString('pt-BR');
-                updateFinancialTotal(totalPoints);
-                updateChartFromInputs();
+            let totalPoints = 0;
+            if (scenarioKey === 'otimizado_p95') {{
+                totalPoints = Math.round(scenarioPoints.p95);
             }} else if (scenarioKey === 'otimizado_p50') {{
-                const totalPoints = Math.round(scenarioPoints.p50);
-                document.getElementById('calcTotalDisplay').innerText = totalPoints.toLocaleString('pt-BR');
-                updateFinancialTotal(totalPoints);
-                updateChartFromInputs();
+                totalPoints = Math.round(scenarioPoints.p50);
             }} else {{
-                updateCalculator();
+                totalPoints = (data.pA * 5) + (data.pC * 15) + (data.bA * 3) + (data.bC * 10);
             }}
+
+            document.getElementById('calcTotalDisplay').innerText = totalPoints.toLocaleString('pt-BR');
+            updateCalculatorDisplay(totalPoints);
+            updateChartFromInputs(); // Agora isso reflete os valores dos inputs, que são consistentes
         }}
 
         let simChartInstance = null;
         function updateCalculator() {{
+            // Quando o usuário edita manualmente, desativa qualquer preset
+            document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+
             const pAuth = parseInt(document.getElementById('inpPremAuth').value) || 0;
             const pConc = parseInt(document.getElementById('inpPremConc').value) || 0;
             const bAuth = parseInt(document.getElementById('inpBaseAuth').value) || 0;
             const bConc = parseInt(document.getElementById('inpBaseConc').value) || 0;
             const totalPoints = Math.round((pAuth * 5) + (pConc * 15) + (bAuth * 3) + (bConc * 10));
+
             document.getElementById('calcTotalDisplay').innerText = totalPoints.toLocaleString('pt-BR');
-            updateFinancialTotal(totalPoints);
+            updateCalculatorDisplay(totalPoints);
             updateChartFromInputs();
         }}
-        
-        function updateFinancialTotal(totalPoints) {{
-            const unitCost = parseFloat(document.getElementById('inpCustoUnitario').value) || 0;
-            document.getElementById('calcFinancialTotal').innerText = "$" + (totalPoints * unitCost).toLocaleString('pt-BR', {{minimumFractionDigits: 2, maximumFractionDigits: 2}});
+
+        function updateCalculatorDisplay(totalPoints) {{
             const alertEl = document.getElementById('calcAlertBox');
             if (totalPoints > 1200) {{
                 document.getElementById('calcTotalDisplay').style.color = 'var(--danger)';
@@ -440,7 +466,7 @@ def _render_scripts(analytics, domains):
             else if (type === 'p95') {{ titleText = "🟡 Pico Seguro (P95)"; description = "Handovers de turno comportados na meta."; }}
             else if (type === 'p100') {{ titleText = "🔴 Emergência (P100)"; description = "Risco moderado. Acesso simultâneo alto registrado no log."; }}
             else if (type === 'blackout') {{ titleText = "⚡ Blackout (100%)"; description = "Cenário fatal: Sondas paradas. Possível travamento do MAS 9."; }}
-            
+
             const outBox = document.getElementById('eventOutputBox');
             outBox.innerText = `${{titleText}}: ${{totalPoints.toLocaleString('pt-BR')}} AppPoints. ${{description}}`;
             outBox.style.background = totalPoints > 1200 ? '#fef2f2' : '#ecfdf5';
@@ -522,11 +548,12 @@ def _render_scripts(analytics, domains):
         }}
 
         document.addEventListener('DOMContentLoaded', function() {{
-            loadScenario('otimizado', document.getElementById('btnOtimizado'));
+            loadScenario('otimizado_p95', document.getElementById('btnOtimizado'));
             triggerEventScenario('p95');
         }});
     </script>
     """
+
 
 # --- Main Orchestrator Function ---
 
@@ -534,14 +561,11 @@ def render_html(data):
     """
     Orchestrates the rendering of the full HTML report by assembling its components.
     """
-    # Extract data for easier access
     analytics = data['analytics']
     gov_tables = data['gov_tables']
     app_points_rows = data['app_points_rows']
-    summary = data['summary']
-    domains = data['domains']
+    identity_analytics = data['identity_analytics']
 
-    # Assemble the HTML document
     return f"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -553,11 +577,11 @@ def render_html(data):
 </head>
 <body>
     {_render_header_and_tabs()}
-    {_render_tab_painel(summary, analytics, domains)}
+    {_render_tab_painel(identity_analytics, analytics)}
     {_render_tab_gov(gov_tables)}
-    {_render_tab_apppoints()}
+    {_render_tab_apppoints(analytics)}
     {_render_tab_eventos(analytics)}
     {_render_tab_tabela(app_points_rows)}
-    {_render_scripts(analytics, domains)}
+    {_render_scripts(analytics, identity_analytics)}
 </body>
 </html>"""

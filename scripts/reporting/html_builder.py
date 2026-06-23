@@ -2,10 +2,10 @@
 from .html_data_processor import DataProcessor
 from .html_template import render_html
 
-def build_html_structure(summary, governance, app_points, domains):
+def build_html_structure(summary, governance, app_points, domains, identity_analytics):
     """
     Orchestrates the data processing and HTML rendering.
     """
-    processor = DataProcessor(summary, governance, app_points, domains)
+    processor = DataProcessor(summary, governance, app_points, domains, identity_analytics)
     processed_data = processor.get_all_data()
     return render_html(processed_data)

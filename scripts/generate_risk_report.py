@@ -18,6 +18,9 @@ from scripts.services.app_points import simulate_app_points
 from scripts.services.usage_analyzer import analyze_usage
 from scripts.reporting.html_builder import build_html_structure
 from scripts.reporting.html_helpers import fmt_br, render_table
+# --- NOVA IMPORTAÇÃO CORRIGIDA ---
+from scripts.domain.identity_analyzer import get_unique_users_data
+
 
 # --- Constants ---
 IN_DIR = ROOT / 'output' / 'consolidated'
@@ -48,6 +51,10 @@ def main():
     """
     # 1. Load Data
     all_data = load_all_data()
+
+    # --- INJEÇÃO DA NOVA ANÁLISE DE IDENTIDADE ---
+    # Obtém os dados de identidade já processados e deduplicados
+    identity_analytics = get_unique_users_data()
 
     # 2. Build User Profiles
     user_profiles = build_user_profiles(all_data["identities"], all_data["access_rows"])
@@ -87,7 +94,7 @@ def main():
     }
 
     # 7. Build and Write HTML
-    html_content = build_html_structure(summary_data, governance_data, app_points_data_optimized, domain_counts)
+    html_content = build_html_structure(summary_data, governance_data, app_points_data_optimized, domain_counts, identity_analytics)
     html_path = OUT_DIR / 'maximo_unified_dashboard.html'
     html_path.write_text(html_content, encoding='utf-8')
     print(f'WROTE {html_path.name}')

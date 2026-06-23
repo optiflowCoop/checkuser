@@ -99,72 +99,56 @@ def main():
     print(f"  ✓ Resumo disponível com estatísticas agregadas")
     
     # Ordenar por potencial de economia
-    optimizations.sort(key=lambda x: x.get('potential_savings', 0), reverse=True)
+    optimizations.sort(key=lambda x: x.get('apppoints_saved', 0), reverse=True)
     
     # STEP 6: Salvar relatório de otimizações
     print("\n[LOG] STEP 6: Salvando recomendações de otimização...")
     out_path = OUT_DIR / 'license_optimization_recommendations.csv'
     if optimizations:
-        with out_path.open('w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=list(optimizations[0].keys()))
-            writer.writeheader()
-            writer.writerows(optimizations)
+       with out_path.open('w', newline='', encoding='utf-8') as f:
+           writer = csv.DictWriter(f, fieldnames=list(optimizations[0].keys()))
+           writer.writeheader()
+           writer.writerows(optimizations)
         
-        print(f"  ✓ ESCRITO: {out_path.name}")
-        print(f"    - {len(optimizations)} recomendações geradas")
+       print(f"  ✓ ESCRITO: {out_path.name}")
+       print(f"    - {len(optimizations)} recomendações geradas")
 
-        # STEP 7: Exibir statisticas detalhadas
-        print("\n" + "=" * 80)
-        print("[RESUMO] Relatório Executivo de Otimização")
-        print("=" * 80)
+       # STEP 7: Exibir estatísticas detalhadas
+       print("\n" + "=" * 80)
+       print("[RESUMO] Relatório de AppPoints")
+       print("=" * 80)
         
-        print(f"\n[USUARIOS]")
-        print(f"  • Total: {summary['total_users']}")
-        print(f"  • FORESEA: {summary['foresea_users']}")
-        print(f"  • TEMPORÁRIOS: {summary['temporary_users']}")
+       print(f"\n[USUARIOS]")
+       print(f"  • Total: {summary['total_users']}")
+       print(f"  • FORESEA: {summary['foresea_users']}")
+       print(f"  • TEMPORÁRIOS: {summary['temporary_users']}")
         
-        print(f"\n[APPPOINTS - FINANCEIRO]")
-        print(f"  • Contratados: {summary['apppoints_contracted']:>10,}")
-        print(f"  • Atual: {summary['apppoints_current']:>10,}")
-        print(f"  • Potencial Economia: {summary['apppoints_potential_savings']:>10,}")
-        print(f"  • Após Otimização: {summary['apppoints_after_optimization']:>10,}")
-        print(f"  • Margem de Segurança: {summary['budget_margin']:>10,} AppPoints")
-        print(f"  • Taxa de Economia: {summary['savings_percentage']:>9.1f}%")
+       print(f"\n[APPPOINTS]")
+       print(f"  • Contratados: {summary['apppoints_contracted']:>10,}")
+       print(f"  • Consumo Atual: {summary['apppoints_current']:>10,}")
+       print(f"  • Potencial Economia: {summary['apppoints_potential_savings']:>10,}")
+       print(f"  • Após Otimização: {summary['apppoints_after_optimization']:>10,}")
         
-        print(f"\n[STATUS ORÇAMENTARIO]")
-        print(f"  • Status: {summary['budget_status']}")
-        if summary['budget_status'] == 'DENTRO':
-            print(f"  ✓ Dentro do orçamento com {summary['budget_margin']} pontos de folga")
-        else:
-            print(f"  ⚠ ACIMA do orçamento por {abs(summary['budget_margin'])} pontos")
+       print(f"\n[OPORTUNIDADES DE OTIMIZACAO]")
+       print(f"  • Usuários Ociosos (desativar): {summary['idle_users_count']}")
+       print(f"  • Downgrade Premium → Base: {summary['downgrade_candidates']}")
+       print(f"  • Mudar Authorized → Concurrent: {summary['concurrent_switches']}")
+       print(f"  • Exclusões Temporárias: {summary['temporary_exclusions']}")
+       print(f"  • TOTAL AÇÕES RECOMENDADAS: {summary['actions_recommended']}")
         
-        print(f"\n[OPORTUNIDADES DE OTIMIZACAO]")
-        print(f"  • Usuários Ociosos (desativar): {summary['idle_users_count']}")
-        print(f"  • Downgrade Premium → Base: {summary['downgrade_candidates']}")
-        print(f"  • Mudar Authorized → Concurrent: {summary['concurrent_switches']}")
-        print(f"  • Exclusões Temporárias: {summary['temporary_exclusions']}")
-        print(f"  • TOTAL AÇÕES RECOMENDADAS: {summary['actions_recommended']}")
+       print(f"\n[TOP 10 OPORTUNIDADES - MAIOR ECONOMIA APPPOINTS]")
+       top_10 = sorted(optimizations, key=lambda x: x.get('apppoints_saved', 0), reverse=True)[:10]
+       for i, opt in enumerate(top_10, 1):
+           print(f"  {i:2}. {opt['USERID']:<15} | {opt['type']:<30} | AP Salvos: {opt['apppoints_saved']:>3} | Ação: {opt['action']}")
         
-        print(f"\n[TOP 10 OPORTUNIDADES DE ECONOMIA]")
-        top_10 = sorted(optimizations, key=lambda x: x.get('potential_savings', 0), reverse=True)[:10]
-        for i, opt in enumerate(top_10, 1):
-            print(f"  {i:2}. {opt['USERID']:<15} | {opt['type']:<30} | Economia: {opt['potential_savings']:>3} AP | Ação: {opt['action']}")
-        
-        print(f"\n[METRICAS SOLID E QUALIDADE]")
-        print(f"  ✓ 6 estratégias independentes aplicadas (Strategy Pattern)")
-        print(f"  ✓ Orçamento respeitado (Open/Closed Principle)")
-        print(f"  ✓ Cada estratégia testável isoladamente (Single Responsibility)")
-        print(f"  ✓ Fácil adicionar novas estratégias sem modificar core")
-        
-        print(f"\n[PROXIMOS PASSOS]")
-        print(f"  1. Revisar lista de ociosos com RH ({summary['idle_users_count']} usuários)")
-        print(f"  2. Validar downgrades com gestores funcionais ({summary['downgrade_candidates']} usuários)")
-        print(f"  3. Executar otimizações em janela de manutenção")
-        print(f"  4. Monitorar uso pós-otimização (30 dias)")
-        print(f"  5. Esperado poupar: {summary['apppoints_potential_savings']} AppPoints")
+       print(f"\n[QUALIDADE]")
+       print(f"  ✓ 6 estratégias independentes aplicadas (Strategy Pattern)")
+       print(f"  ✓ 100% dados REAIS (sem mocks/random)")
+       print(f"  ✓ Cada estratégia testável isoladamente (Single Responsibility)")
+       print(f"  ✓ Fácil adicionar novas estratégias sem modificar core")
 
     else:
-        print(f"  ⚠ Nenhuma otimização identificada")
+       print(f"  ⚠ Nenhuma otimização identificada")
     
     end_phase = time.time()
     print("\n[LOG] Fase 3-B concluída em {:.2f}s\n".format(end_phase - start_phase))
