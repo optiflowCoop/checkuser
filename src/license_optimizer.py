@@ -1,19 +1,14 @@
-#!/usr/bin/env python3
-"""
-Fase 3: Detector de Otimização de Licenças (OURO) - Arquitetura SOLID
-Lê os dados de uso e aplica o motor de regras (Engine) para gerar recomendações.
-"""
 import csv
 import sys
 from pathlib import Path
 
-# --- INÍCIO DO AJUSTE DE IMPORTAÇÃO (Para evitar ModuleNotFoundError) ---
+# --- INÍCIO DO AJUSTE DE IMPORTAÇÃO ---
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 # --- FIM DO AJUSTE ---
 
-from engine.optimizer import LicenseOptimizerEngine
-from core.rules_manager import rules_manager
+from src.engine.optimizer import LicenseOptimizerEngine
+from src.rules_manager import rules_manager
 
 IN_DIR = ROOT / 'output' / 'consolidated'
 OUT_DIR = ROOT / 'output' / 'consolidated'
