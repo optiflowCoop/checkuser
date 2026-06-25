@@ -147,12 +147,16 @@ class DataProcessor:
             'concurrency_peak_count': concurrency_summary.get('peak_count'),
             'concurrency_peak_hours': concurrency_summary.get('peak_hours', []),
             'concurrency_hourly': concurrency_summary.get('hourly_counts', {}),
+            'concurrency_peak_contributors': concurrency_summary.get('peak_contributors', []),
+            'concurrency_peak_contributors_count': concurrency_summary.get('peak_contributors_count', 0),
             # Align identity counts to the exact universe used by license_decision_plan (app_points)
             # Compute from self.app_points to guarantee HTML and XLSX show same user set
             'identity_total_users': len({(u.get('USERID') or '').strip() for u in self.app_points if (u.get('USERID') or '').strip()}),
             'identity_active_users': sum(1 for u in self.app_points if u.get('OPTIMIZATION_REC') != 'INATIVO (>90d)'),
             'identity_status': self.identity_analytics.get('status_counts', {}),
             'identity_domains': self.identity_analytics.get('domain_counts', {}),
+            # UI ceiling limit (configurable via summary)
+            'ceiling_limit': self.summary.get('ceiling_limit', 1200) if isinstance(self.summary, dict) else 1200,
         }
 
     def prepare_governance_tables(self):

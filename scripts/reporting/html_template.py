@@ -101,6 +101,7 @@ def _render_header_and_tabs():
         <button class="tab-button" onclick="openTab(event, 'tab-gov')">2. Governança & Saneamento</button>
         <button class="tab-button" onclick="openTab(event, 'tab-apppoints')" style="color:#60a5fa;">3. Cenários de AppPoints</button>
         <button class="tab-button" onclick="openTab(event, 'tab-eventos')" style="color:var(--warning);">4. Eventos Críticos</button>
+        <button class="tab-button" onclick="openTab(event, 'tab-peak')" style="color:#7c3aed;">6. Peak Contributors</button>
         <button class="tab-button" onclick="openTab(event, 'tab-tabela')">5. Plano de Ação</button>
     </div>
     """
@@ -233,7 +234,8 @@ def _render_tab_apppoints(analytics):
                     <div style="flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: center;">
                         <h3 style="margin: 0; font-size: 1rem; color: var(--secondary);">AppPoints Requeridos</h3>
                         <div id="calcTotalDisplay" style="font-size: 4.5rem; font-weight: 800; color: var(--success); line-height:1;">0</div>
-                        <div id="calcAlertBox" style="margin-top: 1rem; padding: 0.75rem; background: var(--danger); color:white; font-weight:bold; border-radius:6px; display:none; font-size:1.1rem;">⚠️ TETO EXCEDIDO (>1200)</div>
+                        <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #475569;">Soma bruta (XLSX): <strong id="rawSumDisplay">0</strong></div>
+                        <div id="calcAlertBox" style="margin-top: 1rem; padding: 0.75rem; background: var(--danger); color:white; font-weight:bold; border-radius:6px; display:none; font-size:1.1rem;">⚠️ TETO EXCEDIDO</div>
                     </div>
                     <div style="flex: 2; min-width: 300px; height: 260px;"><canvas id="simChart"></canvas></div>
                 </div>
@@ -301,7 +303,7 @@ def _render_tab_eventos(analytics):
                 </div>
             </div>
             <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
-                <h3 style="margin-top:0; font-size:1.2rem; color:var(--secondary);">Termômetro de Impacto (Limite: 1.200)</h3>
+                <h3 id="eventCeilingLabel" style="margin-top:0; font-size:1.2rem; color:var(--secondary);">Termômetro de Impacto (Limite)</h3>
                 <div style="height: 280px; position: relative;">
                     <canvas id="eventChart"></canvas>
                 </div>
@@ -309,6 +311,46 @@ def _render_tab_eventos(analytics):
                     Selecione um cenário ao lado...
                 </div>
             </div>
+        </div>
+    </div>
+    """
+
+
+def _render_tab_peak(analytics):
+    """Renders the Peak Contributors tab with hourly peaks and contributor table."""
+    peak_hours = analytics.get('concurrency_peak_hours', []) or []
+    # Normalize peak_hours to rows
+    peak_rows = []
+    if isinstance(peak_hours, dict):
+        peak_rows = [[k, v] for k, v in sorted(peak_hours.items())]
+    elif isinstance(peak_hours, list):
+        for entry in peak_hours:
+            if isinstance(entry, (list, tuple)) and len(entry) >= 2:
+                peak_rows.append([entry[0], entry[1]])
+            elif isinstance(entry, dict):
+                hour = entry.get('hour') or entry.get('ts') or entry.get('time')
+                val = entry.get('value') or entry.get('points') or entry.get('app_points') or entry.get('count')
+                peak_rows.append([hour, val])
+    contributors = analytics.get('concurrency_peak_contributors', []) or []
+    # Contributors may be list of dicts or USERIDs
+    contrib_section = ''
+    if contributors:
+        if isinstance(contributors[0], dict):
+            contrib_section = render_table(list(contributors[0].keys()), contributors, 'table-peak-contrib', 'gov-table')
+        else:
+            contrib_section = render_table(['USERID'], [[c] for c in contributors], 'table-peak-contrib', 'gov-table')
+
+    return f"""
+    <div id="tab-peak" class="container tab-content">
+        <div class="card">
+            <h2 class="card-header">⛰️ Horas de Pico (High-Water Mark)</h2>
+            <p style="color:#475569;">Lista de horas com maior consumo agregado (AppPoints por hora) geradas a partir do logintracking.</p>
+            {render_table(['Hora', 'AppPoints'], peak_rows, 'table-peak-hours', 'gov-table')}
+        </div>
+        <div class="card">
+            <h2 class="card-header">👥 Contribuintes do Pico</h2>
+            <p style="color:#475569;">Usuários que contribuíram para as horas de pico.</p>
+            {contrib_section}
         </div>
     </div>
     """
@@ -352,6 +394,7 @@ def _render_scripts(analytics, identity_analytics):
     scenarios_json = json.dumps(analytics['scenarios_data'])
     points_json = json.dumps(analytics['scenario_points'])
     total_points_json = json.dumps(analytics.get('scenario_points_total', {}))
+    ceiling_limit = analytics.get('ceiling_limit', 1200)
 
     domain_keys = json.dumps(list(identity_analytics['domain_counts'].keys()))
     domain_values = json.dumps(list(identity_analytics['domain_counts'].values()))
@@ -361,9 +404,9 @@ def _render_scripts(analytics, identity_analytics):
         const rawScenarios = {scenarios_json};
         const scenarioPoints = {points_json};
         const scenarioPointsTotal = {total_points_json};
+        const ceilingLimit = {ceiling_limit};
 
-        function openTab(evt, tabName) {{
-            let i, tabcontent, tablinks;
+        function openTab(evt, tabName) {{            let i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("tab-content");
             for (i = 0; i < tabcontent.length; i++) {{ tabcontent[i].style.display = "none"; tabcontent[i].classList.remove("active"); }}
             tablinks = document.getElementsByClassName("tab-button");
@@ -428,9 +471,17 @@ def _render_scripts(analytics, identity_analytics):
 
         function updateCalculatorDisplay(totalPoints) {{
             const alertEl = document.getElementById('calcAlertBox');
-            if (totalPoints > 1200) {{
+            const rawSumEl = document.getElementById('rawSumDisplay');
+            try {{
+                if (rawSumEl && scenarioPointsTotal && scenarioPointsTotal.p95) {{
+                    rawSumEl.innerText = Number(scenarioPointsTotal.p95).toLocaleString('pt-BR');
+                }}
+            }} catch(e) {{ console.warn('raw sum display error', e); }}
+
+            if (totalPoints > ceilingLimit) {{
                 document.getElementById('calcTotalDisplay').style.color = 'var(--danger)';
                 alertEl.style.display = 'block';
+                alertEl.innerText = `⚠️ TETO EXCEDIDO (>${ceilingLimit.toLocaleString('pt-BR')})`;
             }} else {{
                 document.getElementById('calcTotalDisplay').style.color = 'var(--success)';
                 alertEl.style.display = 'none';
@@ -471,8 +522,8 @@ def _render_scripts(analytics, identity_analytics):
 
             const outBox = document.getElementById('eventOutputBox');
             outBox.innerText = `${{titleText}}: ${{totalPoints.toLocaleString('pt-BR')}} AppPoints. ${{description}}`;
-            outBox.style.background = totalPoints > 1200 ? '#fef2f2' : '#ecfdf5';
-            outBox.style.color = totalPoints > 1200 ? 'var(--danger)' : '#047857';
+            outBox.style.background = totalPoints > ceilingLimit ? '#fef2f2' : '#ecfdf5';
+            outBox.style.color = totalPoints > ceilingLimit ? 'var(--danger)' : '#047857';
 
             const ctxEvent = document.getElementById('eventChart').getContext('2d');
             if (eventChartInstance) {{
@@ -553,6 +604,20 @@ def _render_scripts(analytics, identity_analytics):
             // Force correct initialization with the pre-calculated scenario points
             const initialPoints = Math.round(scenarioPoints.p95);
             document.getElementById('calcTotalDisplay').innerText = initialPoints.toLocaleString('pt-BR');
+            // Populate raw sum display if available
+            try {{
+                const rawSumEl = document.getElementById('rawSumDisplay');
+                if (rawSumEl && scenarioPointsTotal && scenarioPointsTotal.p95) {{
+                    rawSumEl.innerText = Number(scenarioPointsTotal.p95).toLocaleString('pt-BR');
+                }}
+            }} catch(e) {{ console.warn('raw sum init error', e); }}
+
+            // Set ceiling label dynamically
+            try {{
+                const ceilLabel = document.getElementById('eventCeilingLabel');
+                if (ceilLabel) ceilLabel.innerText = `Termômetro de Impacto (Limite: ${ceilingLimit.toLocaleString('pt-BR')})`;
+            }} catch(e) {{ }}
+
             loadScenario('otimizado_p95', document.getElementById('btnOtimizado'));
             triggerEventScenario('p95');
         }});
@@ -586,6 +651,7 @@ def render_html(data):
     {_render_tab_gov(gov_tables)}
     {_render_tab_apppoints(analytics)}
     {_render_tab_eventos(analytics)}
+    {_render_tab_peak(analytics)}
     {_render_tab_tabela(app_points_rows)}
     {_render_scripts(analytics, identity_analytics)}
 </body>

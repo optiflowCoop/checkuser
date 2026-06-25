@@ -142,6 +142,25 @@ def write_excel_workbook(summary, governance, license_rows, domain_counts, missi
     add_sheet('1_VisaoExecutiva', ['Metrica', 'Valor'], executive_rows)
     add_sheet('2_LicenseDecisionPlan', license_headers, license_rows)
 
+    # Add concurrency peak and contributors if available in summary
+    concurrency = summary.get('concurrency', {})
+    if concurrency:
+        # Hourly counts sheet (7_ConcurrentPeak)
+        hourly = concurrency.get('hourly_counts', {})
+        if hourly:
+            hourly_rows = [[h, v] for h, v in sorted(hourly.items())]
+            add_sheet('7_ConcurrentPeak', ['Hour', 'AppPoints'], hourly_rows)
+
+        # Peak contributors sheet (8_PeakContributors)
+        contributors = concurrency.get('peak_contributors', [])
+        if contributors:
+            # contributors is a list of USERID or dicts
+            if isinstance(contributors[0], dict):
+                contrib_headers = list(contributors[0].keys())
+                add_sheet('8_PeakContributors', contrib_headers, contributors)
+            else:
+                add_sheet('8_PeakContributors', ['USERID'], [[c] for c in contributors])
+
     if missing_email_rows:
         review_headers = [
             'USERID', 'DISPLAYNAME', 'STATUS', 'ENVS', 'TYPE', 'GROUPS_COUNT',
