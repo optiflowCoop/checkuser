@@ -11,7 +11,7 @@ Both engines replace hardcoded if/elif blocks with extensible rule classes.
 """
 
 from .rules import UserClassificationEngine, ClassificationRule
-from .optimizer import LicenseOptimizer, OptimizationStrategy
+from .optimizer import LicenseOptimizerEngine, OptimizationRule
 
 __all__ = [
     'UserClassificationEngine',
