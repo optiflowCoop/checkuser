@@ -1,9 +1,127 @@
 # scripts/services/app_points.py
+import csv
+from collections import defaultdict
+from datetime import datetime, timezone
+from pathlib import Path
+
 import pandas as pd
 import numpy as np
 from scripts.analysis.classification import classify_usage_profile
-from scripts.analysis.licensing import assign_license_model
+from scripts.config import get_critical_titles
 from scripts.analysis.entitlement import determine_user_entitlement, calculate_app_points
+
+
+ROOT = Path(__file__).resolve().parents[2]
+CONSOLIDATED_DIR = ROOT / 'output' / 'consolidated'
+
+OFFSHORE_KEYWORDS = (
+    'OFFSHORE', 'PLATAFORMA', 'PLATFORM', 'EMBARCADO', 'FPSO',
+    'RIG', 'SONDA', 'VESSEL', 'NAVIO', 'MOB_', 'TURNO',
+    'ODN1', 'ODN2', 'N06', 'N08', 'N09', 'HTQ'
+)
+
+ONSHORE_ENVS = {'BASE'}
+
+
+def _load_csv(name):
+    path = CONSOLIDATED_DIR / name
+    if not path.exists():
+        return []
+    with path.open('r', encoding='utf-8-sig', newline='') as handle:
+        return list(csv.DictReader(handle))
+
+
+def _parse_datetime(value):
+    if not value:
+        return None
+    text = str(value).strip().replace('Z', '+00:00')
+    try:
+        return datetime.fromisoformat(text)
+    except ValueError:
+        try:
+            return datetime.strptime(text.split('.')[0], '%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            return None
+
+
+def _canonical_title(profile):
+    titles = sorted(str(t).strip() for t in profile.get('TITLES', []) if str(t).strip())
+    return titles[0] if titles else 'SEM CARGO'
+
+
+def _classify_operational_presence(profile):
+    text = ' '.join([
+        ' '.join(str(t) for t in profile.get('TITLES', [])),
+        ' '.join(str(g) for g in profile.get('PERSONGROUPS', [])),
+        ' '.join(str(e) for e in profile.get('ENVS', [])),
+    ]).upper()
+    envs = {str(e).upper() for e in profile.get('ENVS', []) if str(e).strip()}
+    if envs and envs.issubset(ONSHORE_ENVS):
+        return 'ONSHORE'
+    if any(keyword in text for keyword in OFFSHORE_KEYWORDS):
+        return 'OFFSHORE'
+    return 'ONSHORE'
+
+
+def _is_critical_title(titles):
+    title_text = ' '.join(str(t) for t in titles).upper()
+    return any(keyword in title_text for keyword in get_critical_titles())
+
+
+def _load_login_usage():
+    usage = defaultdict(lambda: {
+        'login_count': 0,
+        'last_login': None,
+        'apps': set(),
+        'active_days': set(),
+    })
+    for row in _load_csv('consolidated_logintracking.csv'):
+        if row.get('ATTEMPTRESULT', '').upper() not in ('', 'LOGIN'):
+            continue
+        userid = row.get('USERID', '').strip().upper()
+        if not userid:
+            continue
+        dt = _parse_datetime(row.get('ATTEMPTDATE', ''))
+        data = usage[userid]
+        data['login_count'] += 1
+        app = row.get('APP', '').strip()
+        if app and app != '-':
+            data['apps'].add(app.upper())
+        if dt:
+            data['active_days'].add(dt.date().isoformat())
+            if data['last_login'] is None or dt > data['last_login']:
+                data['last_login'] = dt
+    return usage
+
+
+def _days_since(dt):
+    if not dt:
+        return ''
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return max((datetime.now(timezone.utc) - dt.astimezone(timezone.utc)).days, 0)
+
+
+def _assign_license_model(entitlement, login_count, operational_presence, titles):
+    if login_count == 0:
+        return 'CONCURRENT'
+    if entitlement == 'LIMITED':
+        return 'CONCURRENT'
+    if operational_presence == 'OFFSHORE':
+        return 'AUTHORIZED' if _is_critical_title(titles) else 'CONCURRENT'
+    return 'AUTHORIZED' if login_count > 60 or _is_critical_title(titles) else 'CONCURRENT'
+
+
+def _recommend(entitlement, license_model, login_count, operational_presence):
+    if login_count == 0:
+        return 'INATIVO (>90d)', 'Sem login no extrato consolidado de 90 dias.'
+    if entitlement == 'PREMIUM' and operational_presence == 'ONSHORE' and login_count < 5:
+        return 'DOWNGRADE_CANDIDATE', 'Acesso Premium com uso muito baixo; validar necessidade O&G.'
+    if license_model == 'AUTHORIZED' and login_count < 20:
+        return 'MOVE_TO_CONCURRENT', 'Baixa frequencia para usuario dedicado; avaliar pool concorrente.'
+    if license_model == 'AUTHORIZED':
+        return 'CONFIRMED_AUTHORIZED', 'Uso/cargo justifica disponibilidade fixa.'
+    return 'OK', 'Usuario dimensionado para pool concorrente.'
 
 
 def calculate_statistical_concurrency():
@@ -13,8 +131,8 @@ def calculate_statistical_concurrency():
     Retorna os percentis P50 (Mediana/Cotidiano), P95 (Pico de Turno) e P100 (Worst Case/Emergência).
     """
     try:
-        track_df = pd.read_csv('output/consolidated/consolidated_logintracking.csv')
-        user_df = pd.read_csv('output/consolidated/consolidated_user_identity.csv')
+        track_df = pd.read_csv(CONSOLIDATED_DIR / 'consolidated_logintracking.csv')
+        access_df = pd.read_csv(CONSOLIDATED_DIR / 'consolidated_user_access_normalized.csv')
 
         if 'ATTEMPTRESULT' in track_df.columns:
             track_df = track_df[track_df['ATTEMPTRESULT'].str.upper() == 'LOGIN']
@@ -22,15 +140,25 @@ def calculate_statistical_concurrency():
         track_df['ATTEMPTDATE'] = pd.to_datetime(track_df['ATTEMPTDATE'])
         track_df['LOGIN_DAY'] = track_df['ATTEMPTDATE'].dt.date
 
-        # FIX: Use 'TITLE' instead of 'TITLES'
-        merged_df = pd.merge(track_df, user_df, on='USERID', how='inner')
+        access_df['USERID'] = access_df['USERID'].astype(str).str.upper().str.strip()
+        access_df['TITLE'] = access_df['TITLE'].fillna('').astype(str).str.strip()
+        user_titles = (
+            access_df[access_df['TITLE'] != '']
+            .drop_duplicates(['USERID', 'TITLE'])
+            .groupby('USERID')['TITLE']
+            .first()
+            .reset_index()
+        )
+
+        track_df['USERID'] = track_df['USERID'].astype(str).str.upper().str.strip()
+        merged_df = pd.merge(track_df, user_titles, on='USERID', how='inner')
 
         # 1. Contagem de logins únicos POR DIA POR CARGO
         daily_active = merged_df.groupby(['LOGIN_DAY', 'TITLE'])['USERID'].nunique().reset_index()
         daily_active.rename(columns={'USERID': 'ACTIVE_USERS'}, inplace=True)
 
         # 2. Contagem do passivo físico total POR CARGO
-        total_users = user_df.groupby('TITLE')['USERID'].nunique().reset_index()
+        total_users = user_titles.groupby('TITLE')['USERID'].nunique().reset_index()
         total_users.rename(columns={'USERID': 'TOTAL_USERS'}, inplace=True)
 
         # 3. Cruzamento para achar a Taxa de Concorrência Diária
@@ -57,6 +185,7 @@ def simulate_app_points(profiles_to_simulate):
     """
     app_points_data = []
     stat_map = calculate_statistical_concurrency()
+    login_usage = _load_login_usage()
 
     for profile in profiles_to_simulate:
         usage = classify_usage_profile(len(profile['GROUPS']))
@@ -64,25 +193,23 @@ def simulate_app_points(profiles_to_simulate):
 
         display_names = [str(n).strip() for n in profile.get('DISPLAYNAME', []) if n and str(n).strip()]
         titles = [str(t).strip() for t in profile.get('TITLES', []) if t and str(t).strip()]
-        cargo_principal = titles[0] if titles else "SEM CARGO"
+        cargo_principal = _canonical_title(profile)
+        operational_presence = _classify_operational_presence(profile)
+        user_usage = login_usage.get(str(profile['USERID']).upper(), {})
+        login_count = user_usage.get('login_count', 0)
 
-        license_model = assign_license_model(usage, titles)
+        license_model = _assign_license_model(entitlement, login_count, operational_presence, titles)
         points = calculate_app_points(entitlement, license_model)
 
-        login_count = profile.get('LOGIN_COUNT_90D', 0)
-
-        # Otimização Inteligente
-        if login_count == 0:
-            rec = "INATIVO (>90d)"
-        elif license_model == "AUTHORIZED" and login_count < 15:
-            rec = "MOVE_TO_CONCURRENT"
-        elif entitlement == "PREMIUM" and "OIL" not in "".join(titles).upper():
-            rec = "DOWNGRADE_CANDIDATE"
-        else:
-            rec = "CONFIRMED_AUTHORIZED"
+        rec, reason = _recommend(entitlement, license_model, login_count, operational_presence)
 
         # Busca os fatores estatísticos reais do cargo. Se não existir, usa médias seguras de O&G.
-        cargo_stats = stat_map.get(cargo_principal, {'p50': 0.33, 'p95': 0.50, 'p100': 0.85})
+        fallback_stats = (
+            {'p50': 0.33, 'p95': 0.50, 'p100': 0.85}
+            if operational_presence == 'OFFSHORE'
+            else {'p50': 0.55, 'p95': 0.75, 'p100': 1.0}
+        )
+        cargo_stats = stat_map.get(cargo_principal, fallback_stats)
 
         # Limita os fatores entre 10% (mínimo irreal) e 100% (absoluto)
         f_p50 = max(0.10, min(cargo_stats['p50'], 1.0))
@@ -96,8 +223,12 @@ def simulate_app_points(profiles_to_simulate):
             'LICENSE_MODEL': license_model,
             'APP_POINTS': points,
             'TITLES': '; '.join(titles) if titles else "N/A",
+            'OPERATIONAL_PRESENCE': operational_presence,
+            'USAGE_PROFILE': usage,
             'OPTIMIZATION_REC': rec,
+            'OPTIMIZATION_REASON': reason,
             'LOGIN_COUNT_90D': login_count,
+            'DAYS_SINCE_LAST': _days_since(user_usage.get('last_login')),
             'FACTOR_P50': f_p50,
             'FACTOR_P95': f_p95,
             'FACTOR_P100': f_p100

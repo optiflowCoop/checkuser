@@ -15,7 +15,6 @@ from scripts.config import get_app_points_config, get_entitlement_keywords, get_
 from scripts.domain.user import build_user_profiles, get_user_domain_category
 from scripts.services.analysis import analyze_governance, analyze_title_divergences
 from scripts.services.app_points import simulate_app_points
-from scripts.services.usage_analyzer import analyze_usage
 from scripts.reporting.html_builder import build_html_structure
 from scripts.reporting.html_helpers import fmt_br, render_table
 # --- NOVA IMPORTAÇÃO CORRIGIDA ---
@@ -44,6 +43,23 @@ def load_csv(path: Path):
     with path.open('r', encoding='utf-8-sig', newline='') as f:
         return list(csv.DictReader(f))
 
+def write_license_decision_plan(rows):
+    """Writes an auditable CSV with the final license recommendation per user."""
+    if not rows:
+        return
+    fieldnames = [
+        'USERID', 'DISPLAYNAME', 'ENTITLEMENT', 'LICENSE_MODEL', 'APP_POINTS',
+        'OPERATIONAL_PRESENCE', 'USAGE_PROFILE', 'OPTIMIZATION_REC',
+        'OPTIMIZATION_REASON', 'LOGIN_COUNT_90D', 'DAYS_SINCE_LAST',
+        'FACTOR_P50', 'FACTOR_P95', 'FACTOR_P100', 'TITLES'
+    ]
+    out_path = IN_DIR / 'license_decision_plan.csv'
+    with out_path.open('w', encoding='utf-8-sig', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction='ignore')
+        writer.writeheader()
+        writer.writerows(rows)
+    print(f'WROTE {out_path.name}')
+
 # --- Main Orchestration ---
 def main():
     """
@@ -69,8 +85,10 @@ def main():
     foresea_profiles = [p for p in active_profiles if p['DOMAIN_CATEGORY'] in ('FORESEA', 'PARCEIRO')]
     app_points_data = simulate_app_points(foresea_profiles)
     
-    # 5. Apply Usage Intelligence (Optimization Recommendations)
-    app_points_data_optimized = analyze_usage(app_points_data)
+    # 5. Usage intelligence is already calculated from consolidated production
+    # extracts inside simulate_app_points. Do not overwrite it with legacy mocks.
+    app_points_data_optimized = app_points_data
+    write_license_decision_plan(app_points_data_optimized)
 
     # 6. Prepare Data for HTML Builder
     summary_data = {
