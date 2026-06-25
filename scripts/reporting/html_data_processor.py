@@ -1,5 +1,6 @@
 # scripts/reporting/html_data_processor.py
 import json
+import numpy as np
 from .html_helpers import get_recommendation_badge
 
 
@@ -26,6 +27,7 @@ class DataProcessor:
 
         opt_auth_points = 0
         opt_conc_users = []
+        hourly_concurrent_points = {}
 
         for u in self.app_points:
             lic = u['LICENSE_MODEL']
@@ -69,20 +71,30 @@ class DataProcessor:
 
             # Accumulate data for the precise backend calculation
             if f_is_auth:
-                points = 5 if f_is_prem else 3
+                points = 5 if f_is_prem else 2
                 opt_auth_points += points
             else:
+                points = 15 if f_is_prem else 10
                 opt_conc_users.append({
-                    'points': 15 if f_is_prem else 10,
+                    'points': points,
                     'f_p50': u.get('FACTOR_P50', 0.33),
                     'f_p95': u.get('FACTOR_P95', 0.50),
                     'f_p100': u.get('FACTOR_P100', 0.85)
                 })
+                for hour in u.get('ACTIVE_HOURS', []):
+                    hourly_concurrent_points[hour] = hourly_concurrent_points.get(hour, 0) + points
 
-        # Calculate the definitive, factored totals for each stress scenario
-        scenario_points['p50'] = opt_auth_points + sum(user['points'] * user['f_p50'] for user in opt_conc_users)
-        scenario_points['p95'] = opt_auth_points + sum(user['points'] * user['f_p95'] for user in opt_conc_users)
-        scenario_points['p100'] = opt_auth_points + sum(user['points'] * user['f_p100'] for user in opt_conc_users)
+        # Capacity scenarios use observed hourly demand from LOGINTRACKING.
+        # Authorized remains fixed; Concurrent is sized by users logging in the same hour.
+        hourly_values = list(hourly_concurrent_points.values())
+        if hourly_values:
+            scenario_points['p50'] = opt_auth_points + float(np.percentile(hourly_values, 50))
+            scenario_points['p95'] = opt_auth_points + float(np.percentile(hourly_values, 95))
+            scenario_points['p100'] = opt_auth_points + max(hourly_values)
+        else:
+            scenario_points['p50'] = opt_auth_points
+            scenario_points['p95'] = opt_auth_points
+            scenario_points['p100'] = opt_auth_points
         scenario_points['blackout'] = opt_auth_points + sum(user['points'] for user in opt_conc_users)
 
         return {
@@ -135,7 +147,7 @@ class DataProcessor:
 
     def prepare_app_points_rows(self):
         app_points_rows = []
-        for s in sorted(self.app_points, key=lambda x: x.get('APP_POINTS', 0), reverse=True)[:1000]:
+        for s in sorted(self.app_points, key=lambda x: x.get('APP_POINTS', 0), reverse=True):
             points = s.get('APP_POINTS', 0)
             rec_code = s.get('OPTIMIZATION_REC')
 

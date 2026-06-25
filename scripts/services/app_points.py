@@ -21,6 +21,7 @@ OFFSHORE_KEYWORDS = (
 )
 
 ONSHORE_ENVS = {'BASE'}
+ADMIN_GROUPS = {'MAXADMIN'}
 
 
 def _load_csv(name):
@@ -50,15 +51,20 @@ def _canonical_title(profile):
 
 
 def _classify_operational_presence(profile):
+    groups = {str(g).upper().strip() for g in profile.get('GROUPS', []) if str(g).strip()}
+    if groups & ADMIN_GROUPS:
+        return 'ONSHORE'
+
     text = ' '.join([
         ' '.join(str(t) for t in profile.get('TITLES', [])),
         ' '.join(str(g) for g in profile.get('PERSONGROUPS', [])),
-        ' '.join(str(e) for e in profile.get('ENVS', [])),
     ]).upper()
     envs = {str(e).upper() for e in profile.get('ENVS', []) if str(e).strip()}
     if envs and envs.issubset(ONSHORE_ENVS):
         return 'ONSHORE'
     if any(keyword in text for keyword in OFFSHORE_KEYWORDS):
+        return 'OFFSHORE'
+    if envs and 'BASE' not in envs:
         return 'OFFSHORE'
     return 'ONSHORE'
 
@@ -68,12 +74,27 @@ def _is_critical_title(titles):
     return any(keyword in title_text for keyword in get_critical_titles())
 
 
+def _is_critical_access(profile):
+    groups = {str(g).upper().strip() for g in profile.get('GROUPS', []) if str(g).strip()}
+    return bool(groups & ADMIN_GROUPS)
+
+
+def _migration_scope(profile):
+    category = profile.get('DOMAIN_CATEGORY', 'SEM DOMINIO')
+    if category in ('FORESEA', 'PARCEIRO'):
+        return 'IN_SCOPE'
+    if category == 'SEM DOMINIO':
+        return 'REVIEW_MISSING_EMAIL'
+    return 'OUT_OF_SCOPE_THIRD_PARTY'
+
+
 def _load_login_usage():
     usage = defaultdict(lambda: {
         'login_count': 0,
         'last_login': None,
         'apps': set(),
         'active_days': set(),
+        'active_hours': set(),
     })
     for row in _load_csv('consolidated_logintracking.csv'):
         if row.get('ATTEMPTRESULT', '').upper() not in ('', 'LOGIN'):
@@ -89,6 +110,7 @@ def _load_login_usage():
             data['apps'].add(app.upper())
         if dt:
             data['active_days'].add(dt.date().isoformat())
+            data['active_hours'].add(dt.strftime('%Y-%m-%d %H:00'))
             if data['last_login'] is None or dt > data['last_login']:
                 data['last_login'] = dt
     return usage
@@ -102,19 +124,23 @@ def _days_since(dt):
     return max((datetime.now(timezone.utc) - dt.astimezone(timezone.utc)).days, 0)
 
 
-def _assign_license_model(entitlement, login_count, operational_presence, titles):
+def _assign_license_model(profile, entitlement, login_count, operational_presence, titles):
     if login_count == 0:
         return 'CONCURRENT'
     if entitlement == 'LIMITED':
         return 'CONCURRENT'
+    if _is_critical_access(profile):
+        return 'AUTHORIZED'
     if operational_presence == 'OFFSHORE':
         return 'AUTHORIZED' if _is_critical_title(titles) else 'CONCURRENT'
     return 'AUTHORIZED' if login_count > 60 or _is_critical_title(titles) else 'CONCURRENT'
 
 
-def _recommend(entitlement, license_model, login_count, operational_presence):
+def _recommend(profile, entitlement, license_model, login_count, operational_presence):
     if login_count == 0:
         return 'INATIVO (>90d)', 'Sem login no extrato consolidado de 90 dias.'
+    if _is_critical_access(profile):
+        return 'CONFIRMED_AUTHORIZED', 'Acesso administrativo critico confirmado por grupo MAXADMIN.'
     if entitlement == 'PREMIUM' and operational_presence == 'ONSHORE' and login_count < 5:
         return 'DOWNGRADE_CANDIDATE', 'Acesso Premium com uso muito baixo; validar necessidade O&G.'
     if license_model == 'AUTHORIZED' and login_count < 20:
@@ -198,10 +224,10 @@ def simulate_app_points(profiles_to_simulate):
         user_usage = login_usage.get(str(profile['USERID']).upper(), {})
         login_count = user_usage.get('login_count', 0)
 
-        license_model = _assign_license_model(entitlement, login_count, operational_presence, titles)
+        license_model = _assign_license_model(profile, entitlement, login_count, operational_presence, titles)
         points = calculate_app_points(entitlement, license_model)
 
-        rec, reason = _recommend(entitlement, license_model, login_count, operational_presence)
+        rec, reason = _recommend(profile, entitlement, license_model, login_count, operational_presence)
 
         # Busca os fatores estatísticos reais do cargo. Se não existir, usa médias seguras de O&G.
         fallback_stats = (
@@ -218,7 +244,10 @@ def simulate_app_points(profiles_to_simulate):
 
         app_points_data.append({
             'USERID': profile['USERID'],
-            'DISPLAYNAME': '; '.join(display_names) if display_names else "N/A",
+            'DISPLAYNAME': '; '.join(display_names) if display_names else profile['USERID'],
+            'EMAIL': profile.get('EMAIL', ''),
+            'DOMAIN_CATEGORY': profile.get('DOMAIN_CATEGORY', 'SEM DOMINIO'),
+            'MIGRATION_SCOPE': _migration_scope(profile),
             'ENTITLEMENT': entitlement,
             'LICENSE_MODEL': license_model,
             'APP_POINTS': points,
@@ -229,6 +258,8 @@ def simulate_app_points(profiles_to_simulate):
             'OPTIMIZATION_REASON': reason,
             'LOGIN_COUNT_90D': login_count,
             'DAYS_SINCE_LAST': _days_since(user_usage.get('last_login')),
+            'ACTIVE_DAYS': sorted(user_usage.get('active_days', set())),
+            'ACTIVE_HOURS': sorted(user_usage.get('active_hours', set())),
             'FACTOR_P50': f_p50,
             'FACTOR_P95': f_p95,
             'FACTOR_P100': f_p100
