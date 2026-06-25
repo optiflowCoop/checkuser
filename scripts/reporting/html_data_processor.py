@@ -147,10 +147,10 @@ class DataProcessor:
             'concurrency_peak_count': concurrency_summary.get('peak_count'),
             'concurrency_peak_hours': concurrency_summary.get('peak_hours', []),
             'concurrency_hourly': concurrency_summary.get('hourly_counts', {}),
-            # Use identity_analytics for true human counts (deduped)
-            # Prefer in-scope deduplicated counts for the operational panel
-            'identity_total_users': self.identity_analytics.get('in_scope_total_unique', self.identity_analytics.get('total_unique_users', 0)),
-            'identity_active_users': self.identity_analytics.get('in_scope_active_unique', self.identity_analytics.get('total_active_unique', 0)),
+            # Align identity counts to the exact universe used by license_decision_plan (app_points)
+            # Compute from self.app_points to guarantee HTML and XLSX show same user set
+            'identity_total_users': len({(u.get('USERID') or '').strip() for u in self.app_points if (u.get('USERID') or '').strip()}),
+            'identity_active_users': sum(1 for u in self.app_points if u.get('OPTIMIZATION_REC') != 'INATIVO (>90d)'),
             'identity_status': self.identity_analytics.get('status_counts', {}),
             'identity_domains': self.identity_analytics.get('domain_counts', {}),
         }
