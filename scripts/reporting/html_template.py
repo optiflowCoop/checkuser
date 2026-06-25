@@ -106,10 +106,11 @@ def _render_header_and_tabs():
     """
 
 
-def _render_tab_painel(identity_analytics, analytics):
-    """Renders the 'Painel Operacional' tab content using the new identity data."""
-    total_unique = identity_analytics.get('total_unique_users', 0)
-    active_unique = identity_analytics.get('total_active_unique', 0)
+def _render_tab_painel(analytics, identity_analytics):
+    """Renders the 'Painel Operacional' tab content using processed analytics when available."""
+    # analytics may contain processed identity metrics produced by DataProcessor
+    total_unique = analytics.get('identity_total_users', identity_analytics.get('in_scope_total_unique', identity_analytics.get('total_unique_users', 0)))
+    active_unique = analytics.get('identity_active_users', identity_analytics.get('in_scope_active_unique', identity_analytics.get('total_active_unique', 0)))
     status_counts = identity_analytics.get('status_counts', {})
     domain_counts = identity_analytics.get('domain_counts', {})
     downgrade_count = analytics.get('downgrade_count', 0)
@@ -152,7 +153,6 @@ def _render_tab_painel(identity_analytics, analytics):
         </div>
     </div>
     """
-
 
 def _render_tab_gov(gov_tables):
     """Renders the 'Governança & Saneamento' tab content."""
@@ -582,7 +582,7 @@ def render_html(data):
 </head>
 <body>
     {_render_header_and_tabs()}
-    {_render_tab_painel(identity_analytics, analytics)}
+    {_render_tab_painel(analytics, identity_analytics)}
     {_render_tab_gov(gov_tables)}
     {_render_tab_apppoints(analytics)}
     {_render_tab_eventos(analytics)}

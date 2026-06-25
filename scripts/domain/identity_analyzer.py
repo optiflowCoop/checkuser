@@ -98,13 +98,27 @@ def get_unique_users_data():
         else:
             domain_counts['no_domain'] += 1
 
+    # Define in-scope heuristics: email domain OR known operational sites
+    IN_SCOPE_SITES = {'OP-BASE', 'N06', 'N08', 'N09', 'HTQ', 'ODN1', 'ODN2', 'BASE'}
+    in_scope = []
+    in_scope_active = []
+    for u in deduplicated_list:
+        email = u.get('PRIMARYEMAIL', '').strip().lower()
+        site = u.get('DEFSITE', '').strip().upper()
+        if (email and ('@foresea.com' in email or '@foresea-partner.com' in email)) or (site and site in IN_SCOPE_SITES):
+            in_scope.append(u)
+            if u.get('STATUS','').upper() == 'ACTIVE':
+                in_scope_active.append(u)
+
     # 3. Montagem do Dicionário de Resultados
     return {
         "total_registrations": len(users),
         "total_unique_users": len(deduplicated_list),
+        "total_active_unique": status_counts.get('ACTIVE', 0),
+        "in_scope_total_unique": len(in_scope),
+        "in_scope_active_unique": len(in_scope_active),
         "status_counts": status_counts,
-        "domain_counts": domain_counts,
-        "total_active_unique": status_counts.get('ACTIVE', 0)
+        "domain_counts": domain_counts
     }
 
 if __name__ == '__main__':
