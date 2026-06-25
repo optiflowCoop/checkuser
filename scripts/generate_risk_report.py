@@ -65,19 +65,17 @@ def write_license_decision_plan(rows):
         'EMAIL', 'DOMAIN_CATEGORY', 'MIGRATION_SCOPE', 'OPERATIONAL_PRESENCE',
         'USAGE_PROFILE', 'OPTIMIZATION_REC',
         'OPTIMIZATION_REASON', 'LOGIN_COUNT_90D', 'DAYS_SINCE_LAST',
-        'FACTOR_P50', 'FACTOR_P95', 'FACTOR_P100', 'TITLES'
+        'FACTOR_P50', 'FACTOR_P95', 'FACTOR_P100', 'TITLES', 'ACTIVE_HOURS'
     ]
     out_path = IN_DIR / 'license_decision_plan.csv'
-    try:
-        f = out_path.open('w', encoding='utf-8-sig', newline='')
-    except PermissionError:
-        out_path = IN_DIR / 'license_decision_plan_new.csv'
-        f = out_path.open('w', encoding='utf-8-sig', newline='')
-    with f:
+    with out_path.open('w', encoding='utf-8-sig', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction='ignore')
         writer.writeheader()
-        writer.writerows(rows)
-    print(f'WROTE {out_path.name}')
+        for row in rows:
+            if 'ACTIVE_HOURS' in row and isinstance(row['ACTIVE_HOURS'], list):
+                row['ACTIVE_HOURS'] = '|'.join(row['ACTIVE_HOURS'])
+            writer.writerow(row)
+    print(f'✓ WROTE {out_path.name}')
 
 def write_excel_workbook(summary, governance, license_rows, domain_counts, missing_email_rows):
     """Creates the final consolidated governance workbook used by the pipeline."""
@@ -161,13 +159,8 @@ def write_excel_workbook(summary, governance, license_rows, domain_counts, missi
             add_sheet(sheet_name, list(rows[0].keys()), rows)
 
     out_path = OUT_DIR / 'maximo_risk_and_optimization_workbook.xlsx'
-    try:
-        wb.save(out_path)
-        print(f'WROTE {out_path.name}')
-    except PermissionError:
-        alt_path = OUT_DIR / 'maximo_risk_and_optimization_workbook_new.xlsx'
-        wb.save(alt_path)
-        print(f'WROTE {alt_path.name}')
+    wb.save(out_path)
+    print(f'✓ WROTE {out_path.name}')
 
 # --- Main Orchestration ---
 def main():
@@ -226,6 +219,26 @@ def main():
     app_points_data_optimized = app_points_data
     write_license_decision_plan(app_points_data_optimized)
 
+    # 5b. Compute High-Water Mark and peak contributors for CONCURRENT pool
+    concurrency_summary = {}
+    try:
+        if ca is not None:
+            sessions_csv = IN_DIR / 'consolidated_logintracking.csv'
+            if sessions_csv.exists():
+                sessions = ca.load_sessions_from_csv(str(sessions_csv))
+                hourly_counts = ca.compute_hourly_concurrency(sessions, license_filter='CONCURRENT', days=90)
+                peak_count, peak_hours = ca.high_water_mark(hourly_counts)
+                _, _, contributors = ca.peak_contributors(sessions, license_filter='CONCURRENT', days=90)
+                concurrency_summary = {
+                    'hourly_counts': hourly_counts,
+                    'peak_count': peak_count,
+                    'peak_hours': [h.isoformat() for h in peak_hours],
+                    'peak_contributors_count': len(contributors),
+                    'peak_contributors': list(sorted(contributors))[:1000],
+                }
+    except Exception as e:
+        print(f"[Aviso] Falha ao calcular concorrência avançada: {e}")
+
     # 6. Prepare Data for HTML Builder
     summary_data = {
         'active_profiles_count': len(active_profiles),
@@ -234,7 +247,8 @@ def main():
             'auth_users': [s for s in app_points_data_optimized if s['LICENSE_MODEL'] == 'AUTHORIZED'],
             'conc_users': [s for s in app_points_data_optimized if s['LICENSE_MODEL'] == 'CONCURRENT'],
             'premium_users': [s for s in app_points_data_optimized if s['ENTITLEMENT'] == 'PREMIUM'],
-        }
+        },
+        'concurrency': concurrency_summary
     }
     governance_data = {
         'cross_env': all_data['cross_env'],

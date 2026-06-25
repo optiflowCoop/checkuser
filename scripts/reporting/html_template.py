@@ -284,19 +284,19 @@ def _render_tab_eventos(analytics):
                     <h3 style="margin-top:0; font-size:1.1rem; color:var(--primary);">🚀 Disparadores de Cenário</h3>
                     <div class="event-card" onclick="triggerEventScenario('p50')">
                         <h4>🟢 Cenário Cotidiano (Mediana - P50)</h4>
-                        <p>Simula um dia comum. Consome aprox. {fmt_br(scenario_points['p50'])} AppPoints.</p>
+                        <p>Simula um dia comum. Consome aprox. {fmt_br(scenario_points['p50'])} AppPoints. <small style="color:#64748b;">(Soma bruta: {fmt_br(analytics.get('scenario_points_total', {}).get('p50', 0))})</small></p>
                     </div>
                     <div class="event-card" onclick="triggerEventScenario('p95')" style="border-left-color: var(--warning);">
                         <h4>🟡 Pico Seguro (Percentil 95)</h4>
-                        <p>O teto projetado pela máquina. Consome aprox. {fmt_br(scenario_points['p95'])} AppPoints.</p>
+                        <p>O teto projetado pela máquina. Consome aprox. {fmt_br(scenario_points['p95'])} AppPoints. <small style="color:#64748b;">(Soma bruta: {fmt_br(analytics.get('scenario_points_total', {}).get('p95', 0))})</small></p>
                     </div>
                     <div class="event-card" onclick="triggerEventScenario('p100')" style="border-left-color: var(--danger);">
                         <h4>🔴 Emergência Operacional (P100)</h4>
-                        <p>Pico máximo histórico. Consome aprox. {fmt_br(scenario_points['p100'])} AppPoints.</p>
+                        <p>Pico máximo histórico. Consome aprox. {fmt_br(scenario_points['p100'])} AppPoints. <small style="color:#64748b;">(Soma bruta: {fmt_br(analytics.get('scenario_points_total', {}).get('p100', 0))})</small></p>
                     </div>
                     <div class="event-card" onclick="triggerEventScenario('blackout')" style="border-left-color: #7c3aed; background: #faf5ff; border-color:#e9d5ff">
                         <h4>⚡ Blackout Total (100% de Acessos)</h4>
-                        <p>Cenário extremo: Todos os usuários simultâneos. Consome aprox. {fmt_br(scenario_points['blackout'])} AppPoints.</p>
+                        <p>Cenário extremo: Todos os usuários simultâneos. Consome aprox. {fmt_br(scenario_points['blackout'])} AppPoints. <small style="color:#64748b;">(Soma bruta: {fmt_br(analytics.get('scenario_points_total', {}).get('blackout', 0))})</small></p>
                     </div>
                 </div>
             </div>
@@ -351,6 +351,7 @@ def _render_scripts(analytics, identity_analytics):
     """Renders the JavaScript for the report."""
     scenarios_json = json.dumps(analytics['scenarios_data'])
     points_json = json.dumps(analytics['scenario_points'])
+    total_points_json = json.dumps(analytics.get('scenario_points_total', {}))
 
     domain_keys = json.dumps(list(identity_analytics['domain_counts'].keys()))
     domain_values = json.dumps(list(identity_analytics['domain_counts'].values()))
@@ -359,6 +360,7 @@ def _render_scripts(analytics, identity_analytics):
     <script>
         const rawScenarios = {scenarios_json};
         const scenarioPoints = {points_json};
+        const scenarioPointsTotal = {total_points_json};
 
         function openTab(evt, tabName) {{
             let i, tabcontent, tablinks;
@@ -548,6 +550,9 @@ def _render_scripts(analytics, identity_analytics):
         }}
 
         document.addEventListener('DOMContentLoaded', function() {{
+            // Force correct initialization with the pre-calculated scenario points
+            const initialPoints = Math.round(scenarioPoints.p95);
+            document.getElementById('calcTotalDisplay').innerText = initialPoints.toLocaleString('pt-BR');
             loadScenario('otimizado_p95', document.getElementById('btnOtimizado'));
             triggerEventScenario('p95');
         }});

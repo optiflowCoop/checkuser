@@ -25,6 +25,8 @@ class DataProcessor:
 
         scenario_points = {'p50': 0, 'p95': 0, 'p100': 0, 'blackout': 0}
 
+        opt_total_points = 0  # Sum of all APP_POINTS (including inactive)
+        opt_active_total = 0  # Sum of APP_POINTS for active users only
         opt_auth_points = 0
         opt_conc_users = []
         hourly_concurrent_points = {}
@@ -33,24 +35,31 @@ class DataProcessor:
             lic = u['LICENSE_MODEL']
             ent = u['ENTITLEMENT']
             rec = u['OPTIMIZATION_REC']
+            app_pts = float(u.get('APP_POINTS', 0))
 
             is_prem = (ent == 'PREMIUM')
             is_auth = (lic == 'AUTHORIZED')
 
-            # 1. As-Is Scenario (Physical counts)
+            # 1. As-Is Scenario (Physical counts) - includes all users
             if is_prem:
                 scenarios_data['asis']['pA' if is_auth else 'pC'] += 1
             else:
                 scenarios_data['asis']['bA' if is_auth else 'bC'] += 1
 
+            # Accumulate TOTAL points for all users (as-is scenario)
+            opt_total_points += app_pts
+
             if rec == 'INATIVO (>90d)':
                 inativos_count += 1
                 continue
 
+            # From here on: active users only
+            opt_active_total += app_pts
+
             if rec == 'DOWNGRADE_CANDIDATE': downgrade_count += 1
             if rec == 'MOVE_TO_CONCURRENT': concurrent_count += 1
 
-            # 2. Saneado Scenario (Physical counts)
+            # 2. Saneado Scenario (Physical counts) - excludes inactive
             if is_prem:
                 scenarios_data['saneado']['pA' if is_auth else 'pC'] += 1
             else:
@@ -81,28 +90,68 @@ class DataProcessor:
                     'f_p95': u.get('FACTOR_P95', 0.50),
                     'f_p100': u.get('FACTOR_P100', 0.85)
                 })
-                for hour in u.get('ACTIVE_HOURS', []):
+                # Deserialize ACTIVE_HOURS from CSV pipe-delimited format
+                active_hours = u.get('ACTIVE_HOURS', '')
+                if isinstance(active_hours, str) and active_hours.strip():
+                    hours_list = [h.strip() for h in active_hours.split('|') if h.strip()]
+                elif isinstance(active_hours, list):
+                    hours_list = active_hours
+                else:
+                    hours_list = []
+                
+                for hour in hours_list:
                     hourly_concurrent_points[hour] = hourly_concurrent_points.get(hour, 0) + points
 
-        # Capacity scenarios use observed hourly demand from LOGINTRACKING.
-        # Authorized remains fixed; Concurrent is sized by users logging in the same hour.
+        # Compute peak-based scenario points from observed hourly concurrency
         hourly_values = list(hourly_concurrent_points.values())
         if hourly_values:
-            scenario_points['p50'] = opt_auth_points + float(np.percentile(hourly_values, 50))
-            scenario_points['p95'] = opt_auth_points + float(np.percentile(hourly_values, 95))
-            scenario_points['p100'] = opt_auth_points + max(hourly_values)
+            peak_p50 = float(np.percentile(hourly_values, 50))
+            peak_p95 = float(np.percentile(hourly_values, 95))
+            peak_p100 = float(max(hourly_values))
+            scenario_points_peak = {
+                'p50': opt_auth_points + peak_p50,
+                'p95': opt_auth_points + peak_p95,
+                'p100': opt_auth_points + peak_p100,
+                'blackout': opt_auth_points + sum(u['points'] for u in opt_conc_users)
+            }
         else:
-            scenario_points['p50'] = opt_auth_points
-            scenario_points['p95'] = opt_auth_points
-            scenario_points['p100'] = opt_auth_points
-        scenario_points['blackout'] = opt_auth_points + sum(user['points'] for user in opt_conc_users)
+            scenario_points_peak = {
+                'p50': opt_auth_points,
+                'p95': opt_auth_points,
+ 'p100': opt_auth_points,
+                'blackout': opt_auth_points + sum(u['points'] for u in opt_conc_users)
+            }
+
+        # Also expose the total summed AppPoints (what you'd pay buying per-user licenses)
+        scenario_points_total = {
+            'p50': opt_total_points,
+            'p95': opt_total_points,
+            'p100': opt_total_points,
+            'blackout': opt_total_points
+        }
+
+        # Default 'scenario_points' remains peak-based for the calculator and event cards,
+        # but 'scenario_points_total' is available for reporting the summed footprint.
+        scenario_points = scenario_points_peak
+
+        concurrency_summary = self.summary.get('concurrency', {}) if isinstance(self.summary, dict) else {}
 
         return {
             'inativos_count': inativos_count,
             'downgrade_count': downgrade_count,
             'concurrent_count': concurrent_count,
             'scenarios_data': scenarios_data,  # Contains physical counts for UI
-            'scenario_points': scenario_points  # Contains precise factored totals for display
+            'scenario_points': scenario_points,  # Contains precise factored totals for display (peak-based)
+            'scenario_points_total': scenario_points_total,  # Sum of APP_POINTS (bruto)
+            # Attach computed concurrency metrics from the data science analysis
+            'concurrency_peak_count': concurrency_summary.get('peak_count'),
+            'concurrency_peak_hours': concurrency_summary.get('peak_hours', []),
+            'concurrency_hourly': concurrency_summary.get('hourly_counts', {}),
+            # Use identity_analytics for true human counts (deduped)
+            'identity_total_users': self.identity_analytics.get('total_unique_users', 0),
+            'identity_active_users': self.identity_analytics.get('total_active_unique', 0),
+            'identity_status': self.identity_analytics.get('status_counts', {}),
+            'identity_domains': self.identity_analytics.get('domain_counts', {}),
         }
 
     def prepare_governance_tables(self):
@@ -174,8 +223,12 @@ class DataProcessor:
             # Combina o badge com o texto descritivo
             full_recommendation_html = f"{recommendation_badge_html}<br><small>{recommendation_text}</small>"
 
-            fator_display = f"Med: {s.get('FACTOR_P50', 0) * 100:.0f}% | Pico: {s.get('FACTOR_P95', 0) * 100:.0f}%" if s.get(
-                'LICENSE_MODEL') == 'CONCURRENT' else "100% Fixo"
+            try:
+                f_p50 = float(s.get('FACTOR_P50', 0))
+                f_p95 = float(s.get('FACTOR_P95', 0))
+                fator_display = f"Med: {f_p50 * 100:.0f}% | Pico: {f_p95 * 100:.0f}%" if s.get('LICENSE_MODEL') == 'CONCURRENT' else "100% Fixo"
+            except Exception:
+                fator_display = "—"
 
             app_points_rows.append([
                 f"<strong>{s.get('USERID')}</strong>",

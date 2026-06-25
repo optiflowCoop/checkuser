@@ -1,0 +1,8 @@
+{
+    "unique_human_users": 824,
+    "authorized_reserved_points": 2105,
+    "concurrent_pool_raw_points": 5040,
+    "concurrent_peak_estimated_points": 1764,
+    "true_total_app_points": 3869,
+    "contracted_app_points": 1200
+}

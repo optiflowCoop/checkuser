@@ -28,32 +28,58 @@ def get_unique_users_data():
     with IDENTITY_FILE.open('r', encoding='utf-8-sig') as f:
         users = list(csv.DictReader(f))
 
-    # 1. Deduplicação Inteligente de Usuários
-    unique_users = {}
+    # 1. Deduplicação Inteligente de Usuários (priorizar EMAIL -> PERSONID -> LOGINID)
+    unique_by_email = {}
+    unique_by_person = {}
+    unique_by_login = {}
+
     for user in users:
         loginid = user.get('LOGINID', '').strip().upper()
         personid = user.get('PERSONID', '').strip().upper()
         email = user.get('PRIMARYEMAIL', '').strip().lower()
         status = user.get('STATUS', '').upper()
 
-        # Define a chave de unicidade com uma hierarquia de prioridade
-        unique_key = None
+        # Prefer email as primary key when available
+        if email:
+            key = email
+            existing = unique_by_email.get(key)
+            if not existing or (status == 'ACTIVE' and existing.get('STATUS', '').upper() != 'ACTIVE'):
+                unique_by_email[key] = user
+            continue
+
+        # If no email, fallback to PERSONID
+        if personid and personid not in ('NULL', 'NONE'):
+            key = personid
+            existing = unique_by_person.get(key)
+            if not existing or (status == 'ACTIVE' and existing.get('STATUS', '').upper() != 'ACTIVE'):
+                unique_by_person[key] = user
+            continue
+
+        # Finally fallback to LOGINID
         if loginid and loginid not in ('NULL', 'NONE'):
-            unique_key = f"LOGINID|{loginid}"
-        elif personid and personid not in ('NULL', 'NONE'):
-            unique_key = f"PERSONID|{personid}"
-        elif email:
-            unique_key = f"EMAIL|{email}"
-        
-        if not unique_key:
-            continue # Ignora registros sem chave de identificação
+            key = loginid
+            existing = unique_by_login.get(key)
+            if not existing or (status == 'ACTIVE' and existing.get('STATUS', '').upper() != 'ACTIVE'):
+                unique_by_login[key] = user
+            continue
 
-        # Lógica de atualização: um novo registro só substitui um antigo se
-        # o novo for 'ACTIVE' e o antigo não, ou se a chave ainda não existir.
-        if unique_key not in unique_users or (status == 'ACTIVE' and unique_users[unique_key].get('STATUS') != 'ACTIVE'):
-            unique_users[unique_key] = user
+    # Merge deduplicated users preferring email records, then person, then login
+    deduplicated_list = list(unique_by_email.values())
 
-    deduplicated_list = list(unique_users.values())
+    # Add persons that are not already represented by email
+    emails_seen = set(k for k in unique_by_email.keys())
+    for pid, u in unique_by_person.items():
+        email = u.get('PRIMARYEMAIL', '').strip().lower()
+        if not email or email not in emails_seen:
+            deduplicated_list.append(u)
+
+    # Add logins that are not represented by email or person
+    persons_seen = {u.get('PERSONID', '').upper() for u in deduplicated_list if u.get('PERSONID')}
+    for lid, u in unique_by_login.items():
+        email = u.get('PRIMARYEMAIL', '').strip().lower()
+        personid = u.get('PERSONID', '').strip().upper()
+        if (not email or email not in emails_seen) and (not personid or personid not in persons_seen):
+            deduplicated_list.append(u)
 
     # 2. Cálculo de Métricas com `Counter`
     status_counts = Counter(u.get('STATUS', 'UNKNOWN').upper() for u in deduplicated_list)

@@ -3,9 +3,36 @@ import subprocess
 import sys
 from pathlib import Path
 import time
+import logging
+from datetime import datetime
 
 ROOT = Path(__file__).resolve().parent
 
+# =========================================================================
+# 🛠️ CONFIGURAÇÃO DE LOGGING
+# =========================================================================
+LOG_DIR = ROOT / "output" / "logs"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+current_time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+LOG_FILE = LOG_DIR / f"pipeline_exec_{current_time_str}.log"
+
+# Configura o log para sair no console e salvar no arquivo simultaneamente
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[
+        logging.FileHandler(LOG_FILE, encoding='utf-8'),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
+logger = logging.getLogger(__name__)
+
+# =========================================================================
+# 🚀 DEFINIÇÃO DAS ETAPAS DO PIPELINE
+# =========================================================================
 PIPELINE_STEPS = [
     {
         "name": "1. Extraindo Dados do DB2 (run_db2cli_queries.py)",
@@ -48,34 +75,43 @@ PIPELINE_STEPS = [
         "cmd": [sys.executable, str(ROOT / "src" / "license_optimizer.py")]
     },
     {
-        "name": "12. Gerando Relatório Final (Dashboard HTML e Workbook Excel)",
+        "name": "12. [FASE 4] Cálculo Real de AppPoints (true_capacity_calculator.py)",
+        "cmd": [sys.executable, str(ROOT / "src" / "true_capacity_calculator.py")]
+    },
+    {
+        "name": "13. Gerando Relatório Final (Dashboard HTML e Workbook Excel)",
         "cmd": [sys.executable, str(ROOT / "scripts" / "generate_risk_report.py")]
     }
 ]
 
 
 def main():
-    print("=" * 60)
-    print("🚀 Iniciando Pipeline: Maximo Identity Sanity & MAS 9")
-    print("=" * 60)
+    logger.info("=" * 70)
+    logger.info("🚀 Iniciando Pipeline: Maximo Identity Sanity & MAS 9")
+    logger.info("=" * 70)
+    logger.info(f"📁 Arquivo de log gerado em: {LOG_FILE}")
 
     skip_extract = '--skip-extract' in sys.argv
     start_time = time.time()
 
+    # Rastreamento de métricas para resumo final
+    execution_metrics = []
+
     # Copia o ambiente atual e define PYTHONIOENCODING para UTF-8
-    # Isso força os subprocessos Python a usarem UTF-8 para sua saída
     env = os.environ.copy()
     env['PYTHONIOENCODING'] = 'utf-8'
 
-    for idx, step in enumerate(PIPELINE_STEPS):
+    for step in PIPELINE_STEPS:
         original_step_number = int(step['name'].split('.')[0])
+
         if original_step_number == 1 and skip_extract:
-            print(f"\n⏩ Pulando: {step['name']} (--skip-extract passado)")
+            logger.info(f"⏩ Pulando: {step['name']} (--skip-extract passado)")
+            execution_metrics.append((step['name'], 0.0, "SKIPPED"))
             continue
 
-        print(f"\n{'=' * 60}")
-        print(f"⏳ Executando: {step['name']}")
-        print(f"{'-' * 60}")
+        logger.info(f"\n{'-' * 70}")
+        logger.info(f"⏳ Executando: {step['name']}")
+        logger.info(f"{'-' * 70}")
 
         step_start_time = time.time()
         try:
@@ -86,40 +122,65 @@ def main():
                 check=True,
                 encoding='utf-8',
                 errors='replace',
-                env=env  # Passa o ambiente modificado para o subprocesso
+                env=env
             )
 
-            if result.stdout:
-                print(f"\n--- SAÍDA PADRÃO ({step['name']}) ---")
-                print(result.stdout.strip())
+            # Injeta a saída padrão no log de forma limpa
+            if result.stdout.strip():
+                for line in result.stdout.strip().split('\n'):
+                    logger.info(f"   [STDOUT] {line}")
 
-            if result.stderr:
-                print(f"\n--- ERROS/AVISOS ({step['name']}) ---")
-                print(result.stderr.strip())
+            if result.stderr.strip():
+                for line in result.stderr.strip().split('\n'):
+                    logger.warning(f"   [STDERR] {line}")
 
-            step_end_time = time.time()
-            print(f"\n✅ Concluído: {step['name']} (Tempo: {step_end_time - step_start_time:.2f}s)")
+            step_duration = time.time() - step_start_time
+            logger.info(f"✅ Concluído: {step['name']} (Tempo: {step_duration:.2f}s)")
+            execution_metrics.append((step['name'], step_duration, "SUCCESS"))
 
         except subprocess.CalledProcessError as e:
-            print(f"\n--- SAÍDA PADRÃO (ERRO em {step['name']}) ---")
-            print(e.stdout.strip() if e.stdout else "Nenhuma saída padrão.")
-            print(f"\n--- ERROS/AVISOS (ERRO em {step['name']}) ---")
-            print(e.stderr.strip() if e.stderr else "Nenhum erro/aviso capturado.")
-            print(f"\n❌ ERRO CRÍTICO no passo: {step['name']}")
-            print(f"Processo abortado com código de saída: {e.returncode}")
+            logger.error(f"❌ ERRO CRÍTICO no passo: {step['name']}")
+
+            if e.stdout:
+                logger.error("--- ÚLTIMA SAÍDA ANTES DO ERRO ---")
+                for line in e.stdout.strip().split('\n'):
+                    logger.error(f"   [STDOUT] {line}")
+
+            if e.stderr:
+                logger.error("--- DETALHES DO ERRO ---")
+                for line in e.stderr.strip().split('\n'):
+                    logger.error(f"   [STDERR] {line}")
+
+            logger.error(f"Processo abortado com código de saída: {e.returncode}")
+            execution_metrics.append((step['name'], time.time() - step_start_time, "FAILED"))
             sys.exit(1)
+
         except FileNotFoundError as e:
-            print(f"\n❌ ARQUIVO NÃO ENCONTRADO no passo: {step['name']}")
-            print(str(e))
+            logger.error(f"❌ ARQUIVO NÃO ENCONTRADO no passo: {step['name']}")
+            logger.error(str(e))
+            execution_metrics.append((step['name'], time.time() - step_start_time, "FAILED"))
             sys.exit(1)
 
     total_time = time.time() - start_time
-    print("\n" + "=" * 60)
-    print(f"✅ PIPELINE CONCLUÍDO COM SUCESSO! (Tempo total: {total_time:.2f}s)")
-    print("=" * 60)
-    print("📄 Relatórios gerados em: output/reports/")
-    print("   - maximo_unified_dashboard.html")
-    print("   - maximo_risk_and_optimization_workbook.xlsx")
+
+    # =========================================================================
+    # 📊 QUADRO DE RESUMO FINAL
+    # =========================================================================
+    logger.info("\n" + "=" * 70)
+    logger.info("📊 RESUMO DE EXECUÇÃO DO PIPELINE (MÉTRICAS)")
+    logger.info("=" * 70)
+    for step_name, duration, status in execution_metrics:
+        status_icon = "✅" if status == "SUCCESS" else "⏩" if status == "SKIPPED" else "❌"
+        logger.info(f"{status_icon} [{duration:06.2f}s] - {step_name}")
+
+    logger.info("=" * 70)
+    logger.info(f"🏆 PIPELINE CONCLUÍDO COM SUCESSO! (Tempo total: {total_time:.2f}s)")
+    logger.info("=" * 70)
+    logger.info("📄 Relatórios gerados em: output/reports/")
+    logger.info("   - maximo_unified_dashboard.html")
+    logger.info("   - maximo_risk_and_optimization_workbook.xlsx")
+    logger.info("   - true_capacity_metrics.json")
+    logger.info(f"📝 Log salvo em: {LOG_FILE}")
 
 
 if __name__ == "__main__":
