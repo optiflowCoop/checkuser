@@ -406,7 +406,7 @@ def _render_scripts(analytics, identity_analytics):
         const scenarioPointsTotal = {total_points_json};
         const ceilingLimit = {ceiling_limit};
 
-        function openTab(evt, tabName) {{            let i, tabcontent, tablinks;
+        function openTab(evt, tabName) {{            let i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("tab-content");
             for (i = 0; i < tabcontent.length; i++) {{ tabcontent[i].style.display = "none"; tabcontent[i].classList.remove("active"); }}
             tablinks = document.getElementsByClassName("tab-button");
@@ -481,7 +481,7 @@ def _render_scripts(analytics, identity_analytics):
             if (totalPoints > ceilingLimit) {{
                 document.getElementById('calcTotalDisplay').style.color = 'var(--danger)';
                 alertEl.style.display = 'block';
-                alertEl.innerText = `⚠️ TETO EXCEDIDO (>${ceilingLimit.toLocaleString('pt-BR')})`;
+                alertEl.innerText = `⚠️ TETO EXCEDIDO (>${{ceilingLimit.toLocaleString('pt-BR')}})`;
             }} else {{
                 document.getElementById('calcTotalDisplay').style.color = 'var(--success)';
                 alertEl.style.display = 'none';
@@ -615,7 +615,7 @@ def _render_scripts(analytics, identity_analytics):
             // Set ceiling label dynamically
             try {{
                 const ceilLabel = document.getElementById('eventCeilingLabel');
-                if (ceilLabel) ceilLabel.innerText = `Termômetro de Impacto (Limite: ${ceilingLimit.toLocaleString('pt-BR')})`;
+                if (ceilLabel) ceilLabel.innerText = `Termômetro de Impacto (Limite: ${{ceilingLimit.toLocaleString('pt-BR')}})`;
             }} catch(e) {{ }}
 
             loadScenario('otimizado_p95', document.getElementById('btnOtimizado'));
