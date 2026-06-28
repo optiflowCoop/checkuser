@@ -167,8 +167,12 @@ class DataProcessor:
             'scenario_points_total': scenario_points_total,  # Sum of APP_POINTS (bruto)
             # Attach computed concurrency metrics from the data science analysis
             'concurrency_peak_count': concurrency_summary.get('peak_count'),
+            # peak_hours: AppPoints (consumo)
             'concurrency_peak_hours': (concurrency_summary.get('peak_hours', []) if concurrency_summary else []),
+            # peak_hours_users: Usuários simultâneos (capacidade)
+            'concurrency_peak_users_hours': (concurrency_summary.get('peak_hours_users', []) if concurrency_summary else []),
             'concurrency_hourly': (concurrency_summary.get('hourly_counts', {}) if concurrency_summary else {}),
+
 
             'concurrency_peak_contributors': concurrency_summary.get('peak_contributors', []),
             'concurrency_peak_contributors_count': concurrency_summary.get('peak_contributors_count', 0),

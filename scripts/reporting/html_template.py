@@ -332,9 +332,33 @@ def _render_tab_peak(analytics):
                 val = entry.get('value') or entry.get('points') or entry.get('app_points') or entry.get('count')
                 peak_rows.append([hour, val])
 
-    # Build chart series from peak_rows (Chart.js needs labels+data)
-    chart_labels = [r[0] for r in peak_rows if r and len(r) >= 2]
-    chart_data = [r[1] for r in peak_rows if r and len(r) >= 2]
+    # Users series (capacidade)
+    peak_hours_users = analytics.get('concurrency_peak_users_hours', []) or []
+    users_rows = []
+    if isinstance(peak_hours_users, dict):
+        users_rows = [[k, v] for k, v in sorted(peak_hours_users.items())]
+    elif isinstance(peak_hours_users, list):
+        for entry in peak_hours_users:
+            if isinstance(entry, (list, tuple)) and len(entry) >= 2:
+                users_rows.append([entry[0], entry[1]])
+            elif isinstance(entry, dict):
+                hour = entry.get('hour') or entry.get('ts') or entry.get('time')
+                val = entry.get('value') or entry.get('users') or entry.get('count')
+                users_rows.append([hour, val])
+
+    users_labels = [r[0] for r in users_rows if r and len(r) >= 2]
+    users_data = [r[1] for r in users_rows if r and len(r) >= 2]
+    points_labels = [r[0] for r in peak_rows if r and len(r) >= 2]
+    points_data = [r[1] for r in peak_rows if r and len(r) >= 2]
+
+    # Fallback: se não vierem dados de usuários (capacidade), desenha com AppPoints (consumo)
+    used_fallback_app_points = False
+    if (not users_data) and peak_rows:
+        users_labels = [r[0] for r in peak_rows if r and len(r) >= 2]
+        users_data = [r[1] for r in peak_rows if r and len(r) >= 2]
+        points_labels = [r[0] for r in peak_rows if r and len(r) >= 2]
+        points_data = [r[1] for r in peak_rows if r and len(r) >= 2]
+        used_fallback_app_points = True
 
     contributors = analytics.get('concurrency_peak_contributors', []) or []
     contrib_section = ''
@@ -345,19 +369,23 @@ def _render_tab_peak(analytics):
             contrib_section = render_table(['USERID'], [[c] for c in contributors], 'table-peak-contrib', 'gov-table')
 
     # Expose series to JS through data attributes (simple & robust)
-    labels_json = json.dumps(chart_labels, ensure_ascii=False)
-    data_json = json.dumps(chart_data, ensure_ascii=False)
+    labels_json = json.dumps(users_labels, ensure_ascii=False)
+    data_json = json.dumps(users_data, ensure_ascii=False)
+    points_labels_json = json.dumps(points_labels, ensure_ascii=False)
+    points_data_json = json.dumps(points_data, ensure_ascii=False)
 
     return f"""
     <div id="tab-peak" class="container tab-content">
         <div class="card">
             <h2 class="card-header">⛰️ Peak Hours (High-Water Mark) - Ecocardiograma</h2>
-            <p style="color:#475569;">Passe o mouse para ver quantos usuários simultâneos/valor de pico estavam ativos no horário.</p>
+            <p style="color:#475569;">Passe o mouse para ver usuários simultâneos e consumo de AppPoints no mesmo horário.</p>
 
             <div class="chart-box" style="height: 380px; align-items: stretch; padding: 1.5rem;">
                 <canvas id="peakLineChart"
                         data-labels='{labels_json}'
-                        data-data='{data_json}'></canvas>
+                        data-data='{data_json}'
+                        data-points-labels='{points_labels_json}'
+                        data-points-data='{points_data_json}'></canvas>
             </div>
 
             <div style="margin-top: 1rem;">
@@ -626,8 +654,12 @@ def _render_scripts(analytics, identity_analytics):
                 if (canvasEl) {{
                     const labelsJson = canvasEl.getAttribute('data-labels') || '[]';
                     const dataJson = canvasEl.getAttribute('data-data') || '[]';
+                    const pointsLabelsJson = canvasEl.getAttribute('data-points-labels') || '[]';
+                    const pointsDataJson = canvasEl.getAttribute('data-points-data') || '[]';
                     const peakLabels = JSON.parse(labelsJson);
                     const peakData = JSON.parse(dataJson);
+                    const peakPointsLabels = JSON.parse(pointsLabelsJson);
+                    const peakPointsData = JSON.parse(pointsDataJson);
 
                     const ctxPeak = canvasEl.getContext('2d');
                     // Debug to verify payload types/lengths
@@ -660,7 +692,17 @@ def _render_scripts(analytics, identity_analytics):
                                 legend: {{ display: false }},
                                 tooltip: {{
                                     callbacks: {{
-                                        label: (ctx) => ` ${'{'}ctx.parsed.y{'}'} users simultâneos`
+                                        label: function(ctx) {{
+                                            const ts = ctx.label;
+                                            const users = ctx.parsed.y;
+                                            const pointsByTs = {{}};
+                                            (peakPointsLabels || []).forEach((h, i) => {{ pointsByTs[h] = peakPointsData[i]; }});
+                                            const appPoints = pointsByTs[ts] ?? null;
+                                            return [
+                                                ts + ' | Usuários simultâneos: ' + users,
+                                                'Consumo AppPoints: ' + (appPoints !== null ? appPoints : 'N/D')
+                                            ];
+                                        }}
                                     }}
                                 }}
                             }},

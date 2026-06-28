@@ -213,10 +213,18 @@ def main():
     sorted_hours_pts = sorted(hourly_app_points.items(), key=lambda x: x[1], reverse=True)
     top_buckets = sorted_hours_pts[:24]
 
+    # 4b) peak_hours_users (top 24 buckets por usuários simultâneos)
+    sorted_hours_users = sorted(hourly_counts.items(), key=lambda x: x[1], reverse=True)
+    top_buckets_users = sorted_hours_users[:24]
+
     def _fmt_hour(dt):
         return dt.strftime("%Y-%m-%d %H:00")
 
+    # AppPoints peak buckets (consumo)
     peak_hours = [[_fmt_hour(h), int(round(pts))] for h, pts in top_buckets]
+
+    # Usuários simultâneos peak buckets (capacidade)
+    peak_hours_users = [[_fmt_hour(h), int(v)] for h, v in top_buckets_users]
 
     # 5) Persistir JSON (consumido pelo HTML)
     metrics = {
@@ -228,10 +236,12 @@ def main():
         "contracted_app_points": contracted,
         "hourly_counts": {_fmt_hour(h): int(v) for h, v in sorted(hourly_counts.items())},
         "hourly_app_points": {_fmt_hour(h): int(round(v)) for h, v in sorted(hourly_app_points.items())},
-        "peak_hours": peak_hours,
+        "peak_hours": peak_hours,  # AppPoints
+        "peak_hours_users": peak_hours_users,  # Usuários simultâneos
         "peak_contributors": [],
         "peak_contributors_count": 0,
     }
+
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     out_path = OUT_DIR / "true_capacity_metrics.json"

@@ -230,15 +230,20 @@ def main():
     domain_counts = analyze_governance(active_profiles)
     title_divergences_list, detailed_divergences = analyze_title_divergences(all_data["access_rows"], user_profiles)
 
-    # 4. Perform AppPoints Simulation
+    # 4. Perform AppPoints Simulation (por escopo)
     foresea_profiles = [
         p for p in active_profiles
         if p['DOMAIN_CATEGORY'] in ('FORESEA', 'PARCEIRO')
+    ]
+    other_profiles = [
+        p for p in active_profiles
+        if p['DOMAIN_CATEGORY'] not in ('FORESEA', 'PARCEIRO', 'SEM DOMINIO')
     ]
     missing_email_profiles = [
         p for p in active_profiles
         if p['DOMAIN_CATEGORY'] == 'SEM DOMINIO'
     ]
+
     missing_email_rows = [
         {
             'USERID': p['USERID'],
@@ -254,12 +259,23 @@ def main():
         }
         for p in missing_email_profiles
     ]
-    app_points_data = simulate_app_points(foresea_profiles)
-    
-    # 5. Usage intelligence is already calculated from consolidated production
-    # extracts inside simulate_app_points. Do not overwrite it with legacy mocks.
-    app_points_data_optimized = app_points_data
-    write_license_decision_plan(app_points_data_optimized)
+
+    foresea_app_points = simulate_app_points(foresea_profiles)
+    other_app_points = simulate_app_points(other_profiles)
+
+    app_points_by_scope = {
+        'foresea': foresea_app_points,
+        'other': other_app_points,
+    }
+
+    # Gera o license decision plan usando o conjunto completo que alimenta o pipeline:
+    # (foresea + other). 'SEM DOMINIO' fica fora por inconsistência.
+    all_app_points_for_plan = foresea_app_points + other_app_points
+    write_license_decision_plan(all_app_points_for_plan)
+
+    # Compatibilidade com o pipeline/HTML atual (por enquanto ainda consumimos um único universo)
+    # Depois este valor será substituído por dados por escopo no frontend.
+    app_points_data_optimized = all_app_points_for_plan
 
     # 5b. Compute High-Water Mark and peak contributors for CONCURRENT pool
     concurrency_summary = {}
