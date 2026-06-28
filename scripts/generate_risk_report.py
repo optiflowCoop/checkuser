@@ -168,11 +168,20 @@ def write_excel_workbook(summary, governance, license_rows, domain_counts, missi
     # Add concurrency peak and contributors if available in summary
     concurrency = summary.get('concurrency', {})
     if concurrency:
-        # Hourly counts sheet (7_ConcurrentPeak)
-        hourly = concurrency.get('hourly_counts', {})
-        if hourly:
-            hourly_rows = [[h, v] for h, v in sorted(hourly.items())]
-            add_sheet('7_ConcurrentPeak', ['Hour', 'AppPoints'], hourly_rows)
+        hourly_users = concurrency.get('hourly_counts', {})
+        hourly_points = concurrency.get('hourly_app_points', {})
+        hourly_nem = concurrency.get('hourly_app_points_nem', {})
+        if hourly_users or hourly_points or hourly_nem:
+            hours = sorted(set(hourly_users) | set(hourly_points) | set(hourly_nem))
+            hourly_rows = [
+                [h, hourly_users.get(h, 0), hourly_points.get(h, 0), hourly_nem.get(h, 0)]
+                for h in hours
+            ]
+            add_sheet(
+                '7_ConcurrentPeak',
+                ['Hour', 'Usuarios simultaneos', 'AppPoints observados', 'AppPoints NEM'],
+                hourly_rows,
+            )
 
         # Peak contributors sheet (8_PeakContributors)
         contributors = concurrency.get('peak_contributors', [])
@@ -295,9 +304,13 @@ def main():
             # e hourly_counts/peak_contributors quando disponíveis.
             concurrency_summary = {
                 'hourly_counts': metrics.get('hourly_counts', {}) or {},
+                'hourly_app_points': metrics.get('hourly_app_points', {}) or {},
+                'hourly_concurrent_app_points': metrics.get('hourly_concurrent_app_points', {}) or {},
+                'hourly_app_points_nem': metrics.get('hourly_app_points_nem', {}) or {},
                 'peak_count': metrics.get('concurrent_peak_estimated_points')
                 or metrics.get('peak_contributors_count'),
                 'peak_hours': metrics.get('peak_hours', []) or [],
+                'peak_hours_users': metrics.get('peak_hours_users', []) or [],
                 'peak_contributors_count': metrics.get('peak_contributors_count', 0) or 0,
                 'peak_contributors': metrics.get('peak_contributors', []) or []
             }

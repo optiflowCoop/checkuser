@@ -1,7 +1,11 @@
 # scripts/reporting/html_template.py
 from datetime import datetime
 import json
-from .html_helpers import fmt_br, render_table
+
+try:
+    from .html_helpers import fmt_br, render_table
+except ImportError:
+    from html_helpers import fmt_br, render_table
 
 
 # --- Private Component Functions ---
@@ -154,6 +158,7 @@ def _render_tab_painel(analytics, identity_analytics):
         </div>
     </div>
     """
+
 
 def _render_tab_gov(gov_tables):
     """Renders the 'Governança & Saneamento' tab content."""
@@ -317,62 +322,69 @@ def _render_tab_eventos(analytics):
 
 
 def _render_tab_peak(analytics):
-    """Renders the Peak tab with an ecocardiogram-like line chart and contributor table."""
-    peak_hours = analytics.get('concurrency_peak_hours', []) or []
-    # Normalize peak_hours to rows
-    peak_rows = []
-    if isinstance(peak_hours, dict):
-        peak_rows = [[k, v] for k, v in sorted(peak_hours.items())]
-    elif isinstance(peak_hours, list):
-        for entry in peak_hours:
-            if isinstance(entry, (list, tuple)) and len(entry) >= 2:
-                peak_rows.append([entry[0], entry[1]])
-            elif isinstance(entry, dict):
-                hour = entry.get('hour') or entry.get('ts') or entry.get('time')
-                val = entry.get('value') or entry.get('points') or entry.get('app_points') or entry.get('count')
-                peak_rows.append([hour, val])
+    """Renders the Peak tab with aligned hourly series."""
 
-    # Users series (capacidade)
-    peak_hours_users = analytics.get('concurrency_peak_users_hours', []) or []
-    users_rows = []
-    if isinstance(peak_hours_users, dict):
-        users_rows = [[k, v] for k, v in sorted(peak_hours_users.items())]
-    elif isinstance(peak_hours_users, list):
-        for entry in peak_hours_users:
-            if isinstance(entry, (list, tuple)) and len(entry) >= 2:
-                users_rows.append([entry[0], entry[1]])
-            elif isinstance(entry, dict):
-                hour = entry.get('hour') or entry.get('ts') or entry.get('time')
-                val = entry.get('value') or entry.get('users') or entry.get('count')
-                users_rows.append([hour, val])
+    def rows_to_map(rows, value_keys):
+        if isinstance(rows, dict):
+            return {str(k): v for k, v in rows.items() if k}
 
-    users_labels = [r[0] for r in users_rows if r and len(r) >= 2]
-    users_data = [r[1] for r in users_rows if r and len(r) >= 2]
-    points_labels = [r[0] for r in peak_rows if r and len(r) >= 2]
-    points_data = [r[1] for r in peak_rows if r and len(r) >= 2]
+        mapped = {}
+        if isinstance(rows, list):
+            for entry in rows:
+                if isinstance(entry, (list, tuple)) and len(entry) >= 2:
+                    mapped[str(entry[0])] = entry[1]
+                elif isinstance(entry, dict):
+                    hour = entry.get('hour') or entry.get('ts') or entry.get('time')
+                    value = None
+                    for key in value_keys:
+                        if entry.get(key) is not None:
+                            value = entry.get(key)
+                            break
+                    if hour:
+                        mapped[str(hour)] = value
+        return mapped
 
-    # Fallback: se não vierem dados de usuários (capacidade), desenha com AppPoints (consumo)
-    used_fallback_app_points = False
-    if (not users_data) and peak_rows:
-        users_labels = [r[0] for r in peak_rows if r and len(r) >= 2]
-        users_data = [r[1] for r in peak_rows if r and len(r) >= 2]
-        points_labels = [r[0] for r in peak_rows if r and len(r) >= 2]
-        points_data = [r[1] for r in peak_rows if r and len(r) >= 2]
-        used_fallback_app_points = True
+    users_by_hour = rows_to_map(
+        analytics.get('concurrency_hourly', {}) or analytics.get('concurrency_peak_users_hours', []),
+        ('users', 'count', 'value'),
+    )
+    points_by_hour = rows_to_map(
+        analytics.get('concurrency_hourly_app_points', {}) or analytics.get('concurrency_peak_hours', []),
+        ('app_points', 'points', 'count', 'value'),
+    )
+    nem_by_hour = rows_to_map(
+        analytics.get('concurrency_hourly_app_points_nem', {}),
+        ('app_points_nem', 'app_points', 'points', 'count', 'value'),
+    )
 
-    contributors = analytics.get('concurrency_peak_contributors', []) or []
-    contrib_section = ''
-    if contributors:
-        if isinstance(contributors[0], dict):
-            contrib_section = render_table(list(contributors[0].keys()), contributors, 'table-peak-contrib', 'gov-table')
-        else:
-            contrib_section = render_table(['USERID'], [[c] for c in contributors], 'table-peak-contrib', 'gov-table')
+    if not nem_by_hour:
+        nem_by_hour = points_by_hour.copy()
 
-    # Expose series to JS through data attributes (simple & robust)
-    labels_json = json.dumps(users_labels, ensure_ascii=False)
-    data_json = json.dumps(users_data, ensure_ascii=False)
-    points_labels_json = json.dumps(points_labels, ensure_ascii=False)
-    points_data_json = json.dumps(points_data, ensure_ascii=False)
+    all_hours = set(users_by_hour) | set(points_by_hour) | set(nem_by_hour)
+    peak_hours = sorted(
+        all_hours,
+        key=lambda hour: max(
+            float(points_by_hour.get(hour) or 0),
+            float(nem_by_hour.get(hour) or 0),
+            float(users_by_hour.get(hour) or 0),
+        ),
+        reverse=True,
+    )[:24]
+    labels = sorted(peak_hours)
+
+    def series_values(source):
+        values = []
+        for hour in labels:
+            try:
+                values.append(round(float(source.get(hour) or 0), 2))
+            except (TypeError, ValueError):
+                values.append(0)
+        return values
+
+    labels_json = json.dumps(labels, ensure_ascii=False)
+    users_data_json = json.dumps(series_values(users_by_hour), ensure_ascii=False)
+    points_data_json = json.dumps(series_values(points_by_hour), ensure_ascii=False)
+    nem_data_json = json.dumps(series_values(nem_by_hour), ensure_ascii=False)
 
     return f"""
     <div id="tab-peak" class="container tab-content">
@@ -383,20 +395,10 @@ def _render_tab_peak(analytics):
             <div class="chart-box" style="height: 380px; align-items: stretch; padding: 1.5rem;">
                 <canvas id="peakLineChart"
                         data-labels='{labels_json}'
-                        data-data='{data_json}'
-                        data-points-labels='{points_labels_json}'
-                        data-points-data='{points_data_json}'></canvas>
+                        data-users-data='{users_data_json}'
+                        data-points-data='{points_data_json}'
+                        data-nem-data='{nem_data_json}'></canvas>
             </div>
-
-            <div style="margin-top: 1rem;">
-                {render_table(['Hora', 'AppPoints'], peak_rows, 'table-peak-hours', 'gov-table')}
-            </div>
-        </div>
-
-        <div class="card">
-            <h2 class="card-header">👥 Contribuintes do Pico</h2>
-            <p style="color:#475569;">Usuários que contribuíram para as horas de pico.</p>
-            {contrib_section}
         </div>
     </div>
     """
@@ -652,64 +654,89 @@ def _render_scripts(analytics, identity_analytics):
             try {{
                 const canvasEl = document.getElementById('peakLineChart');
                 if (canvasEl) {{
-                    const labelsJson = canvasEl.getAttribute('data-labels') || '[]';
-                    const dataJson = canvasEl.getAttribute('data-data') || '[]';
-                    const pointsLabelsJson = canvasEl.getAttribute('data-points-labels') || '[]';
-                    const pointsDataJson = canvasEl.getAttribute('data-points-data') || '[]';
-                    const peakLabels = JSON.parse(labelsJson);
-                    const peakData = JSON.parse(dataJson);
-                    const peakPointsLabels = JSON.parse(pointsLabelsJson);
-                    const peakPointsData = JSON.parse(pointsDataJson);
+                    const labels = JSON.parse(canvasEl.getAttribute('data-labels') || '[]');
+                    const usersData = JSON.parse(canvasEl.getAttribute('data-users-data') || '[]');
+                    const pointsData = JSON.parse(canvasEl.getAttribute('data-points-data') || '[]');
+                    const nemData = JSON.parse(canvasEl.getAttribute('data-nem-data') || '[]');
 
                     const ctxPeak = canvasEl.getContext('2d');
-                    // Debug to verify payload types/lengths
-                    console.log('peakLineChart init', {{
-                        peakLabelsType: typeof peakLabels,
-                        peakDataType: typeof peakData,
-                        peakLabelsLen: Array.isArray(peakLabels) ? peakLabels.length : null,
-                        peakDataLen: Array.isArray(peakData) ? peakData.length : null,
-                        firstLabel: Array.isArray(peakLabels) ? peakLabels[0] : null,
-                        firstData: Array.isArray(peakData) ? peakData[0] : null
-                    }});
                     new Chart(ctxPeak, {{
                         type: 'line',
                         data: {{
-                            labels: peakLabels,
+                            labels: labels,
                             datasets: [{{
-                                label: 'Usuários simultâneos (pico por hora)',
-                                data: peakData,
+                                label: 'Usuários Simultâneos',
+                                data: usersData,
                                 borderColor: '#7c3aed',
-                                backgroundColor: 'rgba(124, 58, 237, 0.15)',
-                                pointRadius: 3,
+                                backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                                yAxisID: 'y-users',
+                                borderWidth: 3,
+                                tension: 0.3,
+                                unit: 'usuarios'
+                            }}, {{
+                                label: 'Consumo de AppPoints',
+                                data: pointsData,
+                                borderColor: '#f59e0b',
+                                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                                yAxisID: 'y-points',
                                 borderWidth: 2,
-                                tension: 0.25
+                                borderDash: [5, 5],
+                                tension: 0.3,
+                                unit: 'AppPoints'
+                            }}, {{
+                                label: 'AppPoints NEM',
+                                data: nemData,
+                                borderColor: '#ef4444',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                yAxisID: 'y-points',
+                                borderWidth: 2,
+                                tension: 0.3,
+                                unit: 'AppPoints'
                             }}]
                         }},
                         options: {{
                             responsive: true,
                             maintainAspectRatio: false,
+                            interaction: {{
+                                mode: 'index',
+                                intersect: false,
+                            }},
                             plugins: {{
-                                legend: {{ display: false }},
+                                legend: {{ position: 'bottom' }},
                                 tooltip: {{
+                                    position: 'nearest',
+                                    padding: 10,
+                                    titleFont: {{ weight: 'bold' }},
+                                    bodySpacing: 5,
                                     callbacks: {{
                                         label: function(ctx) {{
-                                            const ts = ctx.label;
-                                            const users = ctx.parsed.y;
-                                            const pointsByTs = {{}};
-                                            (peakPointsLabels || []).forEach((h, i) => {{ pointsByTs[h] = peakPointsData[i]; }});
-                                            const appPoints = pointsByTs[ts] ?? null;
-                                            return [
-                                                ts + ' | Usuários simultâneos: ' + users,
-                                                'Consumo AppPoints: ' + (appPoints !== null ? appPoints : 'N/D')
-                                            ];
+                                            const label = ctx.dataset.label || '';
+                                            const unit = ctx.dataset.unit || '';
+                                            const rawValue = ctx.parsed.y;
+                                            const value = Number(rawValue || 0).toLocaleString('pt-BR');
+                                            return `${{label}}: ${{value}} ${{unit}}`.trim();
                                         }}
                                     }}
                                 }}
                             }},
                             scales: {{
-                                y: {{
+                                x: {{
+                                    title: {{ display: true, text: 'Hora do Dia' }}
+                                }},
+                                'y-users': {{
+                                    type: 'linear',
+                                    position: 'left',
                                     beginAtZero: true,
-                                    title: {{ display: true, text: 'Usuários simultâneos' }}
+                                    title: {{ display: true, text: 'Nº de Usuários Simultâneos', color: '#7c3aed' }}
+                                }},
+                                'y-points': {{
+                                    type: 'linear',
+                                    position: 'right',
+                                    beginAtZero: true,
+                                    title: {{ display: true, text: 'AppPoints Consumidos', color: '#f59e0b' }},
+                                    grid: {{
+                                        drawOnChartArea: false, // Só desenha o grid para o eixo Y da esquerda
+                                    }},
                                 }}
                             }}
                         }}
@@ -737,7 +764,7 @@ def _render_scripts(analytics, identity_analytics):
             }} catch(e) {{ }}
 
             loadScenario('otimizado_p95', document.getElementById('btnOtimizado'));
-            triggerEventScenario('p95');
+            triggerEventScenario('p95'); // Initial trigger for the event chart
         }});
     </script>
     """

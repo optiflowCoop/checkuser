@@ -144,9 +144,10 @@ def main():
 
     logintrack_path = IN_DIR / "consolidated_logintracking.csv"
 
-    # USERID -> APP_POINTS_COST (para custo por bucket)
+    # USERID -> APP_POINTS_COST/licenca (para custo por bucket)
     usage_path = IN_DIR / "usage_analysis_phase3.csv"
     user_cost = {}
+    user_license = {}
     if usage_path.exists():
         usage_rows = _load_csv(usage_path)
         for ur in usage_rows:
@@ -157,10 +158,13 @@ def main():
                 user_cost[uid] = float(ur.get("APP_POINTS_COST", 0) or 0)
             except Exception:
                 user_cost[uid] = 0.0
+            user_license[uid] = (ur.get("REQUIRED_LICENSE") or "").strip().upper()
 
     hourly_counts = defaultdict(int)  # bucket -> num users ativos
     concurrent_users_by_hour = defaultdict(set)  # bucket -> set users ativos
     hourly_app_points = defaultdict(float)  # bucket -> soma custo
+    hourly_concurrent_app_points = defaultdict(float)  # bucket -> soma custo concurrent
+    hourly_app_points_nem = defaultdict(float)  # bucket -> authorized reservado + concurrent ativo
 
     # Janela baseada no tempo máximo real presente nos dados.
     max_dt = None
@@ -205,9 +209,15 @@ def main():
         for bucket, users in concurrent_users_by_hour.items():
             hourly_counts[bucket] = len(users)
             total_pts = 0.0
+            concurrent_pts = 0.0
             for uid in users:
-                total_pts += float(user_cost.get(uid, 0) or 0)
+                cost = float(user_cost.get(uid, 0) or 0)
+                total_pts += cost
+                if "CONCURRENT" in user_license.get(uid, ""):
+                    concurrent_pts += cost
             hourly_app_points[bucket] = total_pts
+            hourly_concurrent_app_points[bucket] = concurrent_pts
+            hourly_app_points_nem[bucket] = authorized_cost + concurrent_pts
 
     # 4) peak_hours (top 24 buckets por app points)
     sorted_hours_pts = sorted(hourly_app_points.items(), key=lambda x: x[1], reverse=True)
@@ -236,6 +246,10 @@ def main():
         "contracted_app_points": contracted,
         "hourly_counts": {_fmt_hour(h): int(v) for h, v in sorted(hourly_counts.items())},
         "hourly_app_points": {_fmt_hour(h): int(round(v)) for h, v in sorted(hourly_app_points.items())},
+        "hourly_concurrent_app_points": {
+            _fmt_hour(h): int(round(v)) for h, v in sorted(hourly_concurrent_app_points.items())
+        },
+        "hourly_app_points_nem": {_fmt_hour(h): int(round(v)) for h, v in sorted(hourly_app_points_nem.items())},
         "peak_hours": peak_hours,  # AppPoints
         "peak_hours_users": peak_hours_users,  # Usuários simultâneos
         "peak_contributors": [],

@@ -172,6 +172,15 @@ class DataProcessor:
             # peak_hours_users: Usuários simultâneos (capacidade)
             'concurrency_peak_users_hours': (concurrency_summary.get('peak_hours_users', []) if concurrency_summary else []),
             'concurrency_hourly': (concurrency_summary.get('hourly_counts', {}) if concurrency_summary else {}),
+            'concurrency_hourly_app_points': (
+                concurrency_summary.get('hourly_app_points', {}) if concurrency_summary else {}
+            ),
+            'concurrency_hourly_concurrent_app_points': (
+                concurrency_summary.get('hourly_concurrent_app_points', {}) if concurrency_summary else {}
+            ),
+            'concurrency_hourly_app_points_nem': (
+                concurrency_summary.get('hourly_app_points_nem', {}) if concurrency_summary else {}
+            ),
 
 
             'concurrency_peak_contributors': concurrency_summary.get('peak_contributors', []),
