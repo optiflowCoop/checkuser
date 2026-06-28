@@ -2,9 +2,9 @@
 
 ## Identidade, Acessos, Licenciamento e Preparação para MAS 9
 
-**Atualizado em:** 2026-06-18  
-**Versão:** MVP 2.1 - Padronização de Perfis e Baseline  
-**Status Oficial:** Etapa 1 (Descoberta e Ambiguidade) Concluída; Etapa 2 (Padronização de Baseline) Concluída Tecnicamente.
+**Atualizado em:** 2026-06-25  
+**Versão:** 3.1 - Phase 3 + LocationSite Corrections  
+**Status Oficial:** Etapa 1-3 Concluídas; Etapa 3 com correções de LocationSite e Consolidação de LoginTracking implementadas.
 
 ---
 
@@ -14,7 +14,8 @@ Após o alinhamento com a arquitetura de negócios para o MAS 9, o roadmap do pr
 
 *   **✅ Etapa 1 — Identity Discovery & Ambiguity Detection:** Mapeamento do reuso de logins (USERID), detecção de clones humanos, e separação segura da massa histórica x ativa.
 *   **✅ Etapa 2 — Padronização / Baseline:** Identificação de perfis funcionais (PERSONGROUP), grupos discrepantes entre unidades e harmonização de regras.
-*   **⏳ Etapa 3 — AppPoints & Licenciamento:** Avaliação da bilhetagem MAS 9 focada APENAS em Identidades Únicas ATIVAS.
+*   **✅ Etapa 3 — AppPoints & Licenciamento:** Avaliação da bilhetagem MAS 9 focada APENAS em Identidades Únicas ATIVAS com LocationSite correto.
+*   **✅ Etapa 3.1 — Correções de Dados:** LocationSite como source-of-truth, consolidação de LoginTracking múltiplas fontes, classificação Onshore/Offshore corrigida.
 *   **⏳ Etapa 4 — Validação AD (Active Directory):** Bate-estaca final para importação dos usuários e unificação de SSO, utilizando a Fila de `AWAITING_AD_MATCH`.
 
 ---
@@ -55,17 +56,40 @@ A **Etapa 2 foi concluída tecnicamente**. O objetivo de identificar e visualiza
 
 ---
 
-# 4. Escopo Atual: Etapa 3 (AppPoints / Licenciamento)
+# 4. Conclusão: Etapa 3 (AppPoints / Licenciamento) + Correções 3.1
 
-Com as identidades limpas, confiáveis e cravadas como "Logins Únicos", e o baseline de acessos mapeado, a aplicação avança para a **Etapa 3**.
+Com as identidades limpas, confiáveis e cravadas como "Logins Únicos", e o baseline de acessos mapeado, a aplicação **concluiu a Etapa 3 com sucesso** e implementou as **Correções 3.1**.
 
-### Objetivo desta Fase
+### Objetivo alcançado
 Medir o *footprint* de licenciamento e direcionar a precificação / *capacity plan* do MAS 9, focando APENAS em Identidades Únicas ATIVAS.
 
-### Backlog Operacional Fase 3:
-- [ ] Analisar os dados das tabelas de licenciamento (`MAXLICUSAGE`, `MASLICUSAGE`, `MAXLICUSERASC`, `MAXLICAPPACCESS`, `MAXLICAPPS`).
-- [ ] Correlacionar as "Pessoas Únicas Ativas" com os tipos de licença e AppPoints consumidos.
-- [ ] Gerar relatórios específicos de licenciamento para identificar oportunidades de otimização.
+### Correções Implementadas (Etapa 3.1):
+
+#### 1. LocationSite como Source-of-Truth
+- [x] PersonGroupView.LocationSite é agora a fonte oficial para LOCATION
+- [x] Coluna LOCATION preenchida corretamente (N08, ODN1, etc.)
+- [x] 768 registros atualizados no XLSX com dados corretos
+
+#### 2. Consolidação de LoginTracking
+- [x] Consolidação automática de múltiplas fontes:
+  - consolidated_logintracking.csv (356.705 registros)
+  - DadosTabelas/LOGINTRACKING_*.csv (16.414 registros)
+- [x] Total: 373.123 registros de LoginTracking
+
+#### 3. Classificação Onshore/Offshore
+- [x] Baseada em LocationSite (não mais palavras-chave genéricas)
+- [x] ONSHORE: base-unp, og-base, macae
+- [x] OFFSHORE: N06, N08, N09, ODN1, ODN2
+
+#### 4. Parse de Data Corrigido
+- [x] Suporte para formato: YYYY-MM-DD-HH.MM.SS
+- [x] Cálculo correto de DAYS_SINCE_LAST
+- [x] ALESSANDRO: 15 dias (antes 999)
+
+### Backlog Operacional Fase 4:
+- [ ] Validação AD (Active Directory)
+- [ ] Importação de usuários no MAS 9
+- [ ] Unificação de SSO baseada em `AWAITING_AD_MATCH`
 
 ---
 

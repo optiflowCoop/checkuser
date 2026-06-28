@@ -1,6 +1,7 @@
-﻿# generate_risk_report.py (Orchestrator)
+# generate_risk_report.py (Orchestrator)
 import sys
 import csv
+import json
 from pathlib import Path
 from collections import Counter, defaultdict
 from datetime import datetime
@@ -57,13 +58,35 @@ def load_person_supplements():
     return rows
 
 def write_license_decision_plan(rows):
-    """Writes an auditable CSV with the final license recommendation per user."""
+    """Writes an auditable CSV with the final license recommendation per user.
+    Ensures LOCATION_SITE is present by enriching rows from usage_analysis_phase3.csv when missing.
+    """
     if not rows:
         return
+    # Build a mapping user -> LOCATION_SITE from usage CSV (if available)
+    usage_map = {}
+    usage_path = IN_DIR / 'usage_analysis_phase3.csv'
+    if usage_path.exists():
+        try:
+            with usage_path.open(encoding='utf-8-sig', newline='') as uf:
+                ureader = csv.DictReader(uf)
+                for ur in ureader:
+                    uid = str(ur.get('USERID', '')).strip().upper()
+                    if uid:
+                        usage_map[uid] = ur.get('LOCATION_SITE') or ur.get('LOCATION') or ''
+        except Exception:
+            pass
+
+    # Enrich rows with LOCATION_SITE if missing
+    for row in rows:
+        uid = str(row.get('USERID', '')).strip().upper()
+        if uid and (not row.get('LOCATION_SITE')):
+            row['LOCATION_SITE'] = usage_map.get(uid, '')
+
     fieldnames = [
         'USERID', 'DISPLAYNAME', 'ENTITLEMENT', 'LICENSE_MODEL', 'APP_POINTS',
         'EMAIL', 'DOMAIN_CATEGORY', 'MIGRATION_SCOPE', 'OPERATIONAL_PRESENCE',
-        'USAGE_PROFILE', 'OPTIMIZATION_REC',
+        'LOCATION_SITE', 'USAGE_PROFILE', 'OPTIMIZATION_REC',
         'OPTIMIZATION_REASON', 'LOGIN_COUNT_90D', 'DAYS_SINCE_LAST',
         'FACTOR_P50', 'FACTOR_P95', 'FACTOR_P100', 'TITLES', 'ACTIVE_HOURS'
     ]
@@ -120,7 +143,7 @@ def write_excel_workbook(summary, governance, license_rows, domain_counts, missi
 
     license_headers = [
         'USERID', 'DISPLAYNAME', 'EMAIL', 'DOMAIN_CATEGORY', 'MIGRATION_SCOPE',
-        'ENTITLEMENT', 'LICENSE_MODEL', 'APP_POINTS', 'OPERATIONAL_PRESENCE',
+        'ENTITLEMENT', 'LICENSE_MODEL', 'APP_POINTS', 'LOCATION_SITE',
         'USAGE_PROFILE', 'OPTIMIZATION_REC', 'OPTIMIZATION_REASON',
         'LOGIN_COUNT_90D', 'DAYS_SINCE_LAST', 'FACTOR_P50', 'FACTOR_P95',
         'FACTOR_P100', 'TITLES'
@@ -241,22 +264,30 @@ def main():
     # 5b. Compute High-Water Mark and peak contributors for CONCURRENT pool
     concurrency_summary = {}
     try:
-        if ca is not None:
-            sessions_csv = IN_DIR / 'consolidated_logintracking.csv'
-            if sessions_csv.exists():
-                sessions = ca.load_sessions_from_csv(str(sessions_csv))
-                hourly_counts = ca.compute_hourly_concurrency(sessions, license_filter='CONCURRENT', days=90)
-                peak_count, peak_hours = ca.high_water_mark(hourly_counts)
-                _, _, contributors = ca.peak_contributors(sessions, license_filter='CONCURRENT', days=90)
-                concurrency_summary = {
-                    'hourly_counts': hourly_counts,
-                    'peak_count': peak_count,
-                    'peak_hours': [h.isoformat() for h in peak_hours],
-                    'peak_contributors_count': len(contributors),
-                    'peak_contributors': list(sorted(contributors))[:1000],
-                }
+        # O true_capacity_calculator.py atual gera apenas true_capacity_metrics.json com agregados,
+        # sem detalhes de "hora" e sem lista de contribuintes.
+        # A UI (scripts/reporting/html_template.py) e o DataProcessor esperam um schema:
+        #   - hourly_counts: dict (hour -> points/count)
+        #   - peak_hours: list/dict (rows para a tabela)
+        #   - peak_contributors: list (USERID/dicts)
+        # Então, quando só houver métricas agregadas, preenchemos o mínimo sem quebrar a UI.
+        metrics_path = ROOT / 'output' / 'consolidated' / 'true_capacity_metrics.json'
+        if metrics_path.exists():
+            metrics = json.loads(metrics_path.read_text(encoding='utf-8'))
+
+            # true_capacity_metrics.json já contém peak_hours (lista ["YYYY-MM-DD HH:MM", value])
+            # e hourly_counts/peak_contributors quando disponíveis.
+            concurrency_summary = {
+                'hourly_counts': metrics.get('hourly_counts', {}) or {},
+                'peak_count': metrics.get('concurrent_peak_estimated_points')
+                or metrics.get('peak_contributors_count'),
+                'peak_hours': metrics.get('peak_hours', []) or [],
+                'peak_contributors_count': metrics.get('peak_contributors_count', 0) or 0,
+                'peak_contributors': metrics.get('peak_contributors', []) or []
+            }
     except Exception as e:
         print(f"[Aviso] Falha ao calcular concorrência avançada: {e}")
+
 
     # 6. Prepare Data for HTML Builder
     summary_data = {

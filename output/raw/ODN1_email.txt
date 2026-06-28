@@ -2509,5 +2509,70 @@ FetchAll:  Columns: 1
   ERICNUNES,ericlopes638@yahoo.com
   RAFAELMANHAESNUNES,rnunes2@slb.com
   DEIVISSONSANTOS,dsantos5@oceanring.com
-FetchAll: 2502 rows fetched.
+  KAIQUEBRAGA,kaiquealmeida484@gmail.com
+  DASILVAANDRETT,andrett.porto33.ap@gmail.com
+  FELIPEMOREIRADOSSANTOS,felipe.santos@archerwell.com
+  PEDROHENRIQUEDEOLIVEIRANOGUEIRA,pedro.h1902@hotmail.com
+  ALMEIDARICHTERS,richter.almeida@fugro.com
+  JRGSOARES,jrgsoares@gmail.com
+  ANTONIOBARBOSA,antoniocarlos.barbosa@halliburton.com
+  MARIABARRETO,maria.barreto@technipfmc.com
+  ELIZEVELRODRIGUES,elizevel.rosa@technipfmc.com
+  PAMELACORREA,pamela.lopes@technipfmc.com
+  BRUNOPEIXOTO,bruno.santos2@technipfmc.com
+  ATILANUNES,atila.nunes@technipfmc.com
+  PEDROMENDONCA,pedromendonca0405@gmail.com
+  BISPOJOILSON,joilson.bcastro@gmail.com
+  RAPHAELMONTEIRO,n/a
+  ALANGOMES,alan.gomes1992@outlook.com
+  MARLONSOARESR,mrodrigues4@oceaneering.com
+  PEDROBEZERRA,pedro.bezerra@archerwell.com
+  JUANSOARES,juan.soares@nov.com
+  CARLOSHOLIVEIRA,carlos.oliveira@weatherford.com
+  FERNANDOPESSANHA,paulofernandoevangelista.pessanha@halliburton.com
+  BRUNOLUIZNUNESCORREA,brunotws@gmail.com
+  LEOROSA,leonardorosamaria0@mail.com
+  WILIAM,wilianmello884@gmail.com
+  FELIPEBONAFE,fbonafe91@gmail.com
+  ALEXANDROSANTOS,ALEXANDRO.SANTOS@TECHNIPFMC.COM
+  MARCOSREISLIMA,MARCOS.LIMA@TECHNIPFMC.COM
+  VICTORLUCIO,victorlucio@subsea7.com
+  STEPHANO,stephanokaraujo@yahoo.com.br
+  ROMULOVENTURA,romulo.ventura.prestserv.com.br
+  ROMULOROBERTOVENTURA,romulo.ventura.prestserv@petrobras.com.br
+  LUCASCODECO,lucascodeco.moutinho@halliburton.com
+  LUCASRIBEIROPACHECO,lucaspache7@gmail.com
+  MIGUELPEREIRA,miguel.pereira@arcterwell.com
+  ALEXPEANHA,alexsandro.pereirapecanha@weatherford.com
+  BRUNOCOUTINHO,brunoacoutinho@gmail.com
+  GABRIELRODRIGUESDASILVAPEREIRA,gabriel.rodrigs@hotmail.com
+  ARRANGEL,arrangel
+  MICHELNACIF,michelnacif@foresea-partner.com
+  MATHEUSPEREIRA,matheuspereira@foresea.com
+  WHADSONNASCIMENTO,whadsonnascimento@foresea.com
+  EDSON,esilva13@slb.com
+  OSWALD,opaiva@slb.com
+  FABIOBARBOSA,fdantas@slb.com
+  JOSMANN,jamorim@slb.com
+  DALMEIDA,dalmeida9@slb.com
+  JSALES,jsales5@sal.com
+  WILLIAN,willianrobaina83@gmail.com
+  DANIELFERREIRA,danielmac19@yahoo.com.br
+  JAKSONFRANCA,jaksonesperidiao@gmail.com
+  ARMELBAKITA,armelllie.bakita@halliburton.com
+  NICOLAUSA,nicolaucarvalho1@hotmail.com
+  JOAOBORGES,joao.carlosleiteborges@halliburton.com
+  ARODRIGUES,asantos39@slb.com
+  JORLANSOUZA,jorlan.medufes@outlook.com
+  RMOURA,rcunha@slb.com
+  ABDOHALLAK,abdohallak@foresea.com
+  LUCASALMEIDA,lucasrangel921@gmail.com
+  GSOUZA,gsouza16@slb.com
+  SOUZAGILVAN,gilvan_mds@hotmail.com
+  JONESDOSSANTOSSALES,jones.dss@hotmail.com
+  DANIELBRANCO,danielbranco@oesgroup.com
+  LUIZPERARO,ljunior15@slb.com
+  DIEGOMEIRELES2,diego_dsm2@hotmail.com
+  DEBORAH,deborahborgessilva@gmail.com
+FetchAll: 2567 rows fetched.
 > 

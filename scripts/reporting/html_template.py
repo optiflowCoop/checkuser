@@ -101,8 +101,8 @@ def _render_header_and_tabs():
         <button class="tab-button" onclick="openTab(event, 'tab-gov')">2. Governança & Saneamento</button>
         <button class="tab-button" onclick="openTab(event, 'tab-apppoints')" style="color:#60a5fa;">3. Cenários de AppPoints</button>
         <button class="tab-button" onclick="openTab(event, 'tab-eventos')" style="color:var(--warning);">4. Eventos Críticos</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-peak')" style="color:#7c3aed;">6. Peak Contributors</button>
         <button class="tab-button" onclick="openTab(event, 'tab-tabela')">5. Plano de Ação</button>
+        <button class="tab-button" onclick="openTab(event, 'tab-peak')" style="color:#7c3aed;">6. Peak Contributors</button>
     </div>
     """
 
@@ -317,7 +317,7 @@ def _render_tab_eventos(analytics):
 
 
 def _render_tab_peak(analytics):
-    """Renders the Peak Contributors tab with hourly peaks and contributor table."""
+    """Renders the Peak tab with an ecocardiogram-like line chart and contributor table."""
     peak_hours = analytics.get('concurrency_peak_hours', []) or []
     # Normalize peak_hours to rows
     peak_rows = []
@@ -331,8 +331,12 @@ def _render_tab_peak(analytics):
                 hour = entry.get('hour') or entry.get('ts') or entry.get('time')
                 val = entry.get('value') or entry.get('points') or entry.get('app_points') or entry.get('count')
                 peak_rows.append([hour, val])
+
+    # Build chart series from peak_rows (Chart.js needs labels+data)
+    chart_labels = [r[0] for r in peak_rows if r and len(r) >= 2]
+    chart_data = [r[1] for r in peak_rows if r and len(r) >= 2]
+
     contributors = analytics.get('concurrency_peak_contributors', []) or []
-    # Contributors may be list of dicts or USERIDs
     contrib_section = ''
     if contributors:
         if isinstance(contributors[0], dict):
@@ -340,13 +344,27 @@ def _render_tab_peak(analytics):
         else:
             contrib_section = render_table(['USERID'], [[c] for c in contributors], 'table-peak-contrib', 'gov-table')
 
+    # Expose series to JS through data attributes (simple & robust)
+    labels_json = json.dumps(chart_labels, ensure_ascii=False)
+    data_json = json.dumps(chart_data, ensure_ascii=False)
+
     return f"""
     <div id="tab-peak" class="container tab-content">
         <div class="card">
-            <h2 class="card-header">⛰️ Horas de Pico (High-Water Mark)</h2>
-            <p style="color:#475569;">Lista de horas com maior consumo agregado (AppPoints por hora) geradas a partir do logintracking.</p>
-            {render_table(['Hora', 'AppPoints'], peak_rows, 'table-peak-hours', 'gov-table')}
+            <h2 class="card-header">⛰️ Peak Hours (High-Water Mark) - Ecocardiograma</h2>
+            <p style="color:#475569;">Passe o mouse para ver quantos usuários simultâneos/valor de pico estavam ativos no horário.</p>
+
+            <div class="chart-box" style="height: 380px; align-items: stretch; padding: 1.5rem;">
+                <canvas id="peakLineChart"
+                        data-labels='{labels_json}'
+                        data-data='{data_json}'></canvas>
+            </div>
+
+            <div style="margin-top: 1rem;">
+                {render_table(['Hora', 'AppPoints'], peak_rows, 'table-peak-hours', 'gov-table')}
+            </div>
         </div>
+
         <div class="card">
             <h2 class="card-header">👥 Contribuintes do Pico</h2>
             <p style="color:#475569;">Usuários que contribuíram para as horas de pico.</p>
@@ -406,7 +424,8 @@ def _render_scripts(analytics, identity_analytics):
         const scenarioPointsTotal = {total_points_json};
         const ceilingLimit = {ceiling_limit};
 
-        function openTab(evt, tabName) {{            let i, tabcontent, tablinks;
+        function openTab(evt, tabName) {{
+            let i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("tab-content");
             for (i = 0; i < tabcontent.length; i++) {{ tabcontent[i].style.display = "none"; tabcontent[i].classList.remove("active"); }}
             tablinks = document.getElementsByClassName("tab-button");
@@ -601,6 +620,63 @@ def _render_scripts(analytics, identity_analytics):
         }}
 
         document.addEventListener('DOMContentLoaded', function() {{
+            // ---- Peak Line Chart (ecocardiograma-like) ----
+            try {{
+                const canvasEl = document.getElementById('peakLineChart');
+                if (canvasEl) {{
+                    const labelsJson = canvasEl.getAttribute('data-labels') || '[]';
+                    const dataJson = canvasEl.getAttribute('data-data') || '[]';
+                    const peakLabels = JSON.parse(labelsJson);
+                    const peakData = JSON.parse(dataJson);
+
+                    const ctxPeak = canvasEl.getContext('2d');
+                    // Debug to verify payload types/lengths
+                    console.log('peakLineChart init', {{
+                        peakLabelsType: typeof peakLabels,
+                        peakDataType: typeof peakData,
+                        peakLabelsLen: Array.isArray(peakLabels) ? peakLabels.length : null,
+                        peakDataLen: Array.isArray(peakData) ? peakData.length : null,
+                        firstLabel: Array.isArray(peakLabels) ? peakLabels[0] : null,
+                        firstData: Array.isArray(peakData) ? peakData[0] : null
+                    }});
+                    new Chart(ctxPeak, {{
+                        type: 'line',
+                        data: {{
+                            labels: peakLabels,
+                            datasets: [{{
+                                label: 'Usuários simultâneos (pico por hora)',
+                                data: peakData,
+                                borderColor: '#7c3aed',
+                                backgroundColor: 'rgba(124, 58, 237, 0.15)',
+                                pointRadius: 3,
+                                borderWidth: 2,
+                                tension: 0.25
+                            }}]
+                        }},
+                        options: {{
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {{
+                                legend: {{ display: false }},
+                                tooltip: {{
+                                    callbacks: {{
+                                        label: (ctx) => ` ${'{'}ctx.parsed.y{'}'} users simultâneos`
+                                    }}
+                                }}
+                            }},
+                            scales: {{
+                                y: {{
+                                    beginAtZero: true,
+                                    title: {{ display: true, text: 'Usuários simultâneos' }}
+                                }}
+                            }}
+                        }}
+                    }});
+                }}
+            }} catch(e) {{
+                console.error('peakLineChart init failed', e);
+            }}
+
             // Force correct initialization with the pre-calculated scenario points
             const initialPoints = Math.round(scenarioPoints.p95);
             document.getElementById('calcTotalDisplay').innerText = initialPoints.toLocaleString('pt-BR');

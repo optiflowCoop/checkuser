@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 from scripts.analysis.classification import classify_usage_profile
-from scripts.config import get_critical_titles
+from scripts.config import get_critical_titles, get_og_group_keywords
 from scripts.analysis.entitlement import determine_user_entitlement, calculate_app_points
 
 
@@ -141,8 +141,22 @@ def _recommend(profile, entitlement, license_model, login_count, operational_pre
         return 'INATIVO (>90d)', 'Sem login no extrato consolidado de 90 dias.'
     if _is_critical_access(profile):
         return 'CONFIRMED_AUTHORIZED', 'Acesso administrativo critico confirmado por grupo MAXADMIN.'
+
+    groups_upper = {str(g).upper().strip() for g in (profile.get('GROUPS') or []) if str(g).strip()}
+    og_keywords = [k.upper() for k in get_og_group_keywords()]
+
+    has_og_access = any(
+        (kw in g) or (g.startswith(kw)) or (kw in g.replace('-', '_'))
+        for g in groups_upper
+        for kw in og_keywords
+    )
+
+    # FIX do bug: nunca downgrade PREMIUM quando há acesso O&G detectado via grupos
     if entitlement == 'PREMIUM' and operational_presence == 'ONSHORE' and login_count < 5:
+        if has_og_access:
+            return 'OK', 'Premium mantido: acesso O&G detectado via grupos.'
         return 'DOWNGRADE_CANDIDATE', 'Acesso Premium com uso muito baixo; validar necessidade O&G.'
+
     if license_model == 'AUTHORIZED' and login_count < 20:
         return 'MOVE_TO_CONCURRENT', 'Baixa frequencia para usuario dedicado; avaliar pool concorrente.'
     if license_model == 'AUTHORIZED':

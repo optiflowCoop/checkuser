@@ -26,6 +26,12 @@ print(f"✓ Loaded {len(app_points)} user records")
 identity_analytics = get_unique_users_data()
 print(f"✓ Loaded identity analytics: {identity_analytics['total_unique_users']} unique users")
 
+# If we computed domain_counts from the license CSV, prefer those values for the dashboard
+try:
+    identity_analytics['domain_counts'] = domain_counts
+except Exception:
+    pass
+
 # Minimal summary and governance for HTML builder
 summary_data = {'concurrency': {}}
 governance_data = {
@@ -37,7 +43,26 @@ governance_data = {
     'access_rows': [],
     'user_profiles': []
 }
-domain_counts = {}
+
+# Build domain_counts from the license_decision_plan CSV so the HTML charts reflect the spreadsheet
+from collections import Counter
+lic_path = IN_DIR / 'license_decision_plan.csv'
+domain_counts = Counter()
+if lic_path.exists():
+    with lic_path.open(encoding='utf-8-sig') as lf:
+        reader = csv.DictReader(lf)
+        for r in reader:
+            email = (r.get('EMAIL') or '').lower()
+            if '@foresea.com' in email:
+                domain_counts['foresea'] += 1
+            elif '@foresea-partner.com' in email:
+                domain_counts['foresea_partner'] += 1
+            elif email:
+                domain_counts['other'] += 1
+            else:
+                domain_counts['no_domain'] += 1
+# convert to plain dict for JSON serialization in template
+domain_counts = dict(domain_counts)
 
 # Build HTML
 html_content = build_html_structure(summary_data, governance_data, app_points, domain_counts, identity_analytics)

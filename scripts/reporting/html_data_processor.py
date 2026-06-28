@@ -4,6 +4,7 @@ import numpy as np
 from .html_helpers import get_recommendation_badge
 
 
+
 class DataProcessor:
     def __init__(self, summary, governance, app_points, domains, identity_analytics):
         self.summary = summary
@@ -32,10 +33,12 @@ class DataProcessor:
         hourly_concurrent_points = {}
 
         for u in self.app_points:
-            lic = u['LICENSE_MODEL']
-            ent = u['ENTITLEMENT']
-            rec = u['OPTIMIZATION_REC']
-            app_pts = float(u.get('APP_POINTS', 0))
+            # Robustness: app_points may come from different generators (services vs legacy domain)
+            lic = u.get('LICENSE_MODEL', 'CONCURRENT')
+            ent = u.get('ENTITLEMENT', 'BASE')
+            rec = u.get('OPTIMIZATION_REC', 'OK')
+            app_pts = float(u.get('APP_POINTS', 0) or 0)
+
 
             is_prem = (ent == 'PREMIUM')
             is_auth = (lic == 'AUTHORIZED')
@@ -90,8 +93,9 @@ class DataProcessor:
                     'f_p95': u.get('FACTOR_P95', 0.50),
                     'f_p100': u.get('FACTOR_P100', 0.85)
                 })
-                # Deserialize ACTIVE_HOURS from CSV pipe-delimited format
+                # Deserialize ACTIVE_HOURS (string with pipes OR list)
                 active_hours = u.get('ACTIVE_HOURS', '')
+
                 if isinstance(active_hours, str) and active_hours.strip():
                     hours_list = [h.strip() for h in active_hours.split('|') if h.strip()]
                 elif isinstance(active_hours, list):
@@ -136,6 +140,24 @@ class DataProcessor:
 
         concurrency_summary = self.summary.get('concurrency', {}) if isinstance(self.summary, dict) else {}
 
+        # Peak table uses analytics['concurrency_peak_hours'] (see html_template._render_tab_peak)
+        # generate_risk_report stores true_capacity_metrics.json under summary['concurrency']
+        peak_hours = concurrency_summary.get('peak_hours')
+        if peak_hours is None:
+            # backward/alternate key shape
+            maybe = concurrency_summary.get('concurrency', {}) if isinstance(concurrency_summary, dict) else {}
+            peak_hours = maybe.get('peak_hours') if isinstance(maybe, dict) else []
+
+        if peak_hours is None:
+            peak_hours = []
+
+        # Also normalize contributors/hours to avoid empty tabs.
+        peak_contributors = concurrency_summary.get('peak_contributors', []) or []
+        hourly_counts = concurrency_summary.get('hourly_counts', {}) or {}
+
+        # IMPORTANT: return normalized keys used by template
+        concurrency_peak_contributors_count = concurrency_summary.get('peak_contributors_count', 0) or 0
+
         return {
             'inativos_count': inativos_count,
             'downgrade_count': downgrade_count,
@@ -145,8 +167,9 @@ class DataProcessor:
             'scenario_points_total': scenario_points_total,  # Sum of APP_POINTS (bruto)
             # Attach computed concurrency metrics from the data science analysis
             'concurrency_peak_count': concurrency_summary.get('peak_count'),
-            'concurrency_peak_hours': concurrency_summary.get('peak_hours', []),
-            'concurrency_hourly': concurrency_summary.get('hourly_counts', {}),
+            'concurrency_peak_hours': (concurrency_summary.get('peak_hours', []) if concurrency_summary else []),
+            'concurrency_hourly': (concurrency_summary.get('hourly_counts', {}) if concurrency_summary else {}),
+
             'concurrency_peak_contributors': concurrency_summary.get('peak_contributors', []),
             'concurrency_peak_contributors_count': concurrency_summary.get('peak_contributors_count', 0),
             # Align identity counts to the exact universe used by license_decision_plan (app_points)

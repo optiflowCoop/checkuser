@@ -23,7 +23,7 @@ def load_csv(filename):
 
 
 def main():
-    print("🏆 Fase 3: DETECTOR DE OTIMIZAÇÃO DE LICENÇAS (SOLID ENGINE)")
+    print("  Fase 3: DETECTOR DE OTIMIZAÇÃO DE LICENÇAS (SOLID ENGINE)")
 
     # Busca a capacidade do RulesManager (desacoplado)
     contracted_points = rules_manager.capacity.get('contracted_app_points', 1200)
@@ -31,10 +31,10 @@ def main():
 
     usage_data = load_csv('usage_analysis_phase3.csv')
     if not usage_data:
-        print("❌ ERRO: usage_analysis_phase3.csv não encontrado. Execute analyze_usage.py primeiro.")
+        print("X ERRO: usage_analysis_phase3.csv não encontrado. Execute analyze_usage.py primeiro.")
         return
 
-    print(f"✓ Carregados {len(usage_data)} usuários para análise.")
+    print(f"V Carregados {len(usage_data)} usuários para análise.")
 
     # Instancia o motor de inteligência
     engine = LicenseOptimizerEngine()
@@ -61,6 +61,7 @@ def main():
             'EMAIL': user.get('EMAIL', ''),
             'USER_CATEGORY': user_category,
             'TITLE': user.get('TITLE', ''),
+            'LOCATION_SITE': user.get('LOCATION', 'UNKNOWN'),  # CORREÇÃO: Usar 'LOCATION' em vez de 'OPERATIONAL_PRESENCE'
             'CURRENT_TIER': user.get('USER_TIER', ''),
             'LOGIN_COUNT_90D': user.get('LOGIN_COUNT_90D', 0),
             'REQUIRED_LICENSE': user.get('REQUIRED_LICENSE', ''),
@@ -77,8 +78,10 @@ def main():
     # Salvar relatório "Mastigado" para o Front/Dashboards
     out_path = OUT_DIR / 'license_optimization_recommendations.csv'
     if optimizations:
+        # Garante que todas as chaves sejam incluídas no cabeçalho
+        fieldnames = list(optimizations[0].keys())
         with out_path.open('w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=list(optimizations[0].keys()))
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(optimizations)
 

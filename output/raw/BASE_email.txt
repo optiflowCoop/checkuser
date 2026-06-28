@@ -2547,5 +2547,17 @@ FetchAll:  Columns: 1
   JOAOBORGES,joao.carlosleiteborges@halliburton.com
   ARODRIGUES,asantos39@slb.com
   JORLANSOUZA,jorlan.medufes@outlook.com
-FetchAll: 2540 rows fetched.
+  RMOURA,rcunha@slb.com
+  ABDOHALLAK,abdohallak@foresea.com
+  LUCASALMEIDA,lucasrangel921@gmail.com
+  GSOUZA,gsouza16@slb.com
+  SOUZAGILVAN,gilvan_mds@hotmail.com
+  JONESDOSSANTOSSALES,jones.dss@hotmail.com
+  DANIELBRANCO,danielbranco@oesgroup.com
+  LUIZPERARO,ljunior15@slb.com
+  DIEGOMEIRELES2,diego_dsm2@hotmail.com
+  DEBORAH,deborahborgessilva@gmail.com
+  LRODRIGUES,lrodrigues45@slb.com
+  ENZOLOPES,elopes3@slb.com
+FetchAll: 2552 rows fetched.
 > 

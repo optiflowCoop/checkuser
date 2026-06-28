@@ -26,6 +26,7 @@ def main():
     groupuser_f = os.path.join(OUTDIR, "consolidated_groupuser.csv")
     maxgroup_f = os.path.join(OUTDIR, "consolidated_maxgroup.csv")
     persongroupview_f = os.path.join(OUTDIR, "consolidated_persongroupview.csv")
+    logintracking_f = os.path.join(OUTDIR, "consolidated_logintracking.csv")
 
     maxusers = read_csv(maxuser_f)
     persons = read_csv(person_f)
@@ -33,6 +34,16 @@ def main():
     groupusers = read_csv(groupuser_f)
     maxgroups = read_csv(maxgroup_f)
     persongroupviews = read_csv(persongroupview_f)
+    logintrackings = read_csv(logintracking_f)
+
+    # Process logintracking to find the last login for each user
+    last_login_index = {}
+    for lt in logintrackings:
+        userid = lt.get('USERID', '').strip()
+        attemptdate = lt.get('ATTEMPTDATE', '').strip()
+        if userid and attemptdate:
+            if userid not in last_login_index or attemptdate > last_login_index[userid]:
+                last_login_index[userid] = attemptdate
 
     env_alias = {'N06': 'NORBE06', 'N08': 'NORBE08', 'N09': 'NORBE09'}
     def canon_env(v):
@@ -87,7 +98,10 @@ def main():
         else:
             r['TITLE'] = ''
             r['PERSONGROUP'] = ''
-        
+
+        # Add last login information
+        r['LASTLOGIN'] = last_login_index.get(userid, '')
+
         user_index[f"{env}|{userid}"] = r
 
     group_index = {g.get('GROUPNAME', '').strip(): g for g in maxgroups if g.get('GROUPNAME')}
@@ -101,7 +115,7 @@ def main():
     header = [
         'ENV_DB','USERID','PERSONID','LOGINID','STATUS','DEFSITE','TYPE',
         'FIRSTNAME','LASTNAME','DISPLAYNAME','PRIMARYEMAIL',
-        'TITLE', 'PERSONGROUP',
+        'TITLE', 'PERSONGROUP', 'LASTLOGIN',
         'GROUPNAME','GROUP_DESCRIPTION','GROUP_FLAGS','SOURCE_FILE','LOAD_TIMESTAMP'
     ] + group_flag_cols
 

@@ -1,4 +1,160 @@
-ENVIRONMENT,disclosure,restricted,by,GSA,ADP,Schedule,Contract,with,IBM,Corp.
+ENVIRONMENT,PERSONGROUP,DESCRIPTION,ISCREWWORKGROUP,OOG_DEPARTMENT,OOG_USEINMOC,OOG_ISTOPSIDE
+BASE,OOG_AMGR,Asset Managers,0,0,0,-
+BASE,DRILLING,DRILLING,0,1,0,-
+BASE,HOSPITAL,Hospital,0,1,0,-
+BASE,MCHNIC,Mechanical,0,1,0,-
+BASE,TDION,Tecnologia da Informa��o / Information Tecnology Onshore,0,0,1,-
+BASE,ATVON,Gest�o de Ativos / Asset Management,0,0,1,-
+BASE,ELEOFF,Eletroeletr�nica / Electro Electronic,0,0,1,-
+BASE,MAQOFF,M�quinas / Engineering,0,0,1,1
+BASE,NAUOFF,Marinha / Marine,0,0,1,-
+BASE,DRLOFF,Perfura��o / Drilling,0,0,1,-
+BASE,QUAON,Garantia da Qualidade / Quality Assurance  Onshore,0,0,1,-
+BASE,OPRON,Opera��o / Operation Onshore,0,0,1,-
+BASE,MANOFF,Manuten��o / Maintenance,0,0,1,1
+BASE,MATOFF,Materiais / Materials,0,0,1,1
+BASE,JURON,Jur�dico / Legal Onshore,0,0,1,-
+BASE,SCPON,Subsea e Constru��o de Po�os / Subsea and Construction of Wells,0,0,1,-
+BASE,SSTON,Sustentabilidade / Sustainabitity Onshore,0,0,1,-
+BASE,ETCOFF,Eletroeletr�nica / Electroelectronical,0,0,1,1
+BASE,ACOON,Administra��o Contratual / Contractual Administration Onshore,0,0,1,-
+BASE,COMON,Comunica��o / Comunication Onshore,0,0,1,-
+BASE,NAUON,Gest�o Mar�tima / Maritime Management,0,0,1,-
+BASE,PRJON,Projetos (Engenharia) / Projects (Engineering),0,0,1,-
+BASE,SBSOFF,Subsea / Subsea,0,0,1,1
+BASE,SUPON,Suprimentos e Log�stica de Materiais / Supply and Materials Logistics Onshore,0,0,1,-
+BASE,FINON,Finan�as / Finance Onshore,0,0,1,-
+BASE,PEOON,Pessoas & Organiza��o / People & Organization Onshore,0,0,1,-
+BASE,SEVON,Servi�os / Services Onshore,0,0,1,-
+BASE,MCHOFF,Mec�nica / Mechanical,0,0,1,1
+BASE,SSTOFF,Sustentabilidade / Sustainabitity Offshore,0,0,1,-
+BASE,ET,ET,0,1,0,-
+BASE,INTOFF,Internaliza��o / Internalization,0,0,1,-
+BASE,SPIE,Servi�o Pr�prio de Inspe��o de Equipamentos,0,1,0,-
+BASE,OOG_QAEG,Aprovadores final de MOC PEO (ajustado para MOCPEO com P&O),0,0,0,-
+BASE,OOG_PH,Profissional Habilitado,0,0,0,-
+BASE,OOG_FIMA,Financial Managers,0,0,0,-
+BASE,YARD,Yard Onshore,0,1,0,-
+BASE,OOG_RMG,Risk Assessment Manager,0,0,0,-
+BASE,OOG_OIMC,Department for OIM/Captain and Chief Mate/Imediatos.,0,0,0,-
+BASE,NAUTICAL,Nautical,0,1,0,-
+BASE,OOG_PD,Person Group Performance Director,0,0,0,-
+BASE,OOG_AM,Asset Manager,0,0,0,-
+BASE,SAU,Sa�de / Health,0,0,1,-
+BASE,SPI,SPIE � Servi�o Pr�prio e Inspe��o de Equipamentos / Own Service and Equipment Inspection,0,0,1,-
+BASE,OOG_QA,Quality Assurance,0,0,0,-
+BASE,OOG_SUT,Sustainability,0,0,0,-
+BASE,OOG_TI,Information Technology,0,0,0,-
+BASE,RSTC,Aprovadores de Risk Assessment,0,0,0,-
+BASE,OOG_CM,CM Approval Group,1,0,0,-
+BASE,OOG_CMML,CM Group Mail,0,0,0,-
+BASE,OOG_FMEC,Grupo FMECA,0,0,0,-
+BASE,ENGINEER,Engineering,0,1,0,-
+BASE,MARINE,Marine,0,1,0,-
+BASE,ROV,ROV,0,1,0,-
+BASE,RELIABIL,Realibility Department to Engineers from the Base,0,1,0,-
+BASE,OOG_AENG,Asset Engineers,0,0,0,-
+BASE,OOG_MACO,Materials Coordinators,0,0,0,-
+BASE,HSE,HSE�-�Safety,0,1,0,-
+BASE,RADIO,Radio,0,1,0,-
+BASE,SUBSEA,Subsea,0,1,0,-
+BASE,OOG_MNCO,Maintenance Coordinators,0,0,0,-
+BASE,OOG_PRWF,Group of people notified when cancelling some PR,0,0,0,-
+BASE,OOG_ASMG,Asset Manager Approval Group - MOCs Only,0,0,0,-
+BASE,TECON,Tecnologia & Inova��o / Technology & Innovation,0,0,1,-
+BASE,APREDIAL,Adm Predial - Base UNP Only,0,1,0,-
+BASE,ADMON,Administra��o Contratual / Contractual Administration Onshore,0,0,1,-
+BASE,MOVCAR,Movimenta��o de cargas - Base UNP Only,0,1,0,-
+BASE,GMAON,Gest�o Mar�tima / Maritime Management,0,0,1,-
+BASE,OOG_EP,Planning Engineering Coordinator (PR with AFE CAPEX),0,0,0,-
+BASE,PERCO,VPE Perfura��o / VPE Drilling,0,0,1,-
+BASE,SSTCO,VP Sustentabilidade / VP Sustainability,0,0,1,-
+BASE,CFMON,Conformidade / Compliance,0,0,1,-
+BASE,1079,Governan�a & Prote��o de Dados / Governance & Data Protection,0,0,1,-
+BASE,GEPON,Governan�a & Prote��o de Dados / Governance & Data Protection,0,0,1,-
+BASE,RINON,Rela��o com Investidores / Investor Relations,0,0,1,-
+BASE,TESON,Tesouraria / Treasury,0,0,1,-
+BASE,AB_ANENG,Person group to Analyst Engineers used in workflow of Alerts & Bulletins,0,0,0,-
+BASE,AB_ANPLA,Person group to Analyst Planners used in workflow of Alerts & Bulletins,0,0,0,-
+BASE,OOG_LBAP,Log Book Approvers in WF OOG_LOGBOO,0,0,0,-
+BASE,MOB_PGC,For dite PGC,0,0,0,-
+BASE,R&R,Repair & Return,0,1,0,-
+BASE,ENGON,Engenharia / Engineering,0,0,1,-
+BASE,MKTON,Marketing,0,0,1,-
+BASE,FSPON,Fornecedor / Supplier OnShore,0,0,1,-
+BASE,INTEGRIT,Integrity,0,1,0,-
+BASE,CEION,Confiabilidade & Integridade /  Reliability and Integrity,0,0,1,-
+BASE,OOG_OIMP,Person Group for PTWs approval (OIM/Capit�o),0,0,0,-
+BASE,TERCEIRO,Grupo terceiros da PTW,0,1,0,-
+BASE,OOG_HSE,Person Group for PTWs approval (Safety Technician),0,0,0,-
+BASE,OOG_PTWA,PTW - Group for PT Administrator users,0,0,0,-
+BASE,OOG_ESUP,PTW - Entry Supervisor Group,0,0,0,-
+BASE,FEICO,VP Finan�as & Investimentos / VP Finance & Investments,0,0,1,-
+BASE,CEACO,VP Controladoria & Administra��o / VP Controllership & Administration,0,0,1,-
+BASE,JEGCO,VP Jur�dico & Governan�a / VP Legal & Governance,0,0,1,-
+BASE,CFMCO,VP Conformidade / VP Compliance,0,0,1,-
+BASE,CTRON,Controladoria / Controllership,0,0,1,-
+BASE,PIMON,Planejamento Estrat�gico & Intelig�ncia de Mercado / Strategic Planning & Market Intelligence,0,0,1,-
+BASE,OOG_COOD,Person Group of Additional Service Coordinators,0,0,0,-
+BASE,CONF,Confiabilidade Aplicada,0,1,0,-
+BASE,OOG_MEET,Group for Planning and Simultaneity Meeting,0,0,0,-
+BASE,MOB_BAUN,Person group for Mobile - BASE-UNP,0,0,0,-
+BASE,MOB_HTQ,Person group for Mobile - HTQ,0,0,0,-
+BASE,MOB_ODN4,Person group for Mobile - ODN4,0,0,0,-
+BASE,MOB_ODN1,Person group for Mobile - ODN1,0,0,0,-
+BASE,MOB_OPBA,Person group for Mobile - OP-BASE,0,0,0,-
+BASE,MOB_ODN2,Person group for Mobile - ODN2,0,0,0,-
+BASE,MOB_N08,Person group for Mobile - N08,0,0,0,-
+BASE,MOB_N09,Person group for Mobile - N09,0,0,0,-
+BASE,MOB_N06,Person group for Mobile - N06,0,0,0,-
+BASE,MOB_ODN3,Person group for Mobile - ODN3,0,0,0,-
+BASE,MOB_POL,For site POL,0,0,0,-
+BASE,MOB_PGA,For site PGA,0,0,0,-
+BASE,MOB_PGB,For site PGB,0,0,0,-
+BASE,OOG_DCSD,Drilling CSD Person Group,0,0,0,-
+BASE,OOG_MCSD,Marine CSD Person Group,0,0,0,-
+BASE,OOG_NR13,NR13 Speciality Offshore,0,0,0,-
+BASE,OOG_SUBS,Subsea Coordination Person Group,0,0,0,-
+BASE,OOG_MOCO,Person group contaning people that can create MOC O&F records,0,0,0,-
+BASE,OOG_COEQ,Equipment Coordination Team,0,0,0,-
+BASE,P&O,P&O,0,0,0,-
+BASE,OOG_SUDI,Department for the Superintendent Director,0,0,0,-
+BASE,OOG_RIGM,Rig Managers,0,0,0,-
+BASE,OOG_COND,Contract Director,0,0,0,-
+BASE,OOG_OIM,Department for OIM/Captain,0,0,0,-
+BASE,MOC_AAPR,An�lise de risco e Aprova��o da MOC,0,0,0,-
+BASE,MAINTENA,-,0,1,0,-
+BASE,MATERIAL,Material,0,1,0,-
+BASE,ELECTRIC,Electrical,0,1,0,-
+BASE,TUBOFF,Tubula��o/Piping,0,0,1,-
+BASE,PROOFF,Processo / Process,0,0,1,1
+BASE,ESTOFF,Estrutura / Structure,0,0,1,1
+BASE,VACOFF,HVAC (Condicionador de Ar de Ventila��o de Aquecimento - Heating Ventilation Air Conditioner),0,0,1,1
+BASE,NR-13,NR-13,0,0,1,-
+BASE,HSEOFF,Sustentabilidade HSE / Sustainability HSE,0,0,1,-
+BASE,HOSOFF,Sustentabilidade Hospital / Sustainability Hospital,0,0,1,-
+BASE,RADOFF,Marinha Radio,0,0,1,-
+BASE,OOG_RIGS,RIG Superintendentes Aprovadores,0,0,0,-
+BASE,OOG_SQP,SQP Person Group to send WOREF communications revisions,0,0,0,-
+BASE,OOG_MACR,Group people to macrostructre,0,0,0,-
+BASE,QUAENG,Quality Engineer,0,0,0,-
+BASE,CSDON,Centro de Suporte a Decis�o e Controle de Po�o / Decision Support Center and Well Control,0,0,1,-
+BASE,ASSETENG,Asset/Planning Engineer,0,1,0,-
+BASE,OOG_AC,Asset Coordinator Person Group,0,0,0,-
+BASE,OOG_EC,Engineering Coordinator person group,0,0,0,-
+BASE,OOG_PJEN,Person group for all the project engineers,0,0,0,-
+BASE,OOG_MPO,MOC People Openers,0,0,0,-
+BASE,DDNON,Desenvolvimento de Neg�cios / Business Development,0,0,1,-
+BASE,T&D,T&D,0,0,0,-
+BASE,OOG_ARM,Assistant Rig Manager / Rig Coordinator,0,0,0,-
+BASE,PROON,Processo / Process Onshore,0,0,1,-
+BASE,ESTON,Estrutura / Stucture Onshore,0,0,1,-
+BASE,MANON,Manuten��o /Maintenance Onshore,0,0,1,-
+BASE,HSEON,Sustentabilidade / Sustainability Onshore.,0,0,1,-
+BASE,SST_ANALYS,Person Group of persons to preliminary applicability analysis in Alert & Bulletins SST,0,0,0,-
+BASE,SST_SUSTEN,Group with sustentability persons,0,0,0,-
+BASE,FetchAll:,154,rows,fetched.,,
+BASE,>,,,,,
 HTQ,MOB_BAUN,Person group for Mobile - BASE-UNP,0,0,0,-
 HTQ,ROV,ROV,0,1,0,-
 HTQ,ET,ET,0,1,0,-

@@ -19,3 +19,14 @@ def get_critical_titles():
 
 def get_foresea_domains():
     return ['foresea.com', 'foresea-partner.com']
+
+def get_og_group_keywords():
+    """
+    Security group name patterns that indicate O&G access requiring PREMIUM licensing.
+    Must be aligned with config/licensing_rules.json user_classification.og_group_keywords.
+    """
+    return [
+        'OG_', 'OOG_', 'OOG_PTW_ISSUER', 'O&G', 'OILGAS', 'PETROLEUM', 'PETRO',
+        'HSE', 'DRILLING', 'DRILL', 'RIG', 'FPSO', 'PFWORK', 'LOCREC',
+        'COMPLIANCE', 'WELL'
+    ]

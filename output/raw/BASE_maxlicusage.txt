@@ -2421,7 +2421,7 @@ FetchAll:  Columns: 5
   ITEAM, -, 0, 1, 0
   MAXREG, -, 1, 0, 0
   FREDERICOCARDOSO, -, 0, 1, 0
-  LEONARDOCOUTINH, -, 0, 1, 1
+  LEONARDOCOUTINH, -, 0, 1, 0
   MAXADOOG, -, 0, 1, 0
   THIAGOTINOCO, -, 0, 1, 0
   ALEXANDRESOUSA, -, 0, 1, 0
@@ -2719,13 +2719,13 @@ FetchAll:  Columns: 5
   ITEAM, -, 0, 1, 0
   MAXADOOG, -, 0, 1, 0
   MAXREG, -, 1, 0, 0
-  FELIPEBERTOLI, -, 0, 1, 1
+  FELIPEBERTOLI, -, 0, 1, 0
   ANDRESSASILVA, -, 0, 1, 1
   MARCELODEOLIVEIRA, -, 0, 1, 1
   ITEAM, -, 0, 1, 0
   MAXADOOG, -, 0, 1, 0
   CLAUDIOFARIAS, -, 0, 1, 1
-  RACHELLEAL, -, 0, 1, 1
+  RACHELLEAL, -, 0, 1, 0
   MAXREG, -, 1, 0, 0
   PATRICKSOUSA, -, 0, 1, 1
   MAXREG, -, 1, 0, 0
@@ -2775,7 +2775,7 @@ FetchAll:  Columns: 5
   CARLOSJUNIOR, -, 0, 1, 1
   ROMULOSTEINBACH, -, 0, 1, 1
   MAXREG, -, 1, 0, 0
-  ITEAM, -, 0, 1, 1
+  ITEAM, -, 0, 1, 0
   LUCASIGNACIO, -, 0, 1, 1
   DIOGOCARVALHO, -, 0, 1, 1
   MAXREG, -, 1, 0, 0
@@ -2795,5 +2795,12 @@ FetchAll:  Columns: 5
   G.CARVALHO, -, 0, 1, 1
   GLIBMYKH, -, 0, 1, 1
   ANISULLECORDEIR, -, 0, 1, 1
-FetchAll: 2788 rows fetched.
+  MAXREG, -, 1, 0, 0
+  ITEAM, -, 0, 1, 1
+  RICARDOVIEIRA, -, 0, 1, 1
+  GABRIELHSIQUEIRA, -, 0, 1, 1
+  REBECAALBERNI, -, 0, 1, 1
+  MAXREG, -, 1, 0, 0
+  JOSETIAGO, -, 0, 1, 1
+FetchAll: 2795 rows fetched.
 > 

@@ -8,6 +8,8 @@ Sistema completo para governança de identidades, baseline funcional e otimizaç
 - ✅ Detecção de colisões de identidades e reuso de logins
 - ✅ Baseline funcional por TITLE (cargo) com análise de divergências de TYPE e grupos
 - ✅ Otimização de licenciamento AppPoints com análise de uso real (LOGINTRACKING)
+- ✅ **LocationSite correto do PersonGroupView** como source-of-truth
+- ✅ **Classificação Onshore/Offshore** baseada em dados reais
 - ✅ Dashboard HTML profissional para apresentações executivas
 
 ---
@@ -29,7 +31,7 @@ Executa todas as 11 etapas:
 - Detecção de colisões
 - Enriquecimento de conflitos
 - Análise de baseline funcional
-- Análise de uso (Phase 3)
+- **Análise de uso (Phase 3)** ← Agora com LocationSite correto
 - Geração de recomendações
 
 ### 3️⃣ Geração do Relatório
@@ -47,6 +49,7 @@ Gera o HTML e abre automaticamente no navegador.
 Clique em: extrair_logintrack.bat
 ```
 Útil para atualizar análise de uso sem recarregar identidades.
+**Novo**: Consolida LoginTracking de múltiplas fontes (consolidated + DadosTabelas/)
 
 ### Extrair apenas Baseline Funcional
 ```
@@ -60,17 +63,25 @@ Atualiza dados de TITLE, PERSONGROUP e PERSONGROUPTEAM.
 
 ### Entrada (input/)
 - `maxuser_*.csv` - Dados de identidades por ambiente
-- `persongroupview_*.csv` - Cargos e departamentos
+- `persongroupview_*.csv` - Cargos, departamentos e **LocationSite** ⭐
 - `logintracking_*.csv` - Histórico de login (90 dias)
+
+### Entrada Adicional (DadosTabelas/)
+- `LOGINTRACKING_*.csv` - Arquivos de LoginTracking baixados manualmente
+  - Consolida automaticamente com dados consolidados
+  - Detecta e elimina duplicatas
 
 ### Saída (output/)
 - `consolidated/` - Dados consolidados do pipeline
-- `reports/` - Dashboard HTML + Excel
+  - `usage_analysis_phase3.csv` - Análise de uso com **LOCATION** do PersonGroupView
+  - `consolidated_persongroupview.csv` - Dados de localização
+- `reports/` - Dashboard HTML + Excel com dados corrigidos
 
 ### Scripts
 - `run_pipeline.py` - Orquestrador principal (11 steps)
 - `generate_risk_report.py` - Gerador do dashboard HTML
-- `src/analyze_usage.py` - Analisador de uso (Phase 3)
+- `src/analyze_usage.py` - Analisador de uso (Phase 3) ← **ATUALIZADO**
+- `integrate_usage_data.py` - Integra dados de análise no XLSX final ← **NOVO**
 - `src/license_optimizer.py` - Otimizador de licenças
 
 ---
@@ -114,6 +125,28 @@ CHEFE DE MECANICA - TYPE DIVERGENTE GRUPOS DIVERGENTES
 📍 NORBE08: TYPE 4, TYPE 5 (2 usuários - sendo que 1 é TYPE 4 e outro é TYPE 5)
 ```
 Significa: O cargo "Chefe de Mecânica" está como TYPE 4 na NORBE06, mas na NORBE08 tem DOIS usuários desse cargo - um é TYPE 4 e outro é TYPE 5. Isso indica despadronização.
+
+---
+
+## 📍 Classificação de Localização (NOVO)
+
+### Coluna LOCATION (source-of-truth: PersonGroupView.LocationSite)
+```
+LOCATION: Identificação da unidade/base onde o usuário está alocado
+Exemplos: N06, N08, N09, ODN1, ODN2, BASE-UNP, OG-BASE
+```
+
+### OPERATIONAL_PRESENCE (classificação automática)
+- **ONSHORE**: base-unp, og-base, macae, base
+- **OFFSHORE**: N06, N08, N09, ODN1, ODN2, e similares
+- **UNKNOWN**: Não classificado (sem LocationSite no PersonGroupView)
+
+**Exemplo:**
+```
+USERID: ALESSANDROCORREA
+LOCATION: N08 (vindo de PersonGroupView)
+OPERATIONAL_PRESENCE: OFFSHORE (classificação)
+```
 
 ---
 
@@ -166,6 +199,10 @@ Significa: O cargo "Chefe de Mecânica" está como TYPE 4 na NORBE06, mas na NOR
 **Problema**: JavaScript desabilitado
 **Solução**: Habilitar JavaScript no navegador
 
+### LOCATION aparece como UNKNOWN
+**Problema**: PersonGroupView não tem LocationSite para o usuário
+**Solução**: Verificar se o usuário existe em consolidated_persongroupview.csv
+
 ---
 
 ## 📞 Suporte Técnico
@@ -174,6 +211,7 @@ Para dúvidas específicas sobre:
 - **Identidades/Colisões**: Ver `identity_collisions_enriched.csv` campo `CONFLICT_REASON`
 - **Baseline Funcional**: Ver seção 6 do dashboard HTML
 - **Otimização Licenças**: Ver `license_optimization_recommendations.csv`
+- **LocationSite**: Ver `consolidated_persongroupview.csv` coluna `locationsite`
 
 **Documentação IBM Maximo**: 
 - [MAS 9 Licensing Guide](https://www.ibm.com/docs/en/mas-cd/continuous-delivery?topic=administering-application-licenses)
@@ -192,5 +230,28 @@ O dashboard possui um painel superior com botões para download dos scripts .bat
 
 ---
 
+## ✨ Atualizações Recentes (Junho 2026)
+
+### Correções Implementadas
+1. **Parse de Data**: Suporte para formato `YYYY-MM-DD-HH.MM.SS` (LoginTracking)
+2. **LocationSite**: Agora é source-of-truth para coluna LOCATION
+3. **Consolidação LoginTracking**: Mescla automática de múltiplas fontes
+4. **Classificação Onshore/Offshore**: Baseada em LocationSite
+5. **Integração XLSX**: Script novo para atualizar dados no workbook
+
+### Exemplo de Resultado
+```
+USERID: ALESSANDROCORREA
+DISPLAYNAME: ALESSANDRO DE CARVALHO CORREA
+LOCATION: N08 ✅ (do PersonGroupView)
+OPERATIONAL_PRESENCE: OFFSHORE ✅
+LOGIN_COUNT_90D: 1623
+DAYS_SINCE_LAST: 15
+USER_TIER: OFFSHORE_STD
+```
+
+---
+
 **Última atualização**: Junho 2026  
-**Versão**: 3.0 (Phase 3 - License Optimization)
+**Versão**: 3.1 (Phase 3 + LocationSite Corrections)
+

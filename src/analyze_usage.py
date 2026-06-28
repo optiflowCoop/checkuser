@@ -274,10 +274,15 @@ def main():
             'DAYS_SINCE_LAST': days_since_last,
             'OPERATIONAL_PRESENCE': operational_presence,
             'IS_CRITICAL_FUNCTION': any(crit in title.lower() for crit in rules['user_classification']['critical_functions']['keywords']) if title else False,
-            'HAS_PREMIUM_ACCESS': detect_premium_from_groups(groups, og_keywords),
-            'USED_PREMIUM': any(is_premium_app(app, premium_modules) for app in all_apps) if all_apps else False,
+'USED_PREMIUM': any(is_premium_app(app, premium_modules) for app in all_apps) if all_apps else False,
+            'HAS_PREMIUM_ACCESS': (
+                detect_premium_from_groups(groups, og_keywords)
+                or (any(is_premium_app(app, premium_modules) for app in all_apps) if all_apps else False)
+            ),
+
             'LICENSE_MODEL': 'AUTHORIZED' if 'AUTHORIZED' in title.upper() else 'CONCURRENT'
         }
+
         
         # Classificar usando engine (em vez de if/elif)
         classification = engine.classify_user(user_data)
@@ -292,6 +297,17 @@ def main():
 
         premium_apps = [app for app in all_apps if is_premium_app(app, premium_modules)]
         standard_apps = [app for app in all_apps if not is_premium_app(app, premium_modules)]
+
+        # FIX: downgrade engine usa REQUIRED_LICENSE (PREMIUM) + PREMIUM_APPS (string vazia).
+        # Se premium access foi detectado por GRUPOS (O&G), mas logintracking(APP) não trouxe
+        # identificadores de módulo, premium_apps pode ficar vazio indevidamente.
+        # Nesse caso, garantimos um fallback a partir dos grupos que casam com og_keywords.
+        if user_data.get('HAS_PREMIUM_ACCESS') is True and not premium_apps:
+            premium_group_matches = [g for g in groups if detect_premium_from_groups([g], og_keywords)]
+            if premium_group_matches:
+                premium_apps = sorted(premium_group_matches)[:5]
+            else:
+                premium_apps = ['HAS_O_G_PREMIUM_ACCESS']
 
         output_rows.append({
             'USERID': userid,

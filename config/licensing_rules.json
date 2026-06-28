@@ -118,6 +118,8 @@
       "description": "Security group name patterns that indicate O&G access requiring Premium",
       "keywords": [
         "OG_",
+        "OOG_",
+        "OOG_PTW_ISSUER",
         "O&G",
         "OILGAS",
         "PETROLEUM",
