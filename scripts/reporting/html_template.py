@@ -389,7 +389,7 @@ def _render_tab_peak(analytics):
     return f"""
     <div id="tab-peak" class="container tab-content">
         <div class="card">
-            <h2 class="card-header">⛰️ Peak Hours (High-Water Mark) - Ecocardiograma</h2>
+            <h2 class="card-header">⛰️ Peak Hours (High-Water Mark)</h2>
             <p style="color:#475569;">Passe o mouse para ver usuários simultâneos e consumo de AppPoints no mesmo horário.</p>
 
             <div class="chart-box" style="height: 380px; align-items: stretch; padding: 1.5rem;">

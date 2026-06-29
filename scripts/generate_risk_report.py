@@ -296,23 +296,25 @@ def main():
         #   - peak_hours: list/dict (rows para a tabela)
         #   - peak_contributors: list (USERID/dicts)
         # Então, quando só houver métricas agregadas, preenchemos o mínimo sem quebrar a UI.
+        # Trecho ajustado do bloco de concorrência
+
         metrics_path = ROOT / 'output' / 'consolidated' / 'true_capacity_metrics.json'
+
+        concurrency_summary = {}
+
         if metrics_path.exists():
             metrics = json.loads(metrics_path.read_text(encoding='utf-8'))
 
-            # true_capacity_metrics.json já contém peak_hours (lista ["YYYY-MM-DD HH:MM", value])
-            # e hourly_counts/peak_contributors quando disponíveis.
             concurrency_summary = {
-                'hourly_counts': metrics.get('hourly_counts', {}) or {},
-                'hourly_app_points': metrics.get('hourly_app_points', {}) or {},
-                'hourly_concurrent_app_points': metrics.get('hourly_concurrent_app_points', {}) or {},
-                'hourly_app_points_nem': metrics.get('hourly_app_points_nem', {}) or {},
-                'peak_count': metrics.get('concurrent_peak_estimated_points')
-                or metrics.get('peak_contributors_count'),
-                'peak_hours': metrics.get('peak_hours', []) or [],
-                'peak_hours_users': metrics.get('peak_hours_users', []) or [],
-                'peak_contributors_count': metrics.get('peak_contributors_count', 0) or 0,
-                'peak_contributors': metrics.get('peak_contributors', []) or []
+                'hourly_counts': metrics.get('hourly_counts', {}),
+                'hourly_app_points': metrics.get('hourly_app_points', {}),
+                'hourly_concurrent_app_points': metrics.get('hourly_concurrent_app_points', {}),
+                'hourly_app_points_nem': metrics.get('hourly_app_points_nem', {}),
+                'peak_count': metrics.get('true_total_app_points'),
+                'peak_hours': metrics.get('peak_hours', []),
+                'peak_hours_users': metrics.get('peak_hours_users', []),
+                'peak_contributors_count': metrics.get('peak_contributors_count', 0),
+                'peak_contributors': metrics.get('peak_contributors', [])
             }
     except Exception as e:
         print(f"[Aviso] Falha ao calcular concorrência avançada: {e}")

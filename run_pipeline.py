@@ -73,7 +73,12 @@ PIPELINE_STEPS = [
         "features": "✓ LicenseOptimizer (SOLID) ✓ 6 estratégias ✓ Batch processing ✓ Summary stats"
     },
     {
-        "name": "11. Gerando Dashboards e Excel de Risco (generate_risk_report.py)",
+        "name": "11. Gerando Uso Real (true_capacity_calculator.py)",
+        "cmd": [sys.executable, str(ROOT / "src" / "true_capacity_calculator.py")],
+        "skippable": False
+    },
+    {
+        "name": "12. Gerando Dashboards e Excel de Risco (generate_risk_report.py)",
         "cmd": [sys.executable, str(ROOT / "scripts" / "generate_risk_report.py")],
         "skippable": False
     }
