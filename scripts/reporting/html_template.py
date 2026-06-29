@@ -111,54 +111,105 @@ def _render_header_and_tabs():
     """
 
 
+# ==========================================================
+# ABA 1 – Painel Operacional (VERSÃO FINAL CORRIGIDA)
+# ==========================================================
+
 def _render_tab_painel(analytics, identity_analytics):
-    """Renders the 'Painel Operacional' tab content using processed analytics when available."""
-    # analytics may contain processed identity metrics produced by DataProcessor
-    total_unique = analytics.get('identity_total_users', identity_analytics.get('in_scope_total_unique', identity_analytics.get('total_unique_users', 0)))
-    active_unique = analytics.get('identity_active_users', identity_analytics.get('in_scope_active_unique', identity_analytics.get('total_active_unique', 0)))
-    status_counts = identity_analytics.get('status_counts', {})
-    domain_counts = identity_analytics.get('domain_counts', {})
-    downgrade_count = analytics.get('downgrade_count', 0)
-    concurrent_count = analytics.get('concurrent_count', 0)
+
+    painel = analytics.get('painel_data', {})
 
     return f"""
-    <div id="tab-painel" class="container tab-content active">
-        <div class="alert-box">
-            <strong>🎯 Resumo Consolidado (Base de Dados Real e Deduplicada)</strong>
-            <p>A inteligência mapeou as 7 instâncias, identificando {fmt_br(total_unique)} usuários únicos. Deste total, {fmt_br(status_counts.get('INACTIVE', 0))} estão inativos e {fmt_br(downgrade_count + concurrent_count)} são elegíveis para otimização de licença.</p>
-        </div>
-        <div class="card">
-            <h2 class="card-header">Radar de Identidade e Acesso (Visão Única)</h2>
-            <div class="stats-grid">
-                <div class="stat-card border-success"><div class="stat-value" style="color: var(--success);">{fmt_br(active_unique)}</div><div class="stat-title">Usuários Únicos Ativos</div></div>
-                <div class="stat-card border-neutral"><div class="stat-value" style="color: var(--neutral);">{fmt_br(status_counts.get('INACTIVE', 0))}</div><div class="stat-title">Usuários Inativos</div><div class="stat-subtitle">Sem login há > 90d</div></div>
-                <div class="stat-card border-warning"><div class="stat-value" style="color: var(--warning);">{fmt_br(downgrade_count)}</div><div class="stat-title">Elegíveis Downgrade</div></div>
-                <div class="stat-card border-accent"><div class="stat-value" style="color: var(--accent);">{fmt_br(concurrent_count)}</div><div class="stat-title">Elegíveis p/ Concorrência</div></div>
-            </div>
-            <div class="charts-container" style="grid-template-columns: 1fr 2fr;">
-                <div class="chart-box" style="flex-direction: column;">
-                    <h3 style="margin-top:0; font-size: 1rem; color: var(--primary);">Distribuição de Domínios (Ativos)</h3>
-                    <canvas id="domainChart"></canvas>
-                </div>
-                <div class="chart-box" style="align-items: flex-start; padding: 2rem;">
-                    <div style="width: 100%;">
-                        <h3 style="margin-top:0; font-size: 1rem; color: var(--primary);">Segregação por Vínculo Contratual</h3>
-                        <p style="font-size: 0.9rem; color: var(--text); margin-bottom: 1rem;">
-                            Usuários de outros domínios ou sem domínio devem ser revisados para desativação ou migração para integrações via API, visando otimizar custos.
-                        </p>
-                        <div style="display: flex; justify-content: space-between; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border);">
-                            <div style="text-align:center"><strong style="color: #10b981; font-size: 1.4rem;">{fmt_br(domain_counts.get('foresea', 0))}</strong> <br><span style="font-size: 0.8rem; font-weight:bold; color: #64748b;">FORESEA</span></div>
-                            <div style="text-align:center"><strong style="color: #2563eb; font-size: 1.4rem;">{fmt_br(domain_counts.get('foresea_partner', 0))}</strong> <br><span style="font-size: 0.8rem; font-weight:bold; color: #64748b;">PARCEIROS</span></div>
-                            <div style="text-align:center"><strong style="color: #f59e0b; font-size: 1.4rem;">{fmt_br(domain_counts.get('other', 0))}</strong> <br><span style="font-size: 0.8rem; font-weight:bold; color: #64748b;">OUTROS</span></div>
-                            <div style="text-align:center"><strong style="color: #ef4444; font-size: 1.4rem;">{fmt_br(domain_counts.get('no_domain', 0))}</strong> <br><span style="font-size: 0.8rem; font-weight:bold; color: #64748b;">S/ DOMÍNIO</span></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    """
+<div id="tab-painel" class="container tab-content active">
 
+<div class="card">
+<h2 class="card-header">📊 Visão Executiva (Alinhado ao Excel)</h2>
+
+<div class="stats-grid">
+
+<div class="stat-card border-success">
+<div class="stat-value" style="color: var(--success);">
+{fmt_br(painel.get('usuarios_ativos', 0))}
+</div>
+<div class="stat-title">Usuários Ativos Analisados</div>
+</div>
+
+<div class="stat-card border-primary">
+<div class="stat-value">
+{fmt_br(painel.get('usuarios_plano', 0))}
+</div>
+<div class="stat-title">Usuários no Plano de Licença</div>
+</div>
+
+<div class="stat-card border-warning">
+<div class="stat-value">
+{fmt_br(painel.get('authorized', 0))}
+</div>
+<div class="stat-title">Authorized</div>
+</div>
+
+<div class="stat-card border-accent">
+<div class="stat-value">
+{fmt_br(painel.get('concurrent', 0))}
+</div>
+<div class="stat-title">Concurrent</div>
+</div>
+
+<div class="stat-card border-secondary">
+<div class="stat-value">
+{fmt_br(painel.get('premium', 0))}
+</div>
+<div class="stat-title">Premium</div>
+</div>
+
+</div>
+</div>
+
+<div class="card" style="border-left: 4px solid var(--danger);">
+<h2 class="card-header">⚡ Capacidade NEM vs Contrato</h2>
+
+<div class="stats-grid">
+
+<div class="stat-card">
+<div class="stat-value" style="color: var(--danger);">
+{fmt_br(painel.get('true_peak', 0))}
+</div>
+<div class="stat-title">Pico Real (P100)</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-value" style="color: var(--warning);">
+{fmt_br(painel.get('p95', 0))}
+</div>
+<div class="stat-title">Pico Seguro (P95)</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-value">
+{fmt_br(painel.get('contratado', 0))}
+</div>
+<div class="stat-title">Capacidade Contratada</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-value" style="color: {'var(--success)' if painel.get('folga', 0) >= 0 else 'var(--danger)'};">
+{fmt_br(painel.get('folga', 0))}
+</div>
+<div class="stat-title">Folga / Déficit</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-value">
+{painel.get('percentual_uso', 0)}%
+</div>
+<div class="stat-title">% Uso do Contrato (P95)</div>
+</div>
+
+</div>
+</div>
+
+</div>
+"""
 
 def _render_tab_gov(gov_tables):
     """Renders the 'Governança & Saneamento' tab content."""
@@ -389,7 +440,7 @@ def _render_tab_peak(analytics):
     return f"""
     <div id="tab-peak" class="container tab-content">
         <div class="card">
-            <h2 class="card-header">⛰️ Peak Hours (High-Water Mark)</h2>
+            <h2 class="card-header">⛰️ Peak Hours (High-Water Mark) - Ecocardiograma</h2>
             <p style="color:#475569;">Passe o mouse para ver usuários simultâneos e consumo de AppPoints no mesmo horário.</p>
 
             <div class="chart-box" style="height: 380px; align-items: stretch; padding: 1.5rem;">

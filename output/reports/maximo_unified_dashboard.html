@@ -88,7 +88,7 @@
             <p>Capacity Planning Avançado e Saneamento de Identidades</p>
         </div>
         <div>
-            <p style="text-align: right; color: #cbd5e1;">Gerado em:<br><strong>29/06/2026 11:49</strong></p>
+            <p style="text-align: right; color: #cbd5e1;">Gerado em:<br><strong>29/06/2026 14:01</strong></p>
         </div>
     </div>
     <div class="tabs">
@@ -101,42 +101,96 @@
     </div>
     
     
-    <div id="tab-painel" class="container tab-content active">
-        <div class="alert-box">
-            <strong>🎯 Resumo Consolidado (Base de Dados Real e Deduplicada)</strong>
-            <p>A inteligência mapeou as 7 instâncias, identificando 7.737 usuários únicos. Deste total, 6.017 estão inativos e 52 são elegíveis para otimização de licença.</p>
-        </div>
-        <div class="card">
-            <h2 class="card-header">Radar de Identidade e Acesso (Visão Única)</h2>
-            <div class="stats-grid">
-                <div class="stat-card border-success"><div class="stat-value" style="color: var(--success);">1.831</div><div class="stat-title">Usuários Únicos Ativos</div></div>
-                <div class="stat-card border-neutral"><div class="stat-value" style="color: var(--neutral);">6.017</div><div class="stat-title">Usuários Inativos</div><div class="stat-subtitle">Sem login há > 90d</div></div>
-                <div class="stat-card border-warning"><div class="stat-value" style="color: var(--warning);">0</div><div class="stat-title">Elegíveis Downgrade</div></div>
-                <div class="stat-card border-accent"><div class="stat-value" style="color: var(--accent);">52</div><div class="stat-title">Elegíveis p/ Concorrência</div></div>
-            </div>
-            <div class="charts-container" style="grid-template-columns: 1fr 2fr;">
-                <div class="chart-box" style="flex-direction: column;">
-                    <h3 style="margin-top:0; font-size: 1rem; color: var(--primary);">Distribuição de Domínios (Ativos)</h3>
-                    <canvas id="domainChart"></canvas>
-                </div>
-                <div class="chart-box" style="align-items: flex-start; padding: 2rem;">
-                    <div style="width: 100%;">
-                        <h3 style="margin-top:0; font-size: 1rem; color: var(--primary);">Segregação por Vínculo Contratual</h3>
-                        <p style="font-size: 0.9rem; color: var(--text); margin-bottom: 1rem;">
-                            Usuários de outros domínios ou sem domínio devem ser revisados para desativação ou migração para integrações via API, visando otimizar custos.
-                        </p>
-                        <div style="display: flex; justify-content: space-between; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border);">
-                            <div style="text-align:center"><strong style="color: #10b981; font-size: 1.4rem;">186</strong> <br><span style="font-size: 0.8rem; font-weight:bold; color: #64748b;">FORESEA</span></div>
-                            <div style="text-align:center"><strong style="color: #2563eb; font-size: 1.4rem;">0</strong> <br><span style="font-size: 0.8rem; font-weight:bold; color: #64748b;">PARCEIROS</span></div>
-                            <div style="text-align:center"><strong style="color: #f59e0b; font-size: 1.4rem;">12</strong> <br><span style="font-size: 0.8rem; font-weight:bold; color: #64748b;">OUTROS</span></div>
-                            <div style="text-align:center"><strong style="color: #ef4444; font-size: 1.4rem;">1.733</strong> <br><span style="font-size: 0.8rem; font-weight:bold; color: #64748b;">S/ DOMÍNIO</span></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
+<div id="tab-painel" class="container tab-content active">
+
+<div class="card">
+<h2 class="card-header">📊 Visão Executiva (Alinhado ao Excel)</h2>
+
+<div class="stats-grid">
+
+<div class="stat-card border-success">
+<div class="stat-value" style="color: var(--success);">
+1.903
+</div>
+<div class="stat-title">Usuários Ativos Analisados</div>
+</div>
+
+<div class="stat-card border-primary">
+<div class="stat-value">
+0
+</div>
+<div class="stat-title">Usuários no Plano de Licença</div>
+</div>
+
+<div class="stat-card border-warning">
+<div class="stat-value">
+304
+</div>
+<div class="stat-title">Authorized</div>
+</div>
+
+<div class="stat-card border-accent">
+<div class="stat-value">
+915
+</div>
+<div class="stat-title">Concurrent</div>
+</div>
+
+<div class="stat-card border-secondary">
+<div class="stat-value">
+771
+</div>
+<div class="stat-title">Premium</div>
+</div>
+
+</div>
+</div>
+
+<div class="card" style="border-left: 4px solid var(--danger);">
+<h2 class="card-header">⚡ Capacidade NEM vs Contrato</h2>
+
+<div class="stats-grid">
+
+<div class="stat-card">
+<div class="stat-value" style="color: var(--danger);">
+0
+</div>
+<div class="stat-title">Pico Real (P100)</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-value" style="color: var(--warning);">
+715
+</div>
+<div class="stat-title">Pico Seguro (P95)</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-value">
+1.200
+</div>
+<div class="stat-title">Capacidade Contratada</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-value" style="color: var(--success);">
+485
+</div>
+<div class="stat-title">Folga / Déficit</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-value">
+59.6%
+</div>
+<div class="stat-title">% Uso do Contrato (P95)</div>
+</div>
+
+</div>
+</div>
+
+</div>
+
     
     <div id="tab-gov" class="container tab-content">
         <div class="card" style="background-color: #ffffff; border-color: #cbd5e1;">
@@ -153,213 +207,213 @@
         </div>
         <div class="card">
             <h2 class="card-header">Top Divergências de Segurança (Matriz Base vs Sonda)</h2>
-            <div class="type-analysis-grid"></div>
+            <div class="type-analysis-grid"><div class="type-card"><h4>SUPERVISOR DE SUBSEA SENIOR/SENIOR SUBSEA SUPERVISOR <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 1, TYPE 2</div><div>📍 NORBE06: TYPE 2, TYPE 4</div><div>📍 NORBE08: TYPE 2, TYPE 5</div><div>📍 ODN1: TYPE 2</div><div>📍 ODN2: TYPE 1, TYPE 5</div></div></div><div class="type-card"><h4>SUPERV DE MATERIAIS OFFSHORE <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 1, TYPE 3</div><div>📍 NORBE06: TYPE 1, TYPE 3</div><div>📍 NORBE08: TYPE 1, TYPE 3</div><div>📍 ODN1: TYPE 3</div><div>📍 ODN2: TYPE 1, TYPE 3</div></div></div><div class="type-card"><h4>COMANDANTE-OIM/MASTER-OIM <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: 5</div><div>📍 NORBE06: TYPE 5</div><div>📍 NORBE08: 5, TYPE 5</div><div>📍 ODN1: TYPE 1</div><div>📍 ODN2: TYPE 1, TYPE 5</div></div></div><div class="type-card"><h4>COORDENADOR DE MANUTENCAO/MAINTENANCE COORDINATOR <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 1, TYPE 2, TYPE 3</div><div>📍 NORBE06: TYPE 3</div><div>📍 NORBE08: TYPE 3</div><div>📍 ODN1: TYPE 3</div><div>📍 ODN2: TYPE 1, TYPE 3</div></div></div><div class="type-card"><h4>COORDENADOR DE MANUTENCAO ON <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 3</div><div>📍 NORBE06: TYPE 1, TYPE 5</div><div>📍 NORBE08: TYPE 1</div><div>📍 ODN1: TYPE 1</div><div>📍 ODN2: TYPE 1</div></div></div><div class="type-card"><h4>ESPECIALISTA DE MATERIAIS <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 3</div><div>📍 NORBE06: TYPE 1</div><div>📍 ODN1: TYPE 1</div><div>📍 ODN2: TYPE 1</div></div></div><div class="type-card"><h4>COORDENADOR DE PLATAFORMA <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 1, TYPE 2, TYPE 4, TYPE 5</div><div>📍 NORBE06: TYPE 1</div><div>📍 ODN2: TYPE 1, TYPE 4</div></div></div><div class="type-card"><h4>COORDENADOR DE ENGENHARIA <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 2</div><div>📍 NORBE06: TYPE 5</div><div>📍 ODN1: TYPE 1</div><div>📍 ODN2: TYPE 1</div></div></div><div class="type-card"><h4>GERENTE DE PLATAFORMA <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 2, TYPE 3, TYPE 4</div><div>📍 NORBE06: TYPE 1, TYPE 2</div><div>📍 NORBE08: TYPE 1</div><div>📍 ODN1: TYPE 1, TYPE 2</div><div>📍 ODN2: TYPE 2</div></div></div><div class="type-card"><h4>ANALISTA DE MATERIAIS <span class="badge badge-critical">TYPE DIVERGENTE</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 3, TYPE 4</div></div></div><div class="type-card"><h4>COORDENADOR DE QUALIDADE <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 3</div><div>📍 NORBE06: TYPE 1</div><div>📍 ODN2: TYPE 1</div></div></div><div class="type-card"><h4>INSPETOR DE EQUIPAMENTOS SPIE <span class="badge badge-critical">TYPE DIVERGENTE</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 1, TYPE 5</div></div></div><div class="type-card"><h4>COORDENADOR DE PERFURA��O <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 5</div><div>📍 NORBE06: TYPE 5</div><div>📍 ODN1: TYPE 1</div><div>📍 ODN2: TYPE 1</div></div></div><div class="type-card"><h4>ENGENHEIRO DE PROJETOS <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 2</div><div>📍 NORBE08: TYPE 1</div></div></div><div class="type-card"><h4>ENGENHEIRO OPERACIONAL OFF/OFF OPERATIONAL ENGINEER <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 3, TYPE 4</div><div>📍 NORBE06: TYPE 3</div><div>📍 ODN1: TYPE 3</div><div>📍 ODN2: TYPE 1, TYPE 3</div></div></div><div class="type-card"><h4>GERENTE DE SUPRIMENTOS <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4></div><div class="type-card"><h4>COORDENADOR DE SEGURANCA TRAB OFF <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 1</div><div>📍 NORBE06: TYPE 1, TYPE 4</div><div>📍 NORBE08: TYPE 5</div><div>📍 ODN1: TYPE 1, TYPE 5</div><div>📍 ODN2: TYPE 5</div></div></div><div class="type-card"><h4>COORD DE SEG DO TRABALHO ON <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 4, TYPE 5</div><div>📍 NORBE08: TYPE 5</div><div>📍 ODN1: TYPE 1</div></div></div><div class="type-card"><h4>ENCARREGADO DE PLATAFORMA/TOOLPUSHER <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 1, TYPE 2, TYPE 4</div><div>📍 NORBE06: TYPE 5</div><div>📍 NORBE08: TYPE 1, TYPE 5</div><div>📍 ODN1: TYPE 5</div><div>📍 ODN2: TYPE 4</div></div></div><div class="type-card"><h4>SUPERVISOR ELETROELETRONICA / ELETROELETRONICS SUPERVISOR <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 1, TYPE 5</div><div>📍 NORBE06: TYPE 1, TYPE 5</div><div>📍 NORBE08: TYPE 4</div><div>📍 ODN2: TYPE 5</div></div></div><div class="type-card"><h4>ENGENHEIRO DE MANUTENCAO <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 2, TYPE 3, TYPE 4, TYPE 5</div><div>📍 NORBE08: TYPE 1, TYPE 3</div><div>📍 ODN2: TYPE 1</div></div></div><div class="type-card"><h4>ENGENHEIRO DE INSPECAO III <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4></div><div class="type-card"><h4>ENGENHEIRO QUALIDADE OFF/OFF QUALITY ENGINEER <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 4, TYPE 5</div><div>📍 NORBE06: TYPE 1</div><div>📍 NORBE08: TYPE 1</div></div></div><div class="type-card"><h4>TEC DE SEG TRABALHO ON <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4></div><div class="type-card"><h4>OPERADOR DE POSIC DINAMICO SR/SENIOR DYNAMIC POSITIONING OP <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 1</div><div>📍 NORBE08: TYPE 5</div><div>📍 ODN2: TYPE 5</div></div></div><div class="type-card"><h4>ANALISTA SUPRIMENTOS <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 4</div><div>📍 NORBE08: TYPE 3</div></div></div><div class="type-card"><h4>SUPERINTENDENTE DE PLATAFORMA/RIG SUPERINTENDENT <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 5</div><div>📍 NORBE06: TYPE 1</div><div>📍 NORBE08: TYPE 1</div><div>📍 ODN2: TYPE 5</div></div></div><div class="type-card"><h4>CHEFE DE ELETRONICA/CHIEF ELETRONIC <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 5</div><div>📍 NORBE06: TYPE 4</div><div>📍 ODN2: TYPE 4, TYPE 5</div></div></div><div class="type-card"><h4>IMEDIATO/CHIEF MATE <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 5</div><div>📍 NORBE06: TYPE 1, TYPE 5</div><div>📍 NORBE08: TYPE 1</div><div>📍 ODN1: TYPE 5</div><div>📍 ODN2: TYPE 5</div></div></div><div class="type-card"><h4>SUPERVISOR DE MECANICA/MECHANICAL SUPERVISOR <span class="badge badge-critical">TYPE DIVERGENTE</span> <span class="badge badge-high">GRUPOS DIVERGENTES</span></h4><div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div><div>📍 BASE: TYPE 5</div><div>📍 NORBE06: 4, TYPE 1, TYPE 4</div><div>📍 ODN1: TYPE 5</div><div>📍 ODN2: TYPE 5</div></div></div></div>
         </div>
         <div class="card">
             <h2 class="card-header">Conflitos de Multi-Ambiente (Cross-Env)</h2>
             <div class="table-responsive"><table id="table-cross-env" class="gov-table">
   <thead><tr><th>USERID</th><th>Bases Encontradas</th><th>Nomes de Exibição</th><th>Conclusão</th></tr></thead>
   <tbody>
-    <tr><td><strong>1996</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>ADRIANOCALIXTO</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ADRIANO CALIXTO REIS</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ALEXANDREBONAVITA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Alexandre Velloso Bonavita</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ALEXANDRECURY</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ALEXANDRE HENRIQUE CURY DE AGUIAR</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ALEXANDRERIBEIRO</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ALEXANDRE JOSE ARIS SILVA RIBEIRO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ALEXANDRESOUSA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Alexandre Raggi de Sousa</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ALLANMARQUES</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ALLAN BORGES MARQUES</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ALVAROCAMPOS</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>ANACAMPOS</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>ANDREJKUEHN</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ANDREJ LUIGI TOMMASI OLIVEIRA KUEHN</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ANDRESILVA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ANDRE LUIS COSTA SILVA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ANGELOSILVA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ANGELO LOPES DA SILVA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ANISULLECORDEIR</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>ANTONIO.GONCALVES</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ANTONIO JOSE GONCALVES NETO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ANTONIOTEIXEIRA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Antonio de Paula Teixeira</td><td><span>OK</span></td></tr>
-    <tr><td><strong>BRUNOMOALLEM</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>BRUNOSILVA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>BRUNO SOUZA FERREIRA DA SILVA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>CAIOQUITETE</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CAIO QUITETE CARVALHO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>CAROLINEFORTES</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Caroline da Silva Fortes</td><td><span>OK</span></td></tr>
-    <tr><td><strong>CAUEVIEIRA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>CECILIASARMENTO</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CECILIA ALVES PERRONI SARMENTO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>CLAUDIOMARTINS</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>DARIUSZWROBLEWSKI</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>DARIUSZ WOJCIECH WROBLEWSKI</td><td><span>OK</span></td></tr>
-    <tr><td><strong>DIOGOCARVALHO</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>DUPLICATION OR</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>EDILSONVIANA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>EDILSON VIANA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>EDUARDOBOSCO</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>EDUARDOOLIVEIRA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>EDUARDO CASTELO BRANCO OLIVEIRA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ELOIORLANDINI</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ELOI RIBEIRO ORLANDINI</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ENZOAZEVEDO</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ENZO DE MATOS AZEVEDO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ERICKPESSANHA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Erick Silva Gomes Pessanha</td><td><span>OK</span></td></tr>
-    <tr><td><strong>FABIOFIGUEIRA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>FABIO DE JESUS FIGUEIRA COUTINHO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>FELIPELEAL</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Felipe De Carvalho Leal</td><td><span>OK</span></td></tr>
-    <tr><td><strong>FELIPERIBEIRO</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>FELIPE ANTONIO RIBEIRO GOMES CRESPO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>FLAVIARIBEIRO</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Flavia dos Santos Ribeiro</td><td><span>OK</span></td></tr>
-    <tr><td><strong>FLAVIOFIALHO</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>FLAVIO FIALHO RIBEIRO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>FRANCISCOCARVALHAL</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>FRANCISCO JOSE CORREA CARVALHAL</td><td><span>OK</span></td></tr>
-    <tr><td><strong>GABRIELREGIS</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>GABRIEL MENDES DA COSTA REGIS</td><td><span>OK</span></td></tr>
-    <tr><td><strong>GEORGEMEDEIROS</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>George Goncalves Dantas de Medeiros</td><td><span>OK</span></td></tr>
-    <tr><td><strong>GREGORYMATOS</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Gregory Matos da Conceicao</td><td><span>OK</span></td></tr>
-    <tr><td><strong>GUILHERMEMOTA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Guilherme Guimaraes Mota</td><td><span>OK</span></td></tr>
-    <tr><td><strong>HAMILTONJUNIOR</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Hamilton Dutra De Oliveira Junior</td><td><span>OK</span></td></tr>
-    <tr><td><strong>HASSLERLEAL</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>HASSLER ESTACIO LEAL</td><td><span>OK</span></td></tr>
-    <tr><td><strong>HELPDESK</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>HENRIQUEPEREIRA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>HENRIQUE EDUARDO DE SOUZA PEREIRA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>HIGORSILVA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Higor Martins Pereira da Silva</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ITEAM</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ITEAM Suporte1</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ITEAM2</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Iteam Suporte</td><td><span>OK</span></td></tr>
-    <tr><td><strong>JOSEILSONAUGUSTO</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Joseilson Augusto da Anuncia��o</td><td><span>OK</span></td></tr>
-    <tr><td><strong>JOSESILVA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>JOSE MANOEL DA SILVA FILHO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>KARINERANGEL</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Karine Ribeiro Rangel</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LAIONSOUZA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LAION DUTRA DE SOUZA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LEONARDODOURADO</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LEONARDO DE OLIVEIRA CRUZ DOURADO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LEONARDOMOREIRA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LEONARDO JOSE DE CARVALHO MOREIRA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LUCASMIRANDA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUCAS MIRANDA GENUNCIO WENDERROSCHY</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LUCASPINHEIRO</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Lucas Fernando Pinheiro</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LUCASSANTANA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUCAS FERNANDO DE SANTANA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LUCASSOUZA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUCAS DE OLIVEIRA SOUZA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LUCIANOJUNIOR</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUCIANO CLAUDINO DOS SANTOS JUNIOR</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LUCIANORIBEIRO</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUCIANO TELES RIBEIRO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LUIZTEIXEIRA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Luiz Carlos Teixeira</td><td><span>OK</span></td></tr>
-    <tr><td><strong>MAGNOGOMES</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Magno Gomes Da Silva</td><td><span>OK</span></td></tr>
-    <tr><td><strong>MAICONROCHA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>MARCOSNEVES</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MARCOS AUGUSTO DO NASCIMENTO NEVES</td><td><span>OK</span></td></tr>
-    <tr><td><strong>MARCOSTAVARES</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Marcos Vinicio RODRIGUES TAVARES</td><td><span>OK</span></td></tr>
-    <tr><td><strong>MARIANAROCHA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MARIANA DA SILVA CAMPOS VIEIRA DA ROCHA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>MATEUSLUIZ</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MATEUS PONTES LUIZ</td><td><span>OK</span></td></tr>
-    <tr><td><strong>MATHEUSNOGUEIRA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Matheus Goncalves Nogueira</td><td><span>OK</span></td></tr>
-    <tr><td><strong>MATHEUSOLIVEIRA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>MAXADMIN</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MAXADMIN</td><td><span>OK</span></td></tr>
-    <tr><td><strong>MAXADOOG</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Jo�o Carlos Santos</td><td><span>OK</span></td></tr>
-    <tr><td><strong>MAXINST</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>MAXREG</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MAXREG</td><td><span>OK</span></td></tr>
-    <tr><td><strong>MGUEST</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Guest User</td><td><span>OK</span></td></tr>
-    <tr><td><strong>MICHELABIFADEL</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MICHEL ABIFADEL</td><td><span>OK</span></td></tr>
-    <tr><td><strong>MOBILE_BASE-UNP</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>MOBILE_HTQ</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>MOBILE_N06</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>MOBILE_N08</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>MOBILE_N09</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>MOBILE_ODN1</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>MOBILE_ODN2</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>MOBILE_ODN3</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>MOBILE_ODN4</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>MOBILE_OP-BASE</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>MXINTADM</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MXINTADM</td><td><span>OK</span></td></tr>
-    <tr><td><strong>NATHALIAMACHADO</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>NATHALIA DA SILVEIRA MACHADO DOS SANTOS</td><td><span>OK</span></td></tr>
-    <tr><td><strong>NICHOLASALMEIDA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Nicholas de Almeida Pinto</td><td><span>OK</span></td></tr>
-    <tr><td><strong>NYKOLASNEVES</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Nykolas de Jesus Motta Neves</td><td><span>OK</span></td></tr>
-    <tr><td><strong>PABLOCABRAL</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>PABLO DA SILVA CABRAL</td><td><span>OK</span></td></tr>
-    <tr><td><strong>PATRICIALIMA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>PATRICIA OLIVEIRA DE LIMA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>PIETROMACHADO</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>PIETRO GOMES MACHADO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>RICARDOBASTOS</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>RICARDO BACELAR BASTOS</td><td><span>OK</span></td></tr>
-    <tr><td><strong>RICARDOVIEIRA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>ROBERTAROMAES</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Roberta Larica Zachel Romaes</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ROBERTATOSTES</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ROBERTA THAYNA MORAES DE BARROS TOSTES</td><td><span>OK</span></td></tr>
-    <tr><td><strong>RODRIGOGUIMARAES</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>RODRIGO CARDOSO GUIMARAES</td><td><span>OK</span></td></tr>
-    <tr><td><strong>RONYPESSANHA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>RONY ANDRADE PESSANHA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>SAMUELLIMA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Samuel Lucas Lima da Silva</td><td><span>OK</span></td></tr>
-    <tr><td><strong>THIAGOBASTOS</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>THIAGO TEIXEIRA BASTOS</td><td><span>OK</span></td></tr>
-    <tr><td><strong>THIAGOLOUZA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>THIAGO LOUZA DOS SANTOS</td><td><span>OK</span></td></tr>
-    <tr><td><strong>TIMOTEOSILVA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Timoteo da Silva</td><td><span>OK</span></td></tr>
-    <tr><td><strong>USERTESTE</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>user teste system</td><td><span>OK</span></td></tr>
-    <tr><td><strong>VICTORCOSTA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>VICTOR LOURENCO COSTA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>VINICIUSALVES</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Vinicius Martins Alves</td><td><span>OK</span></td></tr>
-    <tr><td><strong>WALDENIRFIGUEIRA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>WALDENIR COSTA FIGUEIRA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>WSORACLE</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>ADEMIRJUNIOR</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ADEMIR FERNANDES FELIPPE JUNIOR</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ALANBARROSO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ALAN AUGUSTO BARROSO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ALEKSANDROMAICK</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ALEKSANDRO MAICK PEREIRA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ALEXEIKERKIS</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>ALINEAMANCIO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ALINE GUIMARAES NOGUEIRA AMANCIO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>AMANDAROSA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Amanda Rosa</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ANABARCELOS</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ANA CLAUDIA DOS SANTOS BARCELOS</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ANDREBARRANCO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Andre Barranco</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ANDRESSAPRADO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ANDRESSA YASMIM RODRIGUES PRADO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ANTONIO SERGIO GON�ALVES FILHO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ANTONIO SERGIO GON�ALVES FILHO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ANTONIOFILHO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ANTONIO SERGIO GONCALVES FILHO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ARYGSOUZA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Ary Gomes de Souza Neto</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ASANTANA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ANA PAULA DA SILVA SANTANA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>AUGUSTOBRITO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>AUGUSTO ANTONIO BRITO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>BRUNOCOSTA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>BRUNO LOURENCO COSTA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>BRUNOROSA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Bruno Monteiro Rosa</td><td><span>OK</span></td></tr>
-    <tr><td><strong>BRUNOSTOGMULLER</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Bruno Manco Stogmuller</td><td><span>OK</span></td></tr>
-    <tr><td><strong>BRUNOZULLO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>BRUNO ZULLO PEREIRA RIBEIRO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>CAIOBARBOSA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Caio Henrique De Assumpcao Barbosa</td><td><span>OK</span></td></tr>
-    <tr><td><strong>CAMILLAMATTOS</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CAMILLA FRANCO MATTOS</td><td><span>OK</span></td></tr>
-    <tr><td><strong>CARLAMORAES</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CARLA FERNANDA DA SILVA MORAES</td><td><span>OK</span></td></tr>
-    <tr><td><strong>CARLOSMARIANO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CARLOS AUGUSTO MARIANO DA SILVA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>CHARLESPEREIRA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CHARLES VIEIRA PEREIRA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>CHRISTIANALCANTARA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Christian Simao Alcantara</td><td><span>OK</span></td></tr>
-    <tr><td><strong>CIDCOSTA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CID AUGUSTO DE CASTRO COSTA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>CINTIAFANTINATTI</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CINTIA MONTEIRO DE LIMA FANTINATTI</td><td><span>OK</span></td></tr>
-    <tr><td><strong>CLAUDIOFARIAS</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CLAUDIO ROBERTO COSTA DE FARIAS</td><td><span>OK</span></td></tr>
-    <tr><td><strong>CRISTIANOXAVIER</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Cristiano Venancio Xavier</td><td><span>OK</span></td></tr>
-    <tr><td><strong>CYANO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CYANO SMART</td><td><span>OK</span></td></tr>
-    <tr><td><strong>DANIELGONCALVES</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>DANIEL OLIVEIRA GONCALVES</td><td><span>OK</span></td></tr>
-    <tr><td><strong>DARLANDOREA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>DARLAN JOSE DOREA SANTOS FILHO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>DIEGOESMITE</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>DIEGO FABIAN PISANO ESMITE</td><td><span>OK</span></td></tr>
-    <tr><td><strong>DIEGOOTAVIO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>DIEGO OTAVIO DE OLIVEIRA BAPTISTA MAGALHAES</td><td><span>OK</span></td></tr>
-    <tr><td><strong>DIEGOPEREIRA</strong></td><td>BASE; HTQ; NORBE08; NORBE09; ODN1; ODN2</td><td>DIEGO DE QUEIROZ PEREIRA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>EDSONRAFAEL</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>EDSON RAFAEL TORRES</td><td><span>OK</span></td></tr>
-    <tr><td><strong>EDUARDOGADELHA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Eduardo Augusto Gadelha</td><td><span>OK</span></td></tr>
-    <tr><td><strong>EDUARDONETO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>EDUARDO JOSE NETO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>EDVALDOCONCEICAO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>EDVALDO DE SOUZA CONCEI��O</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ELCIODIAS</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ELCIO DIAS JUNIOR</td><td><span>OK</span></td></tr>
-    <tr><td><strong>EMANUELLYBARRETO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>EMANUELLY DE OLIVEIRA BARRETO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>EMERSONBASTOS</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Emerson Paes Bastos</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ENIOSANTOS</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Enio Santos</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ERICALISBOA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ERICA MELLO LISBOA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ERNANECARVALHAL</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ERNANE MARREIROS CARVALHAL</td><td><span>OK</span></td></tr>
-    <tr><td><strong>EWERSONROCHA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>EWERSON RODRIGUES ROCHA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>FABBIOLEITE</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>FABBIO JOSE FERREIRA COSTA LEITE</td><td><span>OK</span></td></tr>
-    <tr><td><strong>FABIORITA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Fabio dos Santos Santa Rita</td><td><span>OK</span></td></tr>
-    <tr><td><strong>FABIOSOUZA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Fabio Cesar de Souza</td><td><span>OK</span></td></tr>
-    <tr><td><strong>FABRICIOPIEKALA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>FABRICIO MARTINS PIEKALA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>FABRIZIOSOBRINHO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>FABRIZIO ANTUNES SOBRINHO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>FELIPEROMANO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>FELIPE ROMANO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>FERNANDAAREAS</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN2</td><td>FERNANDA CORDEIRO AREAS</td><td><span>OK</span></td></tr>
-    <tr><td><strong>FERNANDOOSILVA</strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1</td><td>FERNANDO OLIVEIRA DA SILVA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>FILLIPESILVA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Fillipe Eduardo Bernardo da SIlva</td><td><span>OK</span></td></tr>
-    <tr><td><strong>FRANCISRIBEIRO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>GABRIELAMARTINEZ</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>GABRIELA DE ABREU E SILVA MARTINEZ</td><td><span>OK</span></td></tr>
-    <tr><td><strong>GABRIELROCHA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>GABRIEL ROCHA NORONHA DA SILVA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>GILSONLOUREIRO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>GILSON GABRIEL CORREIA LOUREIRO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>GORDONMACLAREN</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Gordon John Maclaren</td><td><span>OK</span></td></tr>
-    <tr><td><strong>GUSTAVOCANARIO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>GUSTAVO DE NOVAES CANARIO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>GUSTAVOCORGOSINHO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>GUSTAVO DINIZ CORGOSINHO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>GUSTAVOTAKAMA</strong></td><td>BASE; HTQ; NORBE08; NORBE09; ODN1; ODN2</td><td>GUSTAVO FARIA TAKAMA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>HELCIOYASSUO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>HELCIO YASSUO ENDO COLODETE</td><td><span>OK</span></td></tr>
-    <tr><td><strong>HELENOFILHO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>HELENO TEIXEIRA FILHO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>HENRIQUEROQUE</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>HENRIQUE MACHADO ROQUE</td><td><span>OK</span></td></tr>
-    <tr><td><strong>HERBSONSANTOS</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Herbson Gloria dos Santos</td><td><span>OK</span></td></tr>
-    <tr><td><strong>IARLENKLEIN</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>IARLEN SEBASTIAO PINTO KLEIN</td><td><span>OK</span></td></tr>
-    <tr><td><strong>IRAPOANCARVALHO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>IRAPOAN SARAIVA CARDOSO DE CARVALHO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>ISAACOLIVEIRA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ISAAC FLORENCIO RODRIGUES DE OLIVEIRA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>JAMESREGAN</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>JAMES REGAN</td><td><span>OK</span></td></tr>
-    <tr><td><strong>JEFFERSONSOUZA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>JEFFERSON GOMES DE CARVALHO SOUZA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>JUCOELHO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Juarez Gon�alves Coelho</td><td><span>OK</span></td></tr>
-    <tr><td><strong>JULIAMARCHIOTE</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>JULIA PEREIRA MARCHIOTE</td><td><span>OK</span></td></tr>
-    <tr><td><strong>JULIAMELO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>JULIA CAMILA MAGALHAES MELO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>JULIANAMANHAES</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
-    <tr><td><strong>JULINECAETANO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Juline Caetano</td><td><span>OK</span></td></tr>
-    <tr><td><strong>JUSSARATELES</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>JUSSARA TELES DA SILVA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LEANDROVENANCIO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Leandro Ribeiro Venancio</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LENIELJUNIOR</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LENIEL BOREL DE ALMEIDA JUNIOR</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LEONARDOMAYERHOFFER</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Leonardo de Souza Mayerhoffer</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LEOSANDOVAL</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LEO SANDOVAL TAVARES</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LETICIALEITE</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LETICIA DE CARVALHO LEITE</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LICIAAVENA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LICIA OLIVEIRA ARAUJO AVENA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LINCOLNSOUZA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LINCOLN AZEVEDO GUEDES DE SOUZA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LUANASILVA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUANA SOARES DE OLIVEIRA DA SILVA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LUANCARD</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUAN REISDOERFER CARDOSO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LUCASANGELIM</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUCAS BAPTISTA ANGELIM</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LUCASARAUJO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUCAS OLIVEIRA ARAUJO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LUCASMACHADO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUCAS TOLEDO DA MATTA MACHADO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>LUCIANOCAMARA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUCIANO JOSE CAMARA RODRIGUES</td><td><span>OK</span></td></tr>
-    <tr><td><strong>MARCIOMOLINARI</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MARCIO MOLINARI DE ALMEIDA HORTA</td><td><span>OK</span></td></tr>
-    <tr><td><strong>MARCOSSAMPAIO</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MARCOS VINICIUS SAMPAIO SANTIAGO</td><td><span>OK</span></td></tr>
-    <tr><td><strong>MARIOVIEIRA</strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MARIO ALENCAR VIEIRA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>1996 </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ADRIANOCALIXTO </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ADRIANO CALIXTO REIS</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ALEXANDREBONAVITA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Alexandre Velloso Bonavita</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ALEXANDRECURY </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ALEXANDRE HENRIQUE CURY DE AGUIAR</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ALEXANDRERIBEIRO </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ALEXANDRE JOSE ARIS SILVA RIBEIRO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ALEXANDRESOUSA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Alexandre Raggi de Sousa</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ALLANMARQUES </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ALLAN BORGES MARQUES</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ALVAROCAMPOS </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ANACAMPOS </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ANDREJKUEHN </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ANDREJ LUIGI TOMMASI OLIVEIRA KUEHN</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ANDRESILVA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ANDRE LUIS COSTA SILVA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ANGELOSILVA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ANGELO LOPES DA SILVA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ANISULLECORDEIR </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ANTONIO.GONCALVES </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ANTONIO JOSE GONCALVES NETO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ANTONIOTEIXEIRA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Antonio de Paula Teixeira</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>BRUNOMOALLEM </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>BRUNOSILVA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>BRUNO SOUZA FERREIRA DA SILVA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>CAIOQUITETE </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CAIO QUITETE CARVALHO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>CAROLINEFORTES </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Caroline da Silva Fortes</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>CAUEVIEIRA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>CECILIASARMENTO </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CECILIA ALVES PERRONI SARMENTO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>CLAUDIOMARTINS </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>DARIUSZWROBLEWSKI </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>DARIUSZ WOJCIECH WROBLEWSKI</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>DIOGOCARVALHO </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>DUPLICATION OR </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>EDILSONVIANA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>EDILSON VIANA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>EDUARDOBOSCO </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>EDUARDOOLIVEIRA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>EDUARDO CASTELO BRANCO OLIVEIRA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ELOIORLANDINI </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ELOI RIBEIRO ORLANDINI</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ENZOAZEVEDO </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ENZO DE MATOS AZEVEDO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ERICKPESSANHA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Erick Silva Gomes Pessanha</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>FABIOFIGUEIRA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>FABIO DE JESUS FIGUEIRA COUTINHO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>FELIPELEAL </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Felipe De Carvalho Leal</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>FELIPERIBEIRO </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>FELIPE ANTONIO RIBEIRO GOMES CRESPO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>FLAVIARIBEIRO </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Flavia dos Santos Ribeiro</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>FLAVIOFIALHO </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>FLAVIO FIALHO RIBEIRO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>FRANCISCOCARVALHAL </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>FRANCISCO JOSE CORREA CARVALHAL</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>GABRIELREGIS </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>GABRIEL MENDES DA COSTA REGIS</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>GEORGEMEDEIROS </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>George Goncalves Dantas de Medeiros</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>GREGORYMATOS </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Gregory Matos da Conceicao</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>GUILHERMEMOTA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Guilherme Guimaraes Mota</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>HAMILTONJUNIOR </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Hamilton Dutra De Oliveira Junior</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>HASSLERLEAL </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>HASSLER ESTACIO LEAL</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>HELPDESK </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>HENRIQUEPEREIRA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>HENRIQUE EDUARDO DE SOUZA PEREIRA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>HIGORSILVA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Higor Martins Pereira da Silva</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ITEAM </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ITEAM Suporte1</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ITEAM2 </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Iteam Suporte</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>JOSEILSONAUGUSTO </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Joseilson Augusto da Anuncia��o</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>JOSESILVA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>JOSE MANOEL DA SILVA FILHO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>KARINERANGEL </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Karine Ribeiro Rangel</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LAIONSOUZA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LAION DUTRA DE SOUZA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LEONARDODOURADO </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LEONARDO DE OLIVEIRA CRUZ DOURADO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LEONARDOMOREIRA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LEONARDO JOSE DE CARVALHO MOREIRA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LUCASMIRANDA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUCAS MIRANDA GENUNCIO WENDERROSCHY</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LUCASPINHEIRO </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Lucas Fernando Pinheiro</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LUCASSANTANA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUCAS FERNANDO DE SANTANA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LUCASSOUZA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUCAS DE OLIVEIRA SOUZA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LUCIANOJUNIOR </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUCIANO CLAUDINO DOS SANTOS JUNIOR</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LUCIANORIBEIRO </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUCIANO TELES RIBEIRO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LUIZTEIXEIRA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Luiz Carlos Teixeira</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MAGNOGOMES </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Magno Gomes Da Silva</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MAICONROCHA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MARCOSNEVES </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MARCOS AUGUSTO DO NASCIMENTO NEVES</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MARCOSTAVARES </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Marcos Vinicio RODRIGUES TAVARES</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MARIANAROCHA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MARIANA DA SILVA CAMPOS VIEIRA DA ROCHA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MATEUSLUIZ </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MATEUS PONTES LUIZ</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MATHEUSNOGUEIRA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Matheus Goncalves Nogueira</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MATHEUSOLIVEIRA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MAXADMIN </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MAXADMIN</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MAXADOOG </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Jo�o Carlos Santos</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MAXINST </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MAXREG </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MAXREG</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MGUEST </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Guest User</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MICHELABIFADEL </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MICHEL ABIFADEL</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MOBILE_BASE-UNP </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MOBILE_HTQ </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MOBILE_N06 </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MOBILE_N08 </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MOBILE_N09 </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MOBILE_ODN1 </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MOBILE_ODN2 </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MOBILE_ODN3 </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MOBILE_ODN4 </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MOBILE_OP-BASE </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MXINTADM </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MXINTADM</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>NATHALIAMACHADO </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>NATHALIA DA SILVEIRA MACHADO DOS SANTOS</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>NICHOLASALMEIDA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Nicholas de Almeida Pinto</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>NYKOLASNEVES </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Nykolas de Jesus Motta Neves</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>PABLOCABRAL </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>PABLO DA SILVA CABRAL</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>PATRICIALIMA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>PATRICIA OLIVEIRA DE LIMA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>PIETROMACHADO </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>PIETRO GOMES MACHADO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>RICARDOBASTOS </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>RICARDO BACELAR BASTOS</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>RICARDOVIEIRA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ROBERTAROMAES </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Roberta Larica Zachel Romaes</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ROBERTATOSTES </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ROBERTA THAYNA MORAES DE BARROS TOSTES</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>RODRIGOGUIMARAES </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>RODRIGO CARDOSO GUIMARAES</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>RONYPESSANHA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>RONY ANDRADE PESSANHA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>SAMUELLIMA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Samuel Lucas Lima da Silva</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>THIAGOBASTOS </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>THIAGO TEIXEIRA BASTOS</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>THIAGOLOUZA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>THIAGO LOUZA DOS SANTOS</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>TIMOTEOSILVA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Timoteo da Silva</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>USERTESTE </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>user teste system</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>VICTORCOSTA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>VICTOR LOURENCO COSTA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>VINICIUSALVES </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Vinicius Martins Alves</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>WALDENIRFIGUEIRA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>WALDENIR COSTA FIGUEIRA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>WSORACLE </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ADEMIRJUNIOR </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ADEMIR FERNANDES FELIPPE JUNIOR</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ALANBARROSO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ALAN AUGUSTO BARROSO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ALEKSANDROMAICK </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ALEKSANDRO MAICK PEREIRA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ALEXEIKERKIS </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ALINEAMANCIO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ALINE GUIMARAES NOGUEIRA AMANCIO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>AMANDAROSA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Amanda Rosa</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ANABARCELOS </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ANA CLAUDIA DOS SANTOS BARCELOS</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ANDREBARRANCO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Andre Barranco</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ANDRESSAPRADO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ANDRESSA YASMIM RODRIGUES PRADO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ANTONIO SERGIO GON�ALVES FILHO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ANTONIO SERGIO GON�ALVES FILHO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ANTONIOFILHO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ANTONIO SERGIO GONCALVES FILHO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ARYGSOUZA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Ary Gomes de Souza Neto</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ASANTANA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ANA PAULA DA SILVA SANTANA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>AUGUSTOBRITO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>AUGUSTO ANTONIO BRITO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>BRUNOCOSTA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>BRUNO LOURENCO COSTA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>BRUNOROSA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Bruno Monteiro Rosa</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>BRUNOSTOGMULLER </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Bruno Manco Stogmuller</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>BRUNOZULLO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>BRUNO ZULLO PEREIRA RIBEIRO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>CAIOBARBOSA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Caio Henrique De Assumpcao Barbosa</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>CAMILLAMATTOS </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CAMILLA FRANCO MATTOS</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>CARLAMORAES </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CARLA FERNANDA DA SILVA MORAES</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>CARLOSMARIANO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CARLOS AUGUSTO MARIANO DA SILVA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>CHARLESPEREIRA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CHARLES VIEIRA PEREIRA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>CHRISTIANALCANTARA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Christian Simao Alcantara</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>CIDCOSTA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CID AUGUSTO DE CASTRO COSTA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>CINTIAFANTINATTI </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CINTIA MONTEIRO DE LIMA FANTINATTI</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>CLAUDIOFARIAS </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CLAUDIO ROBERTO COSTA DE FARIAS</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>CRISTIANOXAVIER </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Cristiano Venancio Xavier</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>CYANO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>CYANO SMART</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>DANIELGONCALVES </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>DANIEL OLIVEIRA GONCALVES</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>DARLANDOREA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>DARLAN JOSE DOREA SANTOS FILHO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>DIEGOESMITE </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>DIEGO FABIAN PISANO ESMITE</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>DIEGOOTAVIO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>DIEGO OTAVIO DE OLIVEIRA BAPTISTA MAGALHAES</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>DIEGOPEREIRA </strong></td><td>BASE; HTQ; NORBE08; NORBE09; ODN1; ODN2</td><td>DIEGO DE QUEIROZ PEREIRA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>EDSONRAFAEL </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>EDSON RAFAEL TORRES</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>EDUARDOGADELHA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Eduardo Augusto Gadelha</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>EDUARDONETO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>EDUARDO JOSE NETO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>EDVALDOCONCEICAO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>EDVALDO DE SOUZA CONCEI��O</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ELCIODIAS </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ELCIO DIAS JUNIOR</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>EMANUELLYBARRETO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>EMANUELLY DE OLIVEIRA BARRETO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>EMERSONBASTOS </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Emerson Paes Bastos</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ENIOSANTOS </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Enio Santos</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ERICALISBOA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ERICA MELLO LISBOA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ERNANECARVALHAL </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ERNANE MARREIROS CARVALHAL</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>EWERSONROCHA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>EWERSON RODRIGUES ROCHA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>FABBIOLEITE </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>FABBIO JOSE FERREIRA COSTA LEITE</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>FABIORITA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Fabio dos Santos Santa Rita</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>FABIOSOUZA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Fabio Cesar de Souza</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>FABRICIOPIEKALA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>FABRICIO MARTINS PIEKALA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>FABRIZIOSOBRINHO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>FABRIZIO ANTUNES SOBRINHO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>FELIPEROMANO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>FELIPE ROMANO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>FERNANDAAREAS </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN2</td><td>FERNANDA CORDEIRO AREAS</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>FERNANDOOSILVA </strong></td><td>BASE; HTQ; NORBE06; NORBE08; NORBE09; ODN1</td><td>FERNANDO OLIVEIRA DA SILVA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>FILLIPESILVA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Fillipe Eduardo Bernardo da SIlva</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>FRANCISRIBEIRO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>GABRIELAMARTINEZ </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>GABRIELA DE ABREU E SILVA MARTINEZ</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>GABRIELROCHA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>GABRIEL ROCHA NORONHA DA SILVA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>GILSONLOUREIRO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>GILSON GABRIEL CORREIA LOUREIRO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>GORDONMACLAREN </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Gordon John Maclaren</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>GUSTAVOCANARIO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>GUSTAVO DE NOVAES CANARIO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>GUSTAVOCORGOSINHO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>GUSTAVO DINIZ CORGOSINHO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>GUSTAVOTAKAMA </strong></td><td>BASE; HTQ; NORBE08; NORBE09; ODN1; ODN2</td><td>GUSTAVO FARIA TAKAMA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>HELCIOYASSUO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>HELCIO YASSUO ENDO COLODETE</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>HELENOFILHO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>HELENO TEIXEIRA FILHO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>HENRIQUEROQUE </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>HENRIQUE MACHADO ROQUE</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>HERBSONSANTOS </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Herbson Gloria dos Santos</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>IARLENKLEIN </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>IARLEN SEBASTIAO PINTO KLEIN</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>IRAPOANCARVALHO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>IRAPOAN SARAIVA CARDOSO DE CARVALHO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>ISAACOLIVEIRA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>ISAAC FLORENCIO RODRIGUES DE OLIVEIRA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>JAMESREGAN </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>JAMES REGAN</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>JEFFERSONSOUZA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>JEFFERSON GOMES DE CARVALHO SOUZA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>JUCOELHO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Juarez Gon�alves Coelho</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>JULIAMARCHIOTE </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>JULIA PEREIRA MARCHIOTE</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>JULIAMELO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>JULIA CAMILA MAGALHAES MELO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>JULIANAMANHAES </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td></td><td><span>OK</span></td></tr>
+    <tr><td> <strong>JULINECAETANO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Juline Caetano</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>JUSSARATELES </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>JUSSARA TELES DA SILVA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LEANDROVENANCIO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Leandro Ribeiro Venancio</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LENIELJUNIOR </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LENIEL BOREL DE ALMEIDA JUNIOR</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LEONARDOMAYERHOFFER </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>Leonardo de Souza Mayerhoffer</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LEOSANDOVAL </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LEO SANDOVAL TAVARES</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LETICIALEITE </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LETICIA DE CARVALHO LEITE</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LICIAAVENA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LICIA OLIVEIRA ARAUJO AVENA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LINCOLNSOUZA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LINCOLN AZEVEDO GUEDES DE SOUZA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LUANASILVA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUANA SOARES DE OLIVEIRA DA SILVA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LUANCARD </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUAN REISDOERFER CARDOSO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LUCASANGELIM </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUCAS BAPTISTA ANGELIM</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LUCASARAUJO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUCAS OLIVEIRA ARAUJO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LUCASMACHADO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUCAS TOLEDO DA MATTA MACHADO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>LUCIANOCAMARA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>LUCIANO JOSE CAMARA RODRIGUES</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MARCIOMOLINARI </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MARCIO MOLINARI DE ALMEIDA HORTA</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MARCOSSAMPAIO </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MARCOS VINICIUS SAMPAIO SANTIAGO</td><td><span>OK</span></td></tr>
+    <tr><td> <strong>MARIOVIEIRA </strong></td><td>BASE; NORBE06; NORBE08; NORBE09; ODN1; ODN2</td><td>MARIO ALENCAR VIEIRA</td><td><span>OK</span></td></tr>
   </tbody>
 </table></div>
 
@@ -720,10 +774,10 @@
 
             <div class="chart-box" style="height: 380px; align-items: stretch; padding: 1.5rem;">
                 <canvas id="peakLineChart"
-                        data-labels='["2026-03-31 07:00", "2026-04-03 07:00", "2026-04-07 10:00", "2026-04-07 11:00", "2026-04-18 09:00", "2026-04-28 18:00", "2026-05-06 17:00", "2026-05-13 16:00", "2026-05-17 08:00", "2026-05-21 06:00", "2026-05-21 07:00", "2026-05-21 09:00", "2026-05-23 07:00", "2026-05-24 06:00", "2026-05-24 15:00", "2026-05-26 16:00", "2026-05-26 17:00", "2026-06-03 17:00", "2026-06-03 18:00", "2026-06-09 09:00", "2026-06-21 06:00", "2026-06-21 07:00", "2026-06-22 06:00", "2026-06-24 07:00"]'
-                        data-users-data='[197.0, 179.0, 146.0, 126.0, 129.0, 166.0, 136.0, 128.0, 129.0, 193.0, 208.0, 174.0, 203.0, 184.0, 115.0, 167.0, 171.0, 170.0, 177.0, 161.0, 187.0, 206.0, 187.0, 191.0]'
-                        data-points-data='[205.0, 190.0, 170.0, 165.0, 165.0, 205.0, 175.0, 180.0, 140.0, 195.0, 195.0, 175.0, 200.0, 200.0, 135.0, 215.0, 215.0, 185.0, 155.0, 155.0, 185.0, 205.0, 215.0, 210.0]'
-                        data-nem-data='[720.0, 720.0, 725.0, 725.0, 720.0, 725.0, 725.0, 720.0, 725.0, 725.0, 725.0, 720.0, 725.0, 725.0, 725.0, 725.0, 725.0, 730.0, 725.0, 725.0, 725.0, 725.0, 725.0, 725.0]'></canvas>
+                        data-labels='["2026-03-31 07:00", "2026-04-07 10:00", "2026-04-07 11:00", "2026-04-28 18:00", "2026-05-05 15:00", "2026-05-06 17:00", "2026-05-17 08:00", "2026-05-21 06:00", "2026-05-21 07:00", "2026-05-23 07:00", "2026-05-24 06:00", "2026-05-24 15:00", "2026-05-26 16:00", "2026-05-26 17:00", "2026-05-28 16:00", "2026-06-03 17:00", "2026-06-03 18:00", "2026-06-09 09:00", "2026-06-20 06:00", "2026-06-21 06:00", "2026-06-21 07:00", "2026-06-22 06:00", "2026-06-23 07:00", "2026-06-24 07:00"]'
+                        data-users-data='[197.0, 146.0, 126.0, 166.0, 159.0, 136.0, 129.0, 193.0, 208.0, 203.0, 184.0, 115.0, 167.0, 171.0, 149.0, 170.0, 177.0, 161.0, 188.0, 187.0, 206.0, 187.0, 204.0, 191.0]'
+                        data-points-data='[205.0, 170.0, 165.0, 205.0, 180.0, 175.0, 140.0, 195.0, 195.0, 200.0, 200.0, 135.0, 215.0, 215.0, 185.0, 185.0, 155.0, 155.0, 215.0, 185.0, 205.0, 215.0, 205.0, 210.0]'
+                        data-nem-data='[720.0, 725.0, 725.0, 725.0, 720.0, 725.0, 725.0, 725.0, 725.0, 725.0, 725.0, 725.0, 725.0, 725.0, 720.0, 730.0, 725.0, 725.0, 720.0, 725.0, 725.0, 725.0, 720.0, 725.0]'></canvas>
             </div>
         </div>
     </div>
@@ -924,8 +978,8 @@
     <tr><td><strong>VINICIUSMAUES</strong></td><td>VINICIUS MAUES SIRAIAMA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>152</td><td>SUBCHEFE DE MAQUINAS/1ST ENGINEER</td></tr>
     <tr><td><strong>JADERROBERTO</strong></td><td>JADER ROBERTO DE OLIVEIRA LIST</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>96</td><td>CHEFE DE ELETRONICA/CHIEF ELETRONIC</td></tr>
     <tr><td><strong>ANDRERICARDO</strong></td><td>ANDRE RICARDO DE SALES</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>87</td><td>CHEFE DE ELETRONICA/CHIEF ELETRONIC</td></tr>
-    <tr><td><strong>TONIANGELO</strong></td><td>TONI ANGELO DOS SANTOS CARVALH</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>193</td><td>TECNICO DE MEC�NICA / MECHANIC TECNICIAN; TECNICO DE MECÂNICA / MECHANIC TECNICIAN</td></tr>
-    <tr><td><strong>ANTONIOCOUTINHO</strong></td><td>ANTONIO GOMES COUTINHO</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>150</td><td>TECNICO DE MEC�NICA / MECHANIC TECNICIAN; TECNICO DE MECÂNICA / MECHANIC TECNICIAN</td></tr>
+    <tr><td><strong>TONIANGELO</strong></td><td>TONI ANGELO DOS SANTOS CARVALH</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>193</td><td>TECNICO DE MECÂNICA / MECHANIC TECNICIAN; TECNICO DE MEC�NICA / MECHANIC TECNICIAN</td></tr>
+    <tr><td><strong>ANTONIOCOUTINHO</strong></td><td>ANTONIO GOMES COUTINHO</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>150</td><td>TECNICO DE MECÂNICA / MECHANIC TECNICIAN; TECNICO DE MEC�NICA / MECHANIC TECNICIAN</td></tr>
     <tr><td><strong>MIGUELBRAZUNA</strong></td><td>MIGUEL GONCALVES BRAZUNA NETO</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>380</td><td>IMEDIATO/CHIEF MATE</td></tr>
     <tr><td><strong>ULYSSESESTEVAO</strong></td><td>ULYSSES ALVES DO NASCIMENTO ES</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>276</td><td>TEC SEG TRABALHO OFF/WORK SAFETY TECHNICIAN</td></tr>
     <tr><td><strong>AURELIOMARTINS</strong></td><td>AURELIO JOSE MARTINS JUNIOR</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>62</td><td>SUBCHEFE DE MAQUINAS/1ST ENGINEER</td></tr>
@@ -941,21 +995,21 @@
     <tr><td><strong>ANDREROSA</strong></td><td>ANDRE LUIS ALVES DA ROSA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>32</td><td>ENFERMEIRO/NURSE</td></tr>
     <tr><td><strong>ANTONIODOMINGOS</strong></td><td>ANTONIO RAPHAEL DOMINGOS FERRE</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>278</td><td>CHEFE DE MAQUINAS/CHIEF ENGINEER</td></tr>
     <tr><td><strong>RITIELEMACHADO</strong></td><td>RITIELE FERREIRA MACHADO</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>121</td><td>CHEFE DE MECANICA/CHIEF MECHANIC</td></tr>
-    <tr><td><strong>JOSEGOMES</strong></td><td>JOSE GOMES XAVIER</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>113</td><td>TECNICO DE MEC�NICA / MECHANIC TECNICIAN; TECNICO DE MECÂNICA / MECHANIC TECNICIAN</td></tr>
+    <tr><td><strong>JOSEGOMES</strong></td><td>JOSE GOMES XAVIER</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>113</td><td>TECNICO DE MECÂNICA / MECHANIC TECNICIAN; TECNICO DE MEC�NICA / MECHANIC TECNICIAN</td></tr>
     <tr><td><strong>GABRIELSOARES</strong></td><td>GABRIEL RIBEIRO SOARES FILHO</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>118</td><td>ASSISTENTE DE SONDADOR/ASSISTANT DRILLER</td></tr>
     <tr><td><strong>IGORBORGES</strong></td><td>IGOR GIOIA BORGES</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>197</td><td>COMANDANTE-OIM/MASTER-OIM</td></tr>
     <tr><td><strong>BRENOTAVARES</strong></td><td>BRENO DE HOLLANDA CAVALCANTI T</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>168</td><td>CHEFE DE MAQUINAS/CHIEF ENGINEER</td></tr>
     <tr><td><strong>RAFAELENF</strong></td><td>Rafael Freire Silva</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>112</td><td>ENFERMEIRO/NURSE</td></tr>
     <tr><td><strong>MARCIOBRITO</strong></td><td>MARCIO LIMA DE BRITO</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>251</td><td>TEC SEG TRABALHO OFF/WORK SAFETY TECHNICIAN</td></tr>
-    <tr><td><strong>RODRIGOPEREIRA</strong></td><td>Rodrigo Lima Silva Pereira</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>108</td><td>TECNICO DE MEC�NICA / MECHANIC TECNICIAN; TECNICO DE MECÂNICA / MECHANIC TECNICIAN</td></tr>
+    <tr><td><strong>RODRIGOPEREIRA</strong></td><td>Rodrigo Lima Silva Pereira</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>108</td><td>TECNICO DE MECÂNICA / MECHANIC TECNICIAN; TECNICO DE MEC�NICA / MECHANIC TECNICIAN</td></tr>
     <tr><td><strong>TIAGOPESSOA</strong></td><td>TIAGO PESSOA CACAU</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>39</td><td>ENFERMEIRO/NURSE</td></tr>
     <tr><td><strong>JOSEFERNANDES</strong></td><td>JOSE FERNANDES DOS SANTOS JUNI</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>24</td><td>TECNICO DE ELETRONICA/ELECTRONIC TECHNICIAN</td></tr>
-    <tr><td><strong>RICARDOBERRIEL</strong></td><td>RICARDO DA SILVA BERRIEL</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>62</td><td>TECNICO DE MEC�NICA / MECHANIC TECNICIAN; TECNICO DE MECÂNICA / MECHANIC TECNICIAN</td></tr>
+    <tr><td><strong>RICARDOBERRIEL</strong></td><td>RICARDO DA SILVA BERRIEL</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>62</td><td>TECNICO DE MECÂNICA / MECHANIC TECNICIAN; TECNICO DE MEC�NICA / MECHANIC TECNICIAN</td></tr>
     <tr><td><strong>JAIMERODRIGUES</strong></td><td>JAIME JUNIO DE OLIVEIRA RODRIG</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>47</td><td>ASSISTENTE DE SUBSEA/ASSISTANT SUBSEA</td></tr>
     <tr><td><strong>LEONARDOBRITTO</strong></td><td>LEONARDO COSTA BRITTO</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>104</td><td>INSPETOR DE EQUIPAMENTOS SPIE</td></tr>
     <tr><td><strong>WALLACENEPOMUCENO</strong></td><td>WALLACE DOS SANTOS NEPOMUCENO</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>200</td><td>TECNICO DE ELETRICA OFF</td></tr>
     <tr><td><strong>RAFAELGONCALVES</strong></td><td>RAFAEL DIOGO GONCALVES</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>128</td><td>SUBCHEFE DE MAQUINAS/1ST ENGINEER</td></tr>
-    <tr><td><strong>DEIVIDSILVA</strong></td><td>DEIVID BARRETO DA SILVA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>136</td><td>TECNICO DE MEC�NICA / MECHANIC TECNICIAN; TECNICO DE MECÂNICA / MECHANIC TECNICIAN</td></tr>
+    <tr><td><strong>DEIVIDSILVA</strong></td><td>DEIVID BARRETO DA SILVA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>136</td><td>TECNICO DE MECÂNICA / MECHANIC TECNICIAN; TECNICO DE MEC�NICA / MECHANIC TECNICIAN</td></tr>
     <tr><td><strong>MARCUSPINHEIRO</strong></td><td>MARCUS VINICIUS MEDEIROS PINHE</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>108</td><td>ASSISTENTE DE SUBSEA/ASSISTANT SUBSEA</td></tr>
     <tr><td><strong>RODRIGOCASCARDO</strong></td><td>Rodrigo Francisco Trindade Cas</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>190</td><td>TECNICO DE ELETRICA OFF</td></tr>
     <tr><td><strong>DANIELLOPES</strong></td><td>DANIEL SALLES LOPES</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>183</td><td>OPERADOR DE POSIC DINAMICO</td></tr>
@@ -1022,14 +1076,14 @@
     <tr><td><strong>FERNANDOSANTOS</strong></td><td>Fernando Batista Dos Santos</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>123</td><td>INSPETOR DE EQUIPAMENTOS SPIE</td></tr>
     <tr><td><strong>ALEXANDRECARVALHO</strong></td><td>ALEXANDRE TEIXEIRA DE CARVALHO</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>4</td><td>SONDADOR CYBER/CYBER BASE DRILLER</td></tr>
     <tr><td><strong>UELITONJUNIOR</strong></td><td>UELITON DOS PASSOS CELESTINO J</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>283</td><td>TEC SEG TRABALHO OFF/WORK SAFETY TECHNICIAN</td></tr>
-    <tr><td><strong>SIDNEYPEREIRA</strong></td><td>SIDNEY SANTOS PEREIRA; SIDNEY </td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>45</td><td>ASSISTENTE DE SONDADOR/ASSISTANT DRILLER</td></tr>
+    <tr><td><strong>SIDNEYPEREIRA</strong></td><td>SIDNEY SANTOS�PEREIRA; SIDNEY </td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>45</td><td>ASSISTENTE DE SONDADOR/ASSISTANT DRILLER</td></tr>
     <tr><td><strong>WILLAMISSILVA</strong></td><td>WILLAMIS SILVA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>215</td><td>ASSISTENTE DE SONDADOR/ASSISTANT DRILLER</td></tr>
     <tr><td><strong>LEONARDORIBEIRO</strong></td><td>LEONARDO DA SILVA RIBEIRO</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>160</td><td>TECNICO DE ELETRICA OFF I</td></tr>
     <tr><td><strong>FLAVIOLEMOS</strong></td><td>FLAVIO MOREIRA LEMOS</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>265</td><td>OPERADOR DE POSIC DINAMICO SR/SENIOR DYNAMIC POSITIONING OP</td></tr>
     <tr><td><strong>DANIELSILVA</strong></td><td>DANIEL RAMOS PESSANHA DA SILVA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>150</td><td>SUBCHEFE DE MAQUINAS/1ST ENGINEER</td></tr>
-    <tr><td><strong>FELIPEPINTO</strong></td><td>FELIPE DE PAULA PINTO</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>98</td><td>TECNICO DE MEC�NICA / MECHANIC TECNICIAN; TECNICO DE MECÂNICA / MECHANIC TECNICIAN</td></tr>
+    <tr><td><strong>FELIPEPINTO</strong></td><td>FELIPE DE PAULA PINTO</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>98</td><td>TECNICO DE MECÂNICA / MECHANIC TECNICIAN; TECNICO DE MEC�NICA / MECHANIC TECNICIAN</td></tr>
     <tr><td><strong>JAASIELPADILHA</strong></td><td>JAASIEL DOS SANTOS PADILHA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>7</td><td>RADIO OPERADOR/RADIO OPERATOR</td></tr>
-    <tr><td><strong>ALEXANDREZEFERINO</strong></td><td>ALEXANDRE GOMES ZEFERINO</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>124</td><td>TECNICO DE MEC�NICA / MECHANIC TECNICIAN; TECNICO DE MECÂNICA / MECHANIC TECNICIAN</td></tr>
+    <tr><td><strong>ALEXANDREZEFERINO</strong></td><td>ALEXANDRE GOMES ZEFERINO</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>124</td><td>TECNICO DE MECÂNICA / MECHANIC TECNICIAN; TECNICO DE MEC�NICA / MECHANIC TECNICIAN</td></tr>
     <tr><td><strong>DIEGOROCHA</strong></td><td>DIEGO DA ROCHA COUTINHO</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>123</td><td>TECNICO DE ELETRONICA</td></tr>
     <tr><td><strong>VALTENCIFARIA</strong></td><td>VALTENCI PEIXOTO DE FARIA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>19</td><td>TORRISTA/DERRICKMAN</td></tr>
     <tr><td><strong>BRUNOJESUS</strong></td><td>BRUNO RIBEIRO DE JESUS</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>77</td><td>ASSISTENTE DE SONDADOR/ASSISTANT DRILLER</td></tr>
@@ -1053,7 +1107,7 @@
     <tr><td><strong>SERGIORAMALHO</strong></td><td>SERGIO TEIXEIRA RAMALHO</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>302</td><td>TECNICO SEGURANCA DO TRABALHO</td></tr>
     <tr><td><strong>CELSOROCHA</strong></td><td>CELSO DE OLIVEIRA ROCHA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>95</td><td>ASSISTENTE DE SUBSEA/ASSISTANT SUBSEA</td></tr>
     <tr><td><strong>DAYANESOUZA</strong></td><td>DAYANE DE SOUZA CRUZ BARRA BAP</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>339</td><td>OPERADOR DE POSIC DINAMICO</td></tr>
-    <tr><td><strong>LUISAUGUSTO</strong></td><td>Luis Augusto Almeida Dias</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>10</td><td>TECNICO DE MEC�NICA / MECHANIC TECNICIAN; TECNICO DE MECÂNICA / MECHANIC TECNICIAN</td></tr>
+    <tr><td><strong>LUISAUGUSTO</strong></td><td>Luis Augusto Almeida Dias</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>10</td><td>TECNICO DE MECÂNICA / MECHANIC TECNICIAN; TECNICO DE MEC�NICA / MECHANIC TECNICIAN</td></tr>
     <tr><td><strong>DAVIDMEDINA</strong></td><td>DAVID RIBEIRO MEDINA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>74</td><td>SONDADOR CYBER/CYBER BASE DRILLER</td></tr>
     <tr><td><strong>CRISTIANQUINTANILHA</strong></td><td>CRISTIAN VINICIUS SANTOS QUINT</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>11</td><td>SUPERINTENDENTE DE PLATAFORMA/RIG SUPERINTENDENT</td></tr>
     <tr><td><strong>CONRADOSANTOS</strong></td><td>CONRADO BOECHAT DOS SANTOS</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>13</td><td>AUXILIAR DE PLATAFORMA/ROUSTABOUT</td></tr>
@@ -1145,7 +1199,7 @@
     <tr><td><strong>GIBERSONSILVA</strong></td><td>GIBERSON VARANDA SILVA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>128</td><td>CHEFE DE ELETRICA/CHIEF ELECTRICIAN</td></tr>
     <tr><td><strong>RAMONFRANCA</strong></td><td>RAMON DA SILVA FRANCA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>201</td><td>TECNICO DE ELETRICA OFF</td></tr>
     <tr><td><strong>YAGOBRANCO</strong></td><td>Yago Sardinha de Aguiar Branco</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>125</td><td>CHEFE DE MECANICA/CHIEF MECHANIC</td></tr>
-    <tr><td><strong>AGNALDOSOUZA</strong></td><td>AGNALDO DOS SANTOS SOUZA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>130</td><td>TECNICO DE MEC�NICA / MECHANIC TECNICIAN; CHEFE DE MECANICA/CHIEF MECHANIC; TECNICO DE MECÂNICA / MECHANIC TECNICIAN</td></tr>
+    <tr><td><strong>AGNALDOSOUZA</strong></td><td>AGNALDO DOS SANTOS SOUZA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>130</td><td>TECNICO DE MECÂNICA / MECHANIC TECNICIAN; TECNICO DE MEC�NICA / MECHANIC TECNICIAN; CHEFE DE MECANICA/CHIEF MECHANIC</td></tr>
     <tr><td><strong>CARLOMARINS</strong></td><td>CARLOS RODRIGO OUTOR MARINS</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>78</td><td>TECNICO DE ELETRICA OFF</td></tr>
     <tr><td><strong>EDSONJUNIOR</strong></td><td>EDSON CRESPO DE SOUZA JUNIOR</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>141</td><td>TEC SEG TRABALHO OFF/WORK SAFETY TECHNICIAN</td></tr>
     <tr><td><strong>ELCIODSILVA</strong></td><td>ELCIO DUARTE DA SILVA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>274</td><td>OFICIAL DE QUARTO DE MAQUINAS</td></tr>
@@ -1158,7 +1212,7 @@
     <tr><td><strong>ANAGOUVEIA</strong></td><td>ANA LUIZA DE OLIVEIRA GOUVEIA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>216</td><td>OPERADOR DE POSIC DINAMICO</td></tr>
     <tr><td><strong>ALEXANDRERODRIGUES</strong></td><td>ALEXANDRE DE ALMEIDA RODRIGUES</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>280</td><td>CHEFE DE MAQUINAS/CHIEF ENGINEER</td></tr>
     <tr><td><strong>RAFAELANDRADE</strong></td><td>RAFAEL GOMES DE ANDRADE</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>38</td><td>TECNICO DE ELETRONICA/ELECTRONIC TECHNICIAN</td></tr>
-    <tr><td><strong>ROBSONDIAS</strong></td><td>ROBSON FARIAS DIAS</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>88</td><td>TECNICO DE MEC�NICA / MECHANIC TECNICIAN; TECNICO DE MECÂNICA / MECHANIC TECNICIAN</td></tr>
+    <tr><td><strong>ROBSONDIAS</strong></td><td>ROBSON FARIAS DIAS</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>88</td><td>TECNICO DE MECÂNICA / MECHANIC TECNICIAN; TECNICO DE MEC�NICA / MECHANIC TECNICIAN</td></tr>
     <tr><td><strong>WEATONULEI</strong></td><td>WEATON ULEI CARVALHO DE CARVAL</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>293</td><td>OPERADOR DE POSIC DINAMICO</td></tr>
     <tr><td><strong>WAGNERSILVA</strong></td><td>WAGNER GOMES DA SILVA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>6</td><td>MECANICO DE MAQUINAS/MACHINERY MECHANIC</td></tr>
     <tr><td><strong>BRUNOFSILVA</strong></td><td>Bruno Figueiredo da Silva</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>117</td><td>Assistente de Eletrônica</td></tr>
@@ -1203,7 +1257,7 @@
     <tr><td><strong>PHFALCAO</strong></td><td>PAULO HENRIQUE RODRIGUES FALCA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>251</td><td>CHEFE DE MAQUINAS/CHIEF ENGINEER</td></tr>
     <tr><td><strong>JAGOSBORICIC</strong></td><td>JAGOS BORICIC</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>135</td><td>OPERADOR DE POSIC DINAMICO SR/SENIOR DYNAMIC POSITIONING OP</td></tr>
     <tr><td><strong>JULIMARANDRADE</strong></td><td>JULIMAR MENEZES DE ANDRADE</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>165</td><td>CHEFE DE ELETRONICA/CHIEF ELETRONIC</td></tr>
-    <tr><td><strong>FABIOSILVA</strong></td><td>FABIO DOS SANTOS SILVA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>143</td><td>TECNICO DE MEC�NICA / MECHANIC TECNICIAN; TECNICO DE MECÂNICA / MECHANIC TECNICIAN</td></tr>
+    <tr><td><strong>FABIOSILVA</strong></td><td>FABIO DOS SANTOS SILVA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>143</td><td>TECNICO DE MECÂNICA / MECHANIC TECNICIAN; TECNICO DE MEC�NICA / MECHANIC TECNICIAN</td></tr>
     <tr><td><strong>JEANARAUJO</strong></td><td>JEAN LACERDA DE ARAUJO</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>346</td><td>CHEFE DE MÁQUINAS</td></tr>
     <tr><td><strong>LEONARDOSCIAMMARELLA</strong></td><td>LEONARDO GOMES SCIAMMARELLA SA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>403</td><td>TEC SEG TRABALHO OFF/WORK SAFETY TECHNICIAN</td></tr>
     <tr><td><strong>LEANDROBARBOZA</strong></td><td>LEANDRO PIRACIABA BARBOZA</td><td><span>OK</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>CONCURRENT</td><td>15</td><td>47</td><td>CHEFE DE MECANICA/CHIEF MECHANIC</td></tr>
@@ -1286,12 +1340,12 @@
     <tr><td><strong>IGOROLIVEIRA</strong></td><td>Igor Raphael Rego de Oliveira</td><td><span class="badge badge-success">CONFIRMADO</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>126</td><td>TEC INSPECAO EQUIPAMENTOS</td></tr>
     <tr><td><strong>RAFAELHORTA</strong></td><td>RAFAEL MOLINARI DE ALMEIDA HOR</td><td><span class="badge badge-success">CONFIRMADO</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>103</td><td>ENGENHEIRO DE MANUTENCAO</td></tr>
     <tr><td><strong>DENILTONSANTOS</strong></td><td>Denilton Luis Gloria dos Santo</td><td><span class="badge badge-success">CONFIRMADO</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>86</td><td>INSPETOR DE EQUIPAMENTOS SPIE</td></tr>
-    <tr><td><strong>MARCIOMOLINARI</strong></td><td>MARCIO MOLINARI DE ALMEIDA HOR</td><td><span class="badge badge-success">CONFIRMADO</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>57</td><td>COORDENADOR DE PERFURA��O; COORDENADOR DE PERFURAÇÃO</td></tr>
+    <tr><td><strong>MARCIOMOLINARI</strong></td><td>MARCIO MOLINARI DE ALMEIDA HOR</td><td><span class="badge badge-success">CONFIRMADO</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>57</td><td>COORDENADOR DE PERFURAÇÃO; COORDENADOR DE PERFURA��O</td></tr>
     <tr><td><strong>FILLIPESILVA</strong></td><td>Fillipe Eduardo Bernardo da SI</td><td><span class="badge badge-accent">P/ CONCURRENT</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>14</td><td>GERENTE DE PLATAFORMA</td></tr>
     <tr><td><strong>SONIACOSTA</strong></td><td>SONIA RAQUEL TORRES COSTA</td><td><span class="badge badge-success">CONFIRMADO</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>91</td><td>GERENTE DE QUALIDADE</td></tr>
     <tr><td><strong>CAIOBARBOSA</strong></td><td>Caio Henrique De Assumpcao Bar</td><td><span class="badge badge-success">CONFIRMADO</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>27</td><td>COORDENADOR DE SUBSEA</td></tr>
     <tr><td><strong>ARYGSOUZA</strong></td><td>Ary Gomes de Souza Neto</td><td><span class="badge badge-success">CONFIRMADO</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>101</td><td>ENGENHEIRO DE PROJETOS</td></tr>
-    <tr><td><strong>JOSERAIMUNDO</strong></td><td>JOS� RAIMUNDO DA SILVA; JOSÉ R</td><td><span class="badge badge-success">CONFIRMADO</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>256</td><td>TEC DE SEG TRABALHO OFF II</td></tr>
+    <tr><td><strong>JOSERAIMUNDO</strong></td><td>JOSÉ RAIMUNDO DA SILVA; JOS� R</td><td><span class="badge badge-success">CONFIRMADO</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>256</td><td>TEC DE SEG TRABALHO OFF II</td></tr>
     <tr><td><strong>RODRIGOMENDES</strong></td><td>Rodrigo Mendes Batista Cosande</td><td><span class="badge badge-success">CONFIRMADO</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>228</td><td>ENCARREGADO DE PLATAFORMA/TOOLPUSHER</td></tr>
     <tr><td><strong>ALINEAMANCIO</strong></td><td>ALINE GUIMARAES NOGUEIRA AMANC</td><td><span class="badge badge-success">CONFIRMADO</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>361</td><td>COORDENADORA DE MANUTENCAO/MAINTENANCE COORDINATOR</td></tr>
     <tr><td><strong>MURILOBRAZ</strong></td><td>MURILO PAIXAO BRAZ</td><td><span class="badge badge-success">CONFIRMADO</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>32</td><td>GERENTE DE SUPRIMENTOS</td></tr>
@@ -1321,7 +1375,7 @@
     <tr><td><strong>ARTHURONIAS</strong></td><td>ARTHUR FELIPE ONIAS</td><td><span class="badge badge-success">CONFIRMADO</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>27</td><td>COORDENADOR DE MANUTENCAO ON</td></tr>
     <tr><td><strong>OLIVIAJULIANELLI</strong></td><td>OLIVIA BRAGA JULIANELLI</td><td><span class="badge badge-accent">P/ CONCURRENT</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>18</td><td>COORDENADOR DE MANUTENCAO ON</td></tr>
     <tr><td><strong>LUCASPINHEIRO</strong></td><td>Lucas Fernando Pinheiro</td><td><span class="badge badge-success">CONFIRMADO</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>205</td><td>Engenheiro de manutenção I</td></tr>
-    <tr><td><strong>DOGONCALVES</strong></td><td>Daniel Oliveira Gonçalves; Dan</td><td><span class="badge badge-success">CONFIRMADO</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>88</td><td>N/A</td></tr>
+    <tr><td><strong>DOGONCALVES</strong></td><td>Daniel Oliveira Gon�alves; Dan</td><td><span class="badge badge-success">CONFIRMADO</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>88</td><td>N/A</td></tr>
     <tr><td><strong>FELIPEMENEZES</strong></td><td>FELIPE FERNANDES MENEZES</td><td><span class="badge badge-accent">P/ CONCURRENT</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>2</td><td>COORDENADOR DE PLATAFORMA</td></tr>
     <tr><td><strong>PATRICKXAVIER</strong></td><td>Patrick Cordeiro Xavier</td><td><span class="badge badge-success">CONFIRMADO</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>106</td><td>ENGENHEIRO DE MANUTENCAO III</td></tr>
     <tr><td><strong>WENDELCARVALHO</strong></td><td>WENDEL DA SILVA CARVALHO</td><td><span class="badge badge-success">CONFIRMADO</span><br><small>Licença atual adequada ao perfil de uso.</small></td><td>PREMIUM</td><td>AUTHORIZED</td><td>5</td><td>281</td><td>SUPERVISOR ELETROELETRONICA / ELETROELETRONICS SUPERVISOR</td></tr>
