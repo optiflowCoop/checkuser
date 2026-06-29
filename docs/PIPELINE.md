@@ -65,7 +65,7 @@ O Pipeline de Governança de Identidades e Otimização de Licenças é orquestr
 ### Entrada (Input)
 - `maxuser_*.csv` - Identidades por ambiente (DB2)
 - `persongroupview_*.csv` - Cargos, departamentos e **LocationSite** ⭐
-- `consolidated_logintracking.csv` - LoginTracking consolidado
+- `consolidated_logintracking_from_sources.csv` - LoginTracking consolidado
 - `DadosTabelas/LOGINTRACKING_*.csv` - Logs recentes baixados ⭐ NOVO
 
 ### Processamento
@@ -164,7 +164,7 @@ USER_TIER: OFFSHORE_STD
 ## Troubleshooting
 
 ### Pipeline falha na etapa 9 (analyze_usage)
-**Problema**: Falta arquivo `consolidated_logintracking.csv`
+**Problema**: Falta arquivo `consolidated_logintracking_from_sources.csv`
 **Solução**: Executar `extrair_logintrack.bat` primeiro
 
 ### LOCATION mostra como UNKNOWN
@@ -184,7 +184,7 @@ USER_TIER: OFFSHORE_STD
 output/consolidated/
 ├── usage_analysis_phase3.csv          (13k linhas com LOCATION)
 ├── consolidated_persongroupview.csv   (8.6k linhas)
-└── consolidated_logintracking.csv     (356k linhas)
+└── consolidated_logintracking_from_sources.csv     (356k linhas)
 
 output/reports/
 ├── maximo_risk_and_optimization_workbook.xlsx (768 linhas atualizadas)

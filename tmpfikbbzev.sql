@@ -1,0 +1,1 @@
+SELECT COALESCE(PERSONID, '') || ',' || COALESCE(REPLACE(FIRSTNAME, ',', ' '), '') || ',' || COALESCE(REPLACE(LASTNAME, ',', ' '), '') || ',' || COALESCE(REPLACE(DISPLAYNAME, ',', ' '), '') as CSV_ROW FROM PERSON;

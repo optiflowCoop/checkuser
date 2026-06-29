@@ -29,12 +29,20 @@ def _load_csv(path):
 def _parse_dt(s):
     if not s:
         return None
-    text = str(s).strip().rsplit(".", 1)[0]
-    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d-%H.%M.%S", "%Y-%m-%d"):
+
+    text = str(s).strip()
+
+    for fmt in (
+        "%Y-%m-%d %H:%M:%S.%f",
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d-%H.%M.%S",
+        "%Y-%m-%d"
+    ):
         try:
             return datetime.strptime(text, fmt)
-        except Exception:
+        except ValueError:
             continue
+
     return None
 
 
@@ -46,7 +54,7 @@ def main():
     print("📊 Fase 4: CÁLCULO REAL DE CAPACIDADE (NEM ÚNICO)")
 
     optimizations_path = IN_DIR / "license_optimization_recommendations.csv"
-    logintrack_path = IN_DIR / "consolidated_logintracking.csv"
+    logintrack_path = IN_DIR / "consolidated_logintracking_from_sources.csv"
 
     optimizations = _load_csv(optimizations_path)
     login_rows = _load_csv(logintrack_path)
@@ -72,6 +80,38 @@ def main():
         if userid not in golden or cost > golden[userid]["cost"]:
             golden[userid] = {"cost": cost, "license": lic}
 
+    # --- DIAGNOSTIC START ---
+    print("\n--- USERID MISMATCH DIAGNOSTIC ---")
+    golden_keys = set(golden.keys())
+    login_userids_raw = set((r.get("USERID") or "").strip().upper() for r in login_rows if r.get("USERID"))
+    
+    # Proposed normalization function for consistency
+    def normalize_userid(uid):
+        return (uid or "").strip().upper().replace(" ", "")
+
+    login_userids_normalized = set(normalize_userid(r.get("USERID")) for r in login_rows if r.get("USERID"))
+    golden_keys_normalized = set(normalize_userid(k) for k in golden_keys)
+
+    print(f"Total Golden Users: {len(golden_keys)}")
+    print(f"Total unique users in logintrack: {len(login_userids_raw)}")
+    
+    intersect_raw = golden_keys.intersection(login_userids_raw)
+    print(f"Users in both (raw match): {len(intersect_raw)}")
+
+    intersect_normalized = golden_keys_normalized.intersection(login_userids_normalized)
+    print(f"Users in both (after .replace(' ', '') normalization): {len(intersect_normalized)}")
+    
+    if len(intersect_raw) == 0 and len(login_userids_raw) > 0:
+        print("\n  [!!] DIAGNOSIS: Mismatch confirmed. No raw USERIDs from logs match the golden record.")
+        print(f"  Golden sample: {sorted(list(golden_keys))[:5]}")
+        print(f"  Logins sample: {sorted(list(login_userids_raw))[:5]}")
+    
+    if len(intersect_normalized) > len(intersect_raw):
+        print("  [>>] DIAGNOSIS: Normalization with .replace(' ', '') finds more matching users.")
+    
+    print("--- DIAGNOSTIC END ---\n")
+    # --- END DIAGNOSTIC ---
+
     # Authorized fixo
     authorized_reserved = sum(
         u["cost"] for u in golden.values()
@@ -81,7 +121,8 @@ def main():
     # Janela temporal
     max_dt = None
     for rec in login_rows:
-        if (rec.get("ATTEMPTRESULT") or "").upper() != "LOGIN":
+        result = (rec.get("ATTEMPTRESULT") or "").strip().upper()
+        if result != "LOGIN":
             continue
         dt = _parse_dt(rec.get("ATTEMPTDATE"))
         if dt and (max_dt is None or dt > max_dt):
@@ -97,7 +138,8 @@ def main():
     concurrent_users_by_hour = defaultdict(set)
 
     for rec in login_rows:
-        if (rec.get("ATTEMPTRESULT") or "").upper() != "LOGIN":
+        result = (rec.get("ATTEMPTRESULT") or "").strip().upper()
+        if result != "LOGIN":
             continue
 
         userid = (rec.get("USERID") or "").strip().upper()

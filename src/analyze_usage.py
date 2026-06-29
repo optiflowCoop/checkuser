@@ -47,10 +47,20 @@ def load_csv(filename):
 def parse_date_safe(date_str):
     if not date_str:
         return None
-    try:
-        return datetime.fromisoformat(date_str.split()[0])
-    except Exception:
-        return None
+
+    text = str(date_str).strip()
+
+    for fmt in (
+        "%Y-%m-%d %H:%M:%S.%f",
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d"
+    ):
+        try:
+            return datetime.strptime(text, fmt)
+        except ValueError:
+            continue
+
+    return None
 
 
 def evaluate_offshore_pattern(login_dates):
@@ -98,12 +108,13 @@ def main():
     critical_keywords = rules['user_classification']['critical_functions']['keywords']
 
     identities = load_csv('consolidated_user_identity.csv')
-    logintrack = load_csv('consolidated_logintracking.csv')
+    logintrack = load_csv('consolidated_logintracking_from_sources.csv')
 
     usage_by_user = defaultdict(list)
 
     for rec in logintrack:
-        if rec.get('ATTEMPTRESULT', '').upper() != 'LOGIN':
+        result = (rec.get('ATTEMPTRESULT') or '').strip().upper()
+        if result != 'LOGIN':
             continue
         userid = rec.get('USERID', '').strip().upper()
         dt = parse_date_safe(rec.get('ATTEMPTDATE'))

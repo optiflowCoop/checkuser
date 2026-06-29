@@ -1,6 +1,17 @@
 import numpy as np
 from .html_helpers import get_recommendation_badge
+from datetime import datetime
 
+def _parse_dt(s):
+    if not s:
+        return None
+    text = str(s).strip()
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d-%H.%M.%S", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(text, fmt)
+        except ValueError:
+            continue
+    return None
 
 class DataProcessor:
     def __init__(self, summary, governance, app_points, domains, identity_analytics):
@@ -78,7 +89,14 @@ class DataProcessor:
         concurrency_summary = self.summary.get('concurrency', {}) or {}
         scenario_points = {'p50': 0, 'p95': 0, 'p100': 0, 'blackout': 0}
 
-        hourly_nem = concurrency_summary.get('hourly_app_points_nem', {}) or {}
+        hourly_nem_raw = concurrency_summary.get('hourly_app_points_nem', {}) or {}
+        hourly_nem = {}
+        if hourly_nem_raw:
+            for date_str, value in hourly_nem_raw.items():
+                dt = _parse_dt(date_str)
+                if dt:
+                    hourly_nem[dt.strftime("%Y-%m-%d %H:00")] = value
+
         if hourly_nem:
             values = list(hourly_nem.values())
             if values:

@@ -39,6 +39,11 @@ def consolidate_logintracking_data(data_dir, output_dir):
 
     consolidated_df = pd.concat(df_list, ignore_index=True)
 
+    # Deduplicate records based on key columns to handle multiple sources
+    print(f"Consolidated from {len(df_list)} files. Total rows before deduplication: {len(consolidated_df)}")
+    consolidated_df.drop_duplicates(subset=['ATTEMPTDATE', 'ATTEMPTRESULT', 'USERID'], keep='first', inplace=True)
+    print(f"Total rows after deduplication: {len(consolidated_df)}")
+
     # Data Processing
     # Convert ATTEMPTDATE to datetime
     consolidated_df['ATTEMPTDATE'] = pd.to_datetime(consolidated_df['ATTEMPTDATE'], format='%Y-%m-%d-%H.%M.%S.%f', errors='coerce')

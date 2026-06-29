@@ -26,7 +26,7 @@ def main():
     groupuser_f = os.path.join(OUTDIR, "consolidated_groupuser.csv")
     maxgroup_f = os.path.join(OUTDIR, "consolidated_maxgroup.csv")
     persongroupview_f = os.path.join(OUTDIR, "consolidated_persongroupview.csv")
-    logintracking_f = os.path.join(OUTDIR, "consolidated_logintracking.csv")
+    logintracking_f = os.path.join(OUTDIR, "consolidated_logintracking_from_sources.csv")
 
     maxusers = read_csv(maxuser_f)
     persons = read_csv(person_f)

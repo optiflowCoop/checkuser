@@ -35,14 +35,13 @@ def _load_csv(name):
 def _parse_datetime(value):
     if not value:
         return None
-    text = str(value).strip().replace('Z', '+00:00')
-    try:
-        return datetime.fromisoformat(text)
-    except ValueError:
+    text = str(value).strip()
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d-%H.%M.%S", "%Y-%m-%d"):
         try:
-            return datetime.strptime(text.split('.')[0], '%Y-%m-%d %H:%M:%S')
-        except ValueError:
-            return None
+            return datetime.strptime(text, fmt)
+        except (ValueError, TypeError):
+            continue
+    return None
 
 
 def _canonical_title(profile):
@@ -96,7 +95,7 @@ def _load_login_usage():
         'active_days': set(),
         'active_hours': set(),
     })
-    for row in _load_csv('consolidated_logintracking.csv'):
+    for row in _load_csv('consolidated_logintracking_from_sources.csv'):
         if row.get('ATTEMPTRESULT', '').upper() not in ('', 'LOGIN'):
             continue
         userid = row.get('USERID', '').strip().upper()
@@ -171,13 +170,16 @@ def calculate_statistical_concurrency():
     Retorna os percentis P50 (Mediana/Cotidiano), P95 (Pico de Turno) e P100 (Worst Case/Emergência).
     """
     try:
-        track_df = pd.read_csv(CONSOLIDATED_DIR / 'consolidated_logintracking.csv')
+        track_df = pd.read_csv(CONSOLIDATED_DIR / 'consolidated_logintracking_from_sources.csv')
         access_df = pd.read_csv(CONSOLIDATED_DIR / 'consolidated_user_access_normalized.csv')
 
         if 'ATTEMPTRESULT' in track_df.columns:
             track_df = track_df[track_df['ATTEMPTRESULT'].str.upper() == 'LOGIN']
 
-        track_df['ATTEMPTDATE'] = pd.to_datetime(track_df['ATTEMPTDATE'])
+        # --- FIX: Use a função de parse robusta e remova falhas ---
+        track_df['ATTEMPTDATE'] = track_df['ATTEMPTDATE'].apply(_parse_datetime)
+        track_df.dropna(subset=['ATTEMPTDATE'], inplace=True)
+
         track_df['LOGIN_DAY'] = track_df['ATTEMPTDATE'].dt.date
 
         access_df['USERID'] = access_df['USERID'].astype(str).str.upper().str.strip()

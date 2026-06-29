@@ -87,10 +87,10 @@ PIPELINE_STEPS = [
 
 def main():
     print("\n" + "=" * 100)
-    print("🚀 MAXIMO IDENTITY SANITY PIPELINE - COM REFACTORING SOLID")
+    print("MAXIMO IDENTITY SANITY PIPELINE - COM REFACTORING SOLID")
     print("=" * 100)
     print("\nVersão: 1.0 SOLID (com UserClassificationEngine + LicenseOptimizer)")
-    print("Dados: 100% REAIS de consolidated_logintracking.csv (nenhum mock, nenhum random)")
+    print("Dados: 100% REAIS de consolidated_logintracking_from_sources.csv (nenhum mock, nenhum random)")
     print("Padrões: Strategy Pattern + SOLID Principles")
     
     # Parse arguments
@@ -105,7 +105,7 @@ def main():
     
     for idx, step in enumerate(PIPELINE_STEPS):
         if idx in skip_steps:
-            print(f"\n  ⏩ Pulando: {step['name']}")
+            print(f"\n  Pulando: {step['name']}")
             continue
 
         step_name = step['name']
@@ -123,13 +123,13 @@ def main():
             result = subprocess.run(step['cmd'], check=True, text=True, capture_output=False)
         except subprocess.CalledProcessError as e:
             print(f"\n{'✗' * 50}")
-            print(f"❌ ERRO CRÍTICO no passo: {step_name}")
+            print(f" ERRO CRÍTICO no passo: {step_name}")
             print(f"   Processo abortado com código de saída: {e.returncode}")
             print(f"{'✗' * 50}\n")
             sys.exit(1)
         except FileNotFoundError as e:
             print(f"\n{'✗' * 50}")
-            print(f"❌ ARQUIVO NÃO ENCONTRADO no passo: {step_name}")
+            print(f" ARQUIVO NÃO ENCONTRADO no passo: {step_name}")
             print(str(e))
             print(f"{'✗' * 50}\n")
             sys.exit(1)
@@ -156,7 +156,7 @@ def main():
     print(f"  📄 output/consolidated/")
     print(f"     • consolidated_user_identity.csv")
     print(f"     • consolidated_user_access_normalized.csv")
-    print(f"     • consolidated_logintracking.csv (dados REAIS)")
+    print(f"     • consolidated_logintracking_from_sources.csv (dados REAIS)")
     print(f"     • usage_analysis_phase3.csv (com UserClassificationEngine)")
     print(f"     • license_optimization_recommendations.csv (com LicenseOptimizer)")
     print(f"  📊 output/reports/")
