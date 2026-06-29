@@ -31,6 +31,11 @@ PIPELINE_STEPS = [
         "skippable": True
     },
     {
+        "name": "2.5. Gerando Logintracking Consolidado com Ambientes (generate_logintrack_from_sources.py)",
+        "cmd": [sys.executable, str(ROOT / "scripts" / "generate_logintrack_from_sources.py")],
+        "skippable": True
+    },
+    {
         "name": "3. Montando Base de Acessos (consolidate_user_access.py)",
         "cmd": [sys.executable, str(ROOT / "src" / "consolidate_user_access.py")],
         "skippable": False
@@ -90,7 +95,7 @@ def main():
     print("MAXIMO IDENTITY SANITY PIPELINE - COM REFACTORING SOLID")
     print("=" * 100)
     print("\nVersão: 1.0 SOLID (com UserClassificationEngine + LicenseOptimizer)")
-    print("Dados: 100% REAIS de consolidated_logintracking_from_sources.csv (nenhum mock, nenhum random)")
+    print("Dados: 100% REAIS de consolidated_logintracking.csv (nenhum mock, nenhum random)")
     print("Padrões: Strategy Pattern + SOLID Principles")
     
     # Parse arguments
@@ -156,7 +161,7 @@ def main():
     print(f"  📄 output/consolidated/")
     print(f"     • consolidated_user_identity.csv")
     print(f"     • consolidated_user_access_normalized.csv")
-    print(f"     • consolidated_logintracking_from_sources.csv (dados REAIS)")
+    print(f"     • consolidated_logintracking.csv (dados REAIS)")
     print(f"     • usage_analysis_phase3.csv (com UserClassificationEngine)")
     print(f"     • license_optimization_recommendations.csv (com LicenseOptimizer)")
     print(f"  📊 output/reports/")

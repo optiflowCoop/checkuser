@@ -121,9 +121,12 @@ class DataProcessor:
         true_peak = concurrency_summary.get('true_total_app_points', 0)
         p95 = scenario_points['p95']
 
+        # Domain counts from identity_analytics
+        domain_counts = self.identity_analytics.get('domain_counts', {})
+        
         painel_data = {
             'usuarios_ativos': self.summary.get('active_profiles_count', 0),
-            'usuarios_plano': len(self.summary.get('license_rows', [])),
+            'usuarios_plano': len(self.app_points),
             'authorized': len(app_points_summary.get('auth_users', [])),
             'concurrent': len(app_points_summary.get('conc_users', [])),
             'premium': len(app_points_summary.get('premium_users', [])),
@@ -131,7 +134,12 @@ class DataProcessor:
             'p95': p95,
             'contratado': contracted,
             'folga': contracted - p95,
-            'percentual_uso': round((p95 / contracted) * 100, 1) if contracted else 0
+            'percentual_uso': round((p95 / contracted) * 100, 1) if contracted else 0,
+            # Domain breakdown
+            'dominio_foresea': domain_counts.get('foresea', 0),
+            'dominio_parceiro': domain_counts.get('foresea_partner', 0),
+            'dominio_terceiro': domain_counts.get('other', 0),
+            'dominio_sem_dominio': domain_counts.get('no_domain', 0),
         }
 
         return {
