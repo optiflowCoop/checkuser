@@ -35,7 +35,7 @@ def _render_styles():
         .card-header { margin-top: 0; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border); padding-bottom: 0.75rem; color: var(--secondary); font-size: 1.4rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; }
         .stat-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; text-align: center; transition: transform 0.2s; position: relative; }
-        .stat-value { font-size: 2.2rem; font-weight: 700; color: var(--primary); margin-bottom: 0.2rem; }
+        .stat-value { font-size: 2.2rem; font-weight: 700; color: var(--primary); margin-bottom: 0.2rem; word-break: break-word; }
         .stat-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: #1e293b; font-weight: 700; margin-bottom: 0.5rem; }
         .stat-subtitle { font-size: 0.75rem; color: #64748b; line-height: 1.2; }
         .border-danger { border-bottom: 4px solid var(--danger); }
@@ -45,6 +45,10 @@ def _render_styles():
         .border-neutral { border-bottom: 4px solid var(--neutral); }
         .charts-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; margin-top: 2rem; }
         .chart-box { height: 320px; display: flex; justify-content: center; align-items: center; background: #ffffff; border-radius: 8px; border: 1px solid var(--border); padding: 1rem; }
+        .simulator-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; align-items: stretch; }
+        .simulator-inputs { background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); }
+        .simulator-total { background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); text-align: center; display: flex; flex-direction: column; justify-content: center; }
+        .simulator-chart { background: white; padding: 1rem; border-radius: 8px; border: 1px solid var(--border); height: 300px; }
         .table-responsive { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); max-height: 500px; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th, td { padding: 14px 16px; border-bottom: 1px solid var(--border); vertical-align: top; font-size: 0.9rem; }
@@ -73,7 +77,7 @@ def _render_styles():
         .preset-btn p { margin: 2px 0 0 0; font-size: 0.8rem; font-weight: normal; opacity: 0.8; }
         .calc-input-group { margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 0.5rem; }
         .calc-input-group label { font-weight: 600; color: var(--text); font-size: 0.95rem; }
-        .calc-input-group input { width: 100px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 1.1rem; text-align: center; color: var(--primary); font-weight: bold; }
+        .calc-input-group input { width: 120px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 1.1rem; text-align: center; color: var(--primary); font-weight: bold; }
         .calc-badge-pts { font-size: 0.75rem; background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 4px; margin-left: 8px; }
         .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
         .legend-box { background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); }
@@ -330,45 +334,49 @@ def _render_tab_apppoints(analytics):
                         <p>Aplica todas as otimizações usando o fator de uso mediano (P50) para um dia comum.</p>
                     </button>
                 </div>
-                <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
-                    <div style="flex: 2; min-width: 300px; background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border);">
+                <div class="simulator-grid">
+                    <div class="simulator-inputs">
                         <div class="calc-input-group"><label>Premium Auth <span class="calc-badge-pts">5 pts</span></label><input type="number" id="inpPremAuth" oninput="updateCalculator()"></div>
                         <div class="calc-input-group"><label>Premium Conc <span class="calc-badge-pts">15 pts</span></label><input type="number" id="inpPremConc" oninput="updateCalculator()"></div>
                         <div class="calc-input-group"><label>Base Auth <span class="calc-badge-pts">3 pts</span></label><input type="number" id="inpBaseAuth" oninput="updateCalculator()"></div>
                         <div class="calc-input-group" style="border:none; margin:0; padding:0;"><label>Base Conc <span class="calc-badge-pts">10 pts</span></label><input type="number" id="inpBaseConc" oninput="updateCalculator()"></div>
                     </div>
-                    <div style="flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: center;">
+                    <div class="simulator-total">
                         <h3 style="margin: 0; font-size: 1rem; color: var(--secondary);">AppPoints Requeridos</h3>
-                        <div id="calcTotalDisplay" style="font-size: 4.5rem; font-weight: 800; color: var(--success); line-height:1;">0</div>
+                        <div id="calcTotalDisplay" style="font-size: 3.5rem; font-weight: 800; color: var(--success); line-height:1.2; word-break: break-word;">0</div>
                         <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #475569;">Soma bruta (XLSX): <strong id="rawSumDisplay">0</strong></div>
                         <div id="calcAlertBox" style="margin-top: 1rem; padding: 0.75rem; background: var(--danger); color:white; font-weight:bold; border-radius:6px; display:none; font-size:1.1rem;">⚠️ TETO EXCEDIDO</div>
                     </div>
-                    <div style="flex: 2; min-width: 300px; height: 260px;"><canvas id="simChart"></canvas></div>
+                    <div class="simulator-chart"><canvas id="simChart"></canvas></div>
                 </div>
             </div>
         </div>
         <div class="card" style="border-top: 4px solid var(--primary);">
             <h2 class="card-header" style="border:none; margin-bottom:0.5rem;">🧠 Quadro de Regras de Negócio O&G</h2>
-            <div class="legend-grid">
-                <div class="legend-box" style="border-left: 3px solid #1e3a8a;">
-                    <h3>🔰 Entitlement (Módulos)</h3>
-                    <ul class="legend-list">
-                        <li><strong>PREMIUM:</strong> Obrigatório para usuários Foresea com acesso a Permissão de Trabalho (PTW) e módulos HSE.</li>
-                        <li><strong>BASE:</strong> Mapeado para equipes de retaguarda (Compras, PCM, O.S padrão).</li>
-                    </ul>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start;">
+                <div class="legend-grid" style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+                    <div class="legend-box" style="border-left: 3px solid #1e3a8a;">
+                        <h3>🔰 Entitlement (Módulos)</h3>
+                        <ul class="legend-list">
+                            <li><strong>PREMIUM:</strong> Usuários com acesso a módulos críticos O&G (PTW, HSE, Permissões de Trabalho).</li>
+                            <li><strong>BASE:</strong> Usuários com acesso a módulos padrão (Compras, PCM, Ordem de Serviço).</li>
+                        </ul>
+                    </div>
+                    <div class="legend-box" style="border-left: 3px solid #f59e0b;">
+                        <h3>🔑 Licença (Acesso)</h3>
+                        <ul class="legend-list">
+                            <li><strong>AUTHORIZED:</strong> Licença dedicada para usuários com acesso crítico (Supervisores, Coordenadores). Garante disponibilidade 100%.</li>
+                            <li><strong>CONCURRENT:</strong> Licença compartilhada (pool) para usuários offshore/sonda. Dimensionada pelo pico real de logins.</li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="legend-box" style="border-left: 3px solid #f59e0b;">
-                    <h3>🔑 Licença (Acesso)</h3>
+                <div class="legend-box" style="border-left: 3px solid #10b981; background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);">
+                    <h3>📊 Capacidade Real (NEM)</h3>
                     <ul class="legend-list">
-                        <li><strong>AUTHORIZED:</strong> Cargos críticos (ex: Supervisores). Acesso garantido 100% do tempo.</li>
-                        <li><strong>CONCURRENT:</strong> Aplicado nas Sondas. Partilha o *pool* com base no cálculo do pico real do logintracking.</li>
-                    </ul>
-                </div>
-                <div class="legend-box" style="border-left: 3px solid #10b981;">
-                    <h3>📊 Fator de Escala (Data-Driven)</h3>
-                    <ul class="legend-list">
-                        <li>A máquina abandonou a média de 33%.</li>
-                        <li>O <strong>Fator Real</strong> é calculado dinamicamente encontrando o dia em que cada cargo registrou o maior pico simultâneo de logins.</li>
+                        <li><strong>Pico Real (P100):</strong> Máximo histórico de logins simultâneos registrado no logintracking.</li>
+                        <li><strong>Pico Seguro (P95):</strong> Referência estatística para planejamento (95% dos dias).</li>
+                        <li><strong>Contratado:</strong> Capacidade total adquirida no contrato de licenciamento.</li>
+                        <li><strong>Folga Disponível:</strong> Espaço remanescente antes de atingir o limite contratual.</li>
                     </ul>
                 </div>
             </div>
@@ -462,6 +470,23 @@ def _render_tab_peak(analytics):
         nem_by_hour = points_by_hour.copy()
 
     all_hours = set(users_by_hour) | set(points_by_hour) | set(nem_by_hour)
+    
+    # Se não há dados suficientes, criar mensagem informativa
+    if not all_hours:
+        return f"""
+        <div id="tab-peak" class="container tab-content">
+            <div class="card">
+                <h2 class="card-header">⛰️ Peak Hours (High-Water Mark) - Ecocardiograma</h2>
+                <div class="alert-box">
+                    <strong>📊 Dados de Pico Não Disponíveis</strong>
+                    <p>O arquivo <code>true_capacity_metrics.json</code> não contém dados horários de pico.</p>
+                    <p style="margin-top: 0.5rem;"><strong>Métrica Disponível:</strong> Pico Real (P100) = {analytics.get('concurrency_peak_count', 0)} AppPoints</p>
+                    <p style="font-size: 0.9rem; color: #64748b; margin-top: 0.5rem;">Para visualizar o ecocardiograma, execute o <code>true_capacity_calculator.py</code> com dados de logintracking completos.</p>
+                </div>
+            </div>
+        </div>
+        """
+    
     peak_hours = sorted(
         all_hours,
         key=lambda hour: max(
@@ -487,11 +512,37 @@ def _render_tab_peak(analytics):
     points_data_json = json.dumps(series_values(points_by_hour), ensure_ascii=False)
     nem_data_json = json.dumps(series_values(nem_by_hour), ensure_ascii=False)
 
+    # Estatísticas resumidas
+    p100 = analytics.get('concurrency_peak_count', 0)
+    p95 = analytics.get('scenario_points', {}).get('p95', 0)
+    peak_hours_list = analytics.get('concurrency_peak_hours', [])
+    peak_info = peak_hours_list[0] if peak_hours_list else ['N/A', 0]
+    peak_time = peak_info[0] if len(peak_info) > 0 else 'N/A'
+    peak_value = peak_info[1] if len(peak_info) > 1 else 0
+
     return f"""
     <div id="tab-peak" class="container tab-content">
         <div class="card">
             <h2 class="card-header">⛰️ Peak Hours (High-Water Mark) - Ecocardiograma</h2>
             <p style="color:#475569;">Passe o mouse para ver usuários simultâneos e consumo de AppPoints no mesmo horário.</p>
+            
+            <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                <div class="stat-card border-danger">
+                    <div class="stat-value" style="color: var(--danger);">{fmt_br(p100)}</div>
+                    <div class="stat-title">Pico Real (P100)</div>
+                    <div class="stat-subtitle">Máximo histórico</div>
+                </div>
+                <div class="stat-card border-warning">
+                    <div class="stat-value" style="color: var(--warning);">{fmt_br(p95)}</div>
+                    <div class="stat-title">Pico Seguro (P95)</div>
+                    <div class="stat-subtitle">Percentil 95</div>
+                </div>
+                <div class="stat-card border-accent">
+                    <div class="stat-value" style="color: var(--accent);">{fmt_br(peak_value)}</div>
+                    <div class="stat-title">Maior Pico Registrado</div>
+                    <div class="stat-subtitle">{peak_time}</div>
+                </div>
+            </div>
 
             <div class="chart-box" style="height: 380px; align-items: stretch; padding: 1.5rem;">
                 <canvas id="peakLineChart"
@@ -532,7 +583,7 @@ def _render_tab_tabela(app_points_rows):
                     <option value="BASE">Base</option>
                 </select>
             </div>
-            {render_table(['USERID', 'Nome', 'Recomendação', 'Entitlement', 'Licença To-Be', 'AppPoints Ref.', 'Fator Analytics', 'Logins 90d', 'Cargo'], app_points_rows, 'table-apppoints', 'filterable-app-table')}
+            {render_table(['USERID', 'Nome', 'Recomendação', 'Entitlement', 'Licença To-Be', 'AppPoints Ref.', 'Fator Analytics', 'Logins 90d', 'Unidade', 'Cargo'], app_points_rows, 'table-apppoints', 'filterable-app-table')}
         </div>
     </div>
     """
@@ -665,10 +716,10 @@ def _render_scripts(analytics, identity_analytics):
             let totalPoints = Math.round(scenarioPoints[type] || 0);
             let titleText = "", description = "";
 
-            if (type === 'p50') {{ titleText = "🟢 Cotidiano (Mediana)"; description = "Operação normal e fluida."; }} 
-            else if (type === 'p95') {{ titleText = "🟡 Pico Seguro (P95)"; description = "Handovers de turno comportados na meta."; }}
-            else if (type === 'p100') {{ titleText = "🔴 Emergência (P100)"; description = "Risco moderado. Acesso simultâneo alto registrado no log."; }}
-            else if (type === 'blackout') {{ titleText = "⚡ Blackout (100%)"; description = "Cenário fatal: Sondas paradas. Possível travamento do MAS 9."; }}
+            if (type === 'p50') {{ titleText = "🟢 Cenário Cotidiano (P50)"; description = "Consumo normal em dia comum."; }} 
+            else if (type === 'p95') {{ titleText = "🟡 Pico Seguro (P95)"; description = "Consumo elevado dentro do esperado."; }}
+            else if (type === 'p100') {{ titleText = "🔴 Emergência Operacional (P100)"; description = "Pico máximo histórico registrado."; }}
+            else if (type === 'blackout') {{ titleText = "⚡ Blackout Total (100%)"; description = "Cenário extremo com todos os usuários ativos simultâneos."; }}
 
             const outBox = document.getElementById('eventOutputBox');
             outBox.innerText = `${{titleText}}: ${{totalPoints.toLocaleString('pt-BR')}} AppPoints. ${{description}}`;

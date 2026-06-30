@@ -125,7 +125,13 @@ def write_excel_workbook(summary, governance, license_rows, domain_counts, missi
 
         for row in rows:
             if isinstance(row, dict):
-                values = [row.get(h, '') for h in headers]
+                values = []
+                for h in headers:
+                    v = row.get(h, '')
+                    # Convert sets to strings for Excel compatibility
+                    if isinstance(v, set):
+                        v = '; '.join(sorted(str(x) for x in v if x)) if v else ''
+                    values.append(v)
             else:
                 values = row
             ws.append(values)
@@ -233,6 +239,23 @@ def main():
         all_data["persons"],
         all_data["persongroupview"],
     )
+    
+    # 2b. Enrich with LOCATION_SITE from persongroupview (ENVIRONMENT column) - BEFORE simulation
+    persongroupview_map = {}
+    for pgv in all_data.get("persongroupview", []):
+        uid = str(pgv.get('personid', '')).strip().upper()
+        env = pgv.get('ENVIRONMENT', '').strip()
+        loc = pgv.get('locationsite', '').strip()
+        if uid and env:
+            # Keep first non-empty environment found
+            if uid not in persongroupview_map:
+                persongroupview_map[uid] = {'environment': env, 'locationsite': loc}
+    
+    for profile in user_profiles.values():
+        uid = str(profile.get('USERID', '')).strip().upper()
+        if uid in persongroupview_map and not profile.get('LOCATION_SITE'):
+            profile['LOCATION_SITE'] = persongroupview_map[uid]['environment']
+    
     active_profiles = [p for p in user_profiles.values() if p['STATUS'] == 'ACTIVE']
 
     # 3. Perform Governance Analysis
@@ -272,14 +295,33 @@ def main():
     foresea_app_points = simulate_app_points(foresea_profiles)
     other_app_points = simulate_app_points(other_profiles)
 
+    # Re-enrich with LOCATION_SITE after simulation (simulate_app_points creates new dicts)
+    for row in foresea_app_points + other_app_points:
+        uid = str(row.get('USERID', '')).strip().upper()
+        if uid in persongroupview_map and not row.get('LOCATION_SITE'):
+            row['LOCATION_SITE'] = persongroupview_map[uid]['environment']
+
     app_points_by_scope = {
         'foresea': foresea_app_points,
         'other': other_app_points,
     }
 
-    # Gera o license decision plan usando o conjunto completo que alimenta o pipeline:
-    # (foresea + other). 'SEM DOMINIO' fica fora por inconsistência.
-    all_app_points_for_plan = foresea_app_points + other_app_points
+    # Gera o license decision plan com TODOS os usuários (incluindo SEM DOMINIO)
+    # Usuários SEM DOMINIO são incluídos mas marcados para revisão
+    sem_dominio_rows = [
+        {
+            **p, 
+            'DOMAIN_CATEGORY': 'SEM DOMINIO', 
+            'MIGRATION_SCOPE': 'REVIEW_MISSING_EMAIL',
+            'LICENSE_MODEL': 'CONCURRENT',
+            'ENTITLEMENT': 'BASE',
+            'APP_POINTS': 10,
+            'OPTIMIZATION_REC': 'REQUER_REVISAO',
+            'OPTIMIZATION_REASON': 'Sem email cadastrado. Revisar antes de definir licença.'
+        }
+        for p in missing_email_profiles
+    ]
+    all_app_points_for_plan = foresea_app_points + other_app_points + sem_dominio_rows
     write_license_decision_plan(all_app_points_for_plan)
 
     # Compatibilidade com o pipeline/HTML atual (por enquanto ainda consumimos um único universo)
@@ -305,17 +347,18 @@ def main():
         if metrics_path.exists():
             metrics = json.loads(metrics_path.read_text(encoding='utf-8'))
 
-            concurrency_summary = {
-                'hourly_counts': metrics.get('hourly_counts', {}),
-                'hourly_app_points': metrics.get('hourly_app_points', {}),
-                'hourly_concurrent_app_points': metrics.get('hourly_concurrent_app_points', {}),
-                'hourly_app_points_nem': metrics.get('hourly_app_points_nem', {}),
-                'peak_count': metrics.get('true_total_app_points'),
-                'peak_hours': metrics.get('peak_hours', []),
-                'peak_hours_users': metrics.get('peak_hours_users', []),
-                'peak_contributors_count': metrics.get('peak_contributors_count', 0),
-                'peak_contributors': metrics.get('peak_contributors', [])
-            }
+        concurrency_summary = {
+            'hourly_counts': metrics.get('hourly_counts', {}),
+            'hourly_app_points': metrics.get('hourly_app_points', {}),
+            'hourly_concurrent_app_points': metrics.get('hourly_concurrent_app_points', {}),
+            'hourly_app_points_nem': metrics.get('hourly_app_points_nem', {}),
+            'true_total_app_points': metrics.get('true_total_app_points', 0),
+            'authorized_reserved_points': metrics.get('authorized_reserved_points', 0),
+            'peak_hours': metrics.get('peak_hours', []),
+            'peak_hours_users': metrics.get('peak_hours_users', []),
+            'peak_contributors_count': metrics.get('peak_contributors_count', 0),
+            'peak_contributors': metrics.get('peak_contributors', [])
+        }
     except Exception as e:
         print(f"[Aviso] Falha ao calcular concorrência avançada: {e}")
 

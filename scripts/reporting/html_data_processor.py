@@ -6,7 +6,7 @@ def _parse_dt(s):
     if not s:
         return None
     text = str(s).strip()
-    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d-%H.%M.%S", "%Y-%m-%d"):
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d-%H.%M.%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
         try:
             return datetime.strptime(text, fmt)
         except ValueError:
@@ -38,7 +38,13 @@ class DataProcessor:
         opt_total_points = 0
 
         # Cenários físicos (As-Is e Saneado) + otimizado físico (apenas contagem para UI)
-        for u in self.app_points:
+        # Filtra apenas usuários FORESEA + PARCEIRO (escopo de licenciamento)
+        foresea_parceiro_users = [
+            u for u in self.app_points 
+            if u.get('DOMAIN_CATEGORY', '') in ('FORESEA', 'PARCEIRO')
+        ]
+        
+        for u in foresea_parceiro_users:
             lic = u.get('LICENSE_MODEL', 'CONCURRENT')
             ent = u.get('ENTITLEMENT', 'BASE')
             rec = u.get('OPTIMIZATION_REC', 'OK')
@@ -47,7 +53,7 @@ class DataProcessor:
             is_prem = (ent == 'PREMIUM')
             is_auth = (lic == 'AUTHORIZED')
 
-            # AS-IS (inclui todos)
+            # AS-IS (inclui todos do escopo)
             if is_prem:
                 scenarios_data['asis']['pA' if is_auth else 'pC'] += 1
             else:
@@ -106,11 +112,16 @@ class DataProcessor:
                 scenario_points['blackout'] = int(max(values))
 
         # Somatório bruto (per-user) apenas para referência (XLSX)
+        # Usa apenas usuários FORESEA + PARCEIRO (mesmo escopo dos cenários)
+        foresea_parceiro_total = sum(
+            float(u.get('APP_POINTS', 0) or 0) 
+            for u in foresea_parceiro_users
+        )
         scenario_points_total = {
-            'p50': int(opt_total_points),
-            'p95': int(opt_total_points),
-            'p100': int(opt_total_points),
-            'blackout': int(opt_total_points)
+            'p50': int(foresea_parceiro_total),
+            'p95': int(foresea_parceiro_total),
+            'p100': int(foresea_parceiro_total),
+            'blackout': int(foresea_parceiro_total)
         }
 
         # ------------------------------------------------------
@@ -253,21 +264,46 @@ class DataProcessor:
         for s in sorted(self.app_points, key=lambda x: x.get('APP_POINTS', 0), reverse=True):
             points = s.get('APP_POINTS', 0)
             rec_code = s.get('OPTIMIZATION_REC')
+            current_license = s.get('LICENSE_MODEL', 'CONCURRENT')
+            current_entitlement = s.get('ENTITLEMENT', 'BASE')
 
-            # Badge + descrição simples (estável)
+            # Determina a licença To-Be baseada na recomendação
+            if rec_code == 'MOVE_TO_CONCURRENT':
+                license_to_be = 'CONCURRENT'
+                recommendation_text = "Migrar para Concurrent (baixo uso)."
+            elif rec_code == 'CONFIRMED_AUTHORIZED':
+                license_to_be = 'AUTHORIZED'
+                recommendation_text = "Manter Authorized (uso crítico)."
+            elif rec_code == 'DOWNGRADE_CANDIDATE':
+                license_to_be = 'CONCURRENT'
+                recommendation_text = "Downgrade de Premium para Base."
+            elif rec_code == 'INATIVO (>90d)':
+                license_to_be = 'CONCURRENT'
+                recommendation_text = "Usuário inativo. Considerar remoção."
+            elif rec_code == 'REQUER_REVISAO':
+                license_to_be = 'CONCURRENT'
+                recommendation_text = "Requer revisão manual."
+            else:  # OK
+                license_to_be = current_license
+                recommendation_text = "Licença atual adequada ao perfil de uso."
+
+            # Badge + descrição
             recommendation_badge_html = get_recommendation_badge(rec_code)
-            recommendation_text = "Licença atual adequada ao perfil de uso."
-
             full_recommendation_html = f"{recommendation_badge_html}<br><small>{recommendation_text}</small>"
 
+            displayname = s.get('DISPLAYNAME', 'N/A')
+            if isinstance(displayname, set):
+                displayname = '; '.join(sorted(str(x) for x in displayname if x)) or 'N/A'
             app_points_rows.append([
                 f"<strong>{s.get('USERID')}</strong>",
-                s.get('DISPLAYNAME', 'N/A')[:30],
+                str(displayname)[:30],
                 full_recommendation_html,
-                s.get('ENTITLEMENT'),
-                s.get('LICENSE_MODEL'),
+                current_entitlement,
+                license_to_be,  # Licença To-Be (corrigida)
                 f"{points:,.0f}",
+                f"{points:,.0f}",  # Fator Analytics
                 s.get('LOGIN_COUNT_90D', 0),
+                s.get('LOCATION_SITE', 'N/A'),
                 s.get('TITLES', '')
             ])
 
