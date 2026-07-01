@@ -1,14 +1,15 @@
-# scripts/reporting/html_template.py
+# scripts/reporting/html_template.py - Orquestrador de Abas
 from datetime import datetime
 import json
 
-try:
-    from .html_helpers import fmt_br, render_table
-except ImportError:
-    from html_helpers import fmt_br, render_table
+from .html_helpers import fmt_br, render_table
+from .ab1_painel import render_tab_painel
+from .ab2_governanca import render_tab_gov
+from .ab3_cenarios import render_tab_apppoints
+from .ab4_eventos import render_tab_eventos
+from .ab5_plano_acao import render_tab_tabela
+from .ab6_peak import render_tab_peak
 
-
-# --- Private Component Functions ---
 
 def _render_styles():
     """Returns the CSS styles for the report."""
@@ -115,496 +116,20 @@ def _render_header_and_tabs():
     """
 
 
-# ==========================================================
-# ABA 1 – Painel Operacional (VERSÃO FINAL CORRIGIDA)
-# ==========================================================
-
-def _render_tab_painel(analytics, identity_analytics):
-
-    painel = analytics.get('painel_data', {})
-
-    return f"""
-<div id="tab-painel" class="container tab-content active">
-
-<div class="card">
-<h2 class="card-header">📊 Visão Executiva - Resumo de Identidades</h2>
-
-<div class="stats-grid">
-
-<div class="stat-card border-success">
-<div class="stat-value" style="color: var(--success);">
-{fmt_br(painel.get('usuarios_ativos', 0))}
-</div>
-<div class="stat-title">Usuários Ativos Analisados</div>
-<div class="stat-subtitle">Total de usuários ACTIVE em todos os ambientes</div>
-</div>
-
-<div class="stat-card border-primary">
-<div class="stat-value">
-{fmt_br(painel.get('usuarios_plano', 0))}
-</div>
-<div class="stat-title">Usuários no Plano de Licença</div>
-<div class="stat-subtitle">FORESEA + PARCEIRO + TERCEIRO (com domínio válido)</div>
-</div>
-
-<div class="stat-card border-warning">
-<div class="stat-value">
-{fmt_br(painel.get('authorized', 0))}
-</div>
-<div class="stat-title">Authorized</div>
-<div class="stat-subtitle">Licença dedicada (acesso garantido)</div>
-</div>
-
-<div class="stat-card border-accent">
-<div class="stat-value">
-{fmt_br(painel.get('concurrent', 0))}
-</div>
-<div class="stat-title">Concurrent</div>
-<div class="stat-subtitle">Pool compartilhado (modelo offshore)</div>
-</div>
-
-<div class="stat-card border-secondary">
-<div class="stat-value">
-{fmt_br(painel.get('premium', 0))}
-</div>
-<div class="stat-title">Premium</div>
-<div class="stat-subtitle">Entitlement O&G (módulos críticos)</div>
-</div>
-
-</div>
-</div>
-
-<div class="card">
-<h2 class="card-header">🏢 Distribuição por Domínio</h2>
-
-<div class="stats-grid">
-
-<div class="stat-card" style="border-bottom: 4px solid #2563eb;">
-<div class="stat-value" style="color: #2563eb;">
-{fmt_br(painel.get('dominio_foresea', 0))}
-</div>
-<div class="stat-title">@foresea.com</div>
-<div class="stat-subtitle">Colaboradores Foresea (permanentes)</div>
-</div>
-
-<div class="stat-card" style="border-bottom: 4px solid #10b981;">
-<div class="stat-value" style="color: #10b981;">
-{fmt_br(painel.get('dominio_parceiro', 0))}
-</div>
-<div class="stat-title">@foresea-partner.com</div>
-<div class="stat-subtitle">Parceiros e contratados</div>
-</div>
-
-<div class="stat-card" style="border-bottom: 4px solid #f59e0b;">
-<div class="stat-value" style="color: #f59e0b;">
-{fmt_br(painel.get('dominio_terceiro', 0))}
-</div>
-<div class="stat-title">Outros Domínios</div>
-<div class="stat-subtitle">Terceiros e prestadores</div>
-</div>
-
-<div class="stat-card" style="border-bottom: 4px solid #ef4444;">
-<div class="stat-value" style="color: #ef4444;">
-{fmt_br(painel.get('dominio_sem_dominio', 0))}
-</div>
-<div class="stat-title">Sem Domínio</div>
-<div class="stat-subtitle">Requer revisão de email</div>
-</div>
-
-</div>
-</div>
-
-<div class="card" style="border-left: 4px solid var(--danger);">
-<h2 class="card-header">⚡ Capacidade NEM vs Contrato</h2>
-
-<div class="stats-grid">
-
-<div class="stat-card">
-<div class="stat-value" style="color: var(--danger);">
-{fmt_br(painel.get('true_peak', 0))}
-</div>
-<div class="stat-title">Pico Real (P100)</div>
-<div class="stat-subtitle">Máximo histórico de AppPoints simultâneos</div>
-</div>
-
-<div class="stat-card">
-<div class="stat-value" style="color: var(--warning);">
-{fmt_br(painel.get('p95', 0))}
-</div>
-<div class="stat-title">Pico Seguro (P95)</div>
-<div class="stat-subtitle">Percentil 95 - referência de planejamento</div>
-</div>
-
-<div class="stat-card">
-<div class="stat-value">
-{fmt_br(painel.get('contratado', 0))}
-</div>
-<div class="stat-title">Capacidade Contratada</div>
-<div class="stat-subtitle">Limite do contrato de licenciamento</div>
-</div>
-
-<div class="stat-card">
-<div class="stat-value" style="color: {'var(--success)' if painel.get('folga', 0) >= 0 else 'var(--danger)'};">
-{fmt_br(painel.get('folga', 0))}
-</div>
-<div class="stat-title">Folga / Déficit</div>
-<div class="stat-subtitle">Diferença entre contrato e P95</div>
-</div>
-
-<div class="stat-card">
-<div class="stat-value">
-{painel.get('percentual_uso', 0)}%
-</div>
-<div class="stat-title">% Uso do Contrato (P95)</div>
-<div class="stat-subtitle">Percentual de ocupação do contrato</div>
-</div>
-
-</div>
-</div>
-
-</div>
-"""
-
-def _render_tab_gov(gov_tables):
-    """Renders the 'Governança & Saneamento' tab content."""
-    return f"""
-    <div id="tab-gov" class="container tab-content">
-        <div class="card" style="background-color: #ffffff; border-color: #cbd5e1;">
-            <h3 style="margin-top: 0; color: var(--primary);">🔍 Filtro Interativo de Risco Lógico</h3>
-            <div class="search-container">
-                <input type="text" id="searchGov" class="search-bar" onkeyup="filterGovTable()" placeholder="Pesquisar por ID, Nome, Email...">
-                <select id="selGovDec" class="filter-select" onchange="filterGovTable()">
-                    <option value="">⚖️ Todas as Decisões</option>
-                    <option value="PESSOAS DIFERENTES">🔴 ALTO - PESSOAS DIFERENTES</option>
-                    <option value="REQUER REVISÃO">🟡 MÉDIO - REQUER REVISÃO</option>
-                    <option value="POSSÍVEL MESMA PESSOA">🟢 BAIXO - POSSÍVEL MESMA PESSOA</option>
-                </select>
-            </div>
-        </div>
-        <div class="card">
-            <h2 class="card-header">Top Divergências de Segurança (Matriz Base vs Sonda)</h2>
-            <div class="type-analysis-grid">{gov_tables['title_divergence_html']}</div>
-        </div>
-        <div class="card">
-            <h2 class="card-header">Conflitos de Multi-Ambiente (Cross-Env)</h2>
-            {render_table(['USERID', 'Bases Encontradas', 'Nomes de Exibição', 'Conclusão'], gov_tables['cross_env_rows'], 'table-cross-env', 'gov-table')}
-        </div>
-        <div class="card">
-            <h2 class="card-header">Colisões de Active Directory (LOGINID)</h2>
-            {render_table(['LOGINID AD', 'Bases', 'USERIDs', 'Nomes Cadastrados'], gov_tables['login_conflicts_rows'], 'table-login-conflicts', 'gov-table')}
-        </div>
-        <div class="card">
-            <div style="display:flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem; padding-bottom: 0.75rem;">
-                <h2 style="margin:0; color: var(--secondary); font-size: 1.4rem; font-weight: 600;">Fila de Resolução Consolidada</h2>
-                <button class="btn-export" style="background-color: var(--secondary);" onclick="exportTableToCSV('table-worklist', 'Backlog_Governanca.csv')">Exportar Backlog</button>
-            </div>
-            {render_table(['ID Bruto', 'Nome', 'Hipótese Sistêmica', 'Decisão / Ação'], gov_tables['worklist_rows'], 'table-worklist', 'gov-table')}
-        </div>
-    </div>
-    """
-
-
-def _render_tab_apppoints(analytics):
-    """Renders the 'Cenários de AppPoints' tab content."""
-    return f"""
-    <div id="tab-apppoints" class="container tab-content">
-        <div class="card" style="border-left: 4px solid var(--success); background-image: linear-gradient(to right, #ffffff, #f8fafc);">
-            <div class="card-header" style="border:none; margin-bottom:0.5rem;">
-                <div>
-                    <h2 style="margin:0; color:var(--success);">🧮 Simulador de Cenários de AppPoints</h2>
-                    <p style="font-size: 0.9rem; color: #64748b; font-weight: normal; margin-top: 4px;">Selecione um cenário para ver o impacto no consumo de AppPoints ou edite os campos para uma simulação manual.</p>
-                </div>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: start;">
-                <div class="preset-btn-group">
-                    <button class="preset-btn" id="btnAsIs" onclick="loadScenario('asis', this)">
-                        <strong>1. Cenário Atual (As-Is)</strong>
-                        <p>Simula o consumo se todos os usuários atuais fossem migrados sem nenhuma otimização.</p>
-                    </button>
-                    <button class="preset-btn" id="btnSaneado" onclick="loadScenario('saneado', this)">
-                        <strong>2. Pós-Saneamento</strong>
-                        <p>Simula o consumo após a desativação de usuários inativos (> 90 dias).</p>
-                    </button>
-                    <button class="preset-btn active" id="btnOtimizado" onclick="loadScenario('otimizado_p95', this)">
-                        <strong>3. Otimizado (Pico P95)</strong>
-                        <p>Aplica todas as otimizações (inativos, downgrades, concorrência) usando o fator de pico (P95).</p>
-                    </button>
-                    <button class="preset-btn" id="btnOtimizadoP50" onclick="loadScenario('otimizado_p50', this)">
-                        <strong>4. Otimizado (Mediana P50)</strong>
-                        <p>Aplica todas as otimizações usando o fator de uso mediano (P50) para um dia comum.</p>
-                    </button>
-                </div>
-                <div class="simulator-grid">
-                    <div class="simulator-inputs">
-                        <div class="calc-input-group"><label>Premium Auth <span class="calc-badge-pts">5 pts</span></label><input type="number" id="inpPremAuth" oninput="updateCalculator()"></div>
-                        <div class="calc-input-group"><label>Premium Conc <span class="calc-badge-pts">15 pts</span></label><input type="number" id="inpPremConc" oninput="updateCalculator()"></div>
-                        <div class="calc-input-group"><label>Base Auth <span class="calc-badge-pts">3 pts</span></label><input type="number" id="inpBaseAuth" oninput="updateCalculator()"></div>
-                        <div class="calc-input-group" style="border:none; margin:0; padding:0;"><label>Base Conc <span class="calc-badge-pts">10 pts</span></label><input type="number" id="inpBaseConc" oninput="updateCalculator()"></div>
-                    </div>
-                    <div class="simulator-total">
-                        <h3 style="margin: 0; font-size: 1rem; color: var(--secondary);">AppPoints Requeridos</h3>
-                        <div id="calcTotalDisplay" style="font-size: 3.5rem; font-weight: 800; color: var(--success); line-height:1.2; word-break: break-word;">0</div>
-                        <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #475569;">Soma bruta (XLSX): <strong id="rawSumDisplay">0</strong></div>
-                        <div id="calcAlertBox" style="margin-top: 1rem; padding: 0.75rem; background: var(--danger); color:white; font-weight:bold; border-radius:6px; display:none; font-size:1.1rem;">⚠️ TETO EXCEDIDO</div>
-                    </div>
-                    <div class="simulator-chart"><canvas id="simChart"></canvas></div>
-                </div>
-            </div>
-        </div>
-        <div class="card" style="border-top: 4px solid var(--primary);">
-            <h2 class="card-header" style="border:none; margin-bottom:0.5rem;">🧠 Quadro de Regras de Negócio O&G</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start;">
-                <div class="legend-grid" style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
-                    <div class="legend-box" style="border-left: 3px solid #1e3a8a;">
-                        <h3>🔰 Entitlement (Módulos)</h3>
-                        <ul class="legend-list">
-                            <li><strong>PREMIUM:</strong> Usuários com acesso a módulos críticos O&G (PTW, HSE, Permissões de Trabalho).</li>
-                            <li><strong>BASE:</strong> Usuários com acesso a módulos padrão (Compras, PCM, Ordem de Serviço).</li>
-                        </ul>
-                    </div>
-                    <div class="legend-box" style="border-left: 3px solid #f59e0b;">
-                        <h3>🔑 Licença (Acesso)</h3>
-                        <ul class="legend-list">
-                            <li><strong>AUTHORIZED:</strong> Licença dedicada para usuários com acesso crítico (Supervisores, Coordenadores). Garante disponibilidade 100%.</li>
-                            <li><strong>CONCURRENT:</strong> Licença compartilhada (pool) para usuários offshore/sonda. Dimensionada pelo pico real de logins.</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="legend-box" style="border-left: 3px solid #10b981; background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);">
-                    <h3>📊 Capacidade Real (NEM)</h3>
-                    <ul class="legend-list">
-                        <li><strong>Pico Real (P100):</strong> Máximo histórico de logins simultâneos registrado no logintracking.</li>
-                        <li><strong>Pico Seguro (P95):</strong> Referência estatística para planejamento (95% dos dias).</li>
-                        <li><strong>Contratado:</strong> Capacidade total adquirida no contrato de licenciamento.</li>
-                        <li><strong>Folga Disponível:</strong> Espaço remanescente antes de atingir o limite contratual.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-    """
-
-
-def _render_tab_eventos(analytics):
-    """Renders the 'Eventos Críticos' tab content."""
-    scenario_points = analytics['scenario_points']
-    return f"""
-    <div id="tab-eventos" class="container tab-content">
-        <div class="alert-box" style="border-left-color: var(--warning); background-color: #fffbeb;">
-            <strong style="color: #b45309;">📊 Simulador de Teto de AppPoints (Eventos de Sonda)</strong>
-            <p style="color: #92400e;">Teste a resistência da arquitetura de licenciamento. O que acontece com o consumo se houver um evento atípico na Foresea?</p>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
-            <div>
-                <div class="card">
-                    <h3 style="margin-top:0; font-size:1.1rem; color:var(--primary);">🚀 Disparadores de Cenário</h3>
-                    <div class="event-card" onclick="triggerEventScenario('p50')">
-                        <h4>🟢 Cenário Cotidiano (Mediana - P50)</h4>
-                        <p>Simula um dia comum. Consome aprox. {fmt_br(scenario_points['p50'])} AppPoints. <small style="color:#64748b;">(Soma bruta: {fmt_br(analytics.get('scenario_points_total', {}).get('p50', 0))})</small></p>
-                    </div>
-                    <div class="event-card" onclick="triggerEventScenario('p95')" style="border-left-color: var(--warning);">
-                        <h4>🟡 Pico Seguro (Percentil 95)</h4>
-                        <p>O teto projetado pela máquina. Consome aprox. {fmt_br(scenario_points['p95'])} AppPoints. <small style="color:#64748b;">(Soma bruta: {fmt_br(analytics.get('scenario_points_total', {}).get('p95', 0))})</small></p>
-                    </div>
-                    <div class="event-card" onclick="triggerEventScenario('p100')" style="border-left-color: var(--danger);">
-                        <h4>🔴 Emergência Operacional (P100)</h4>
-                        <p>Pico máximo histórico. Consome aprox. {fmt_br(scenario_points['p100'])} AppPoints. <small style="color:#64748b;">(Soma bruta: {fmt_br(analytics.get('scenario_points_total', {}).get('p100', 0))})</small></p>
-                    </div>
-                    <div class="event-card" onclick="triggerEventScenario('blackout')" style="border-left-color: #7c3aed; background: #faf5ff; border-color:#e9d5ff">
-                        <h4>⚡ Blackout Total (100% de Acessos)</h4>
-                        <p>Cenário extremo: Todos os usuários simultâneos. Consome aprox. {fmt_br(scenario_points['blackout'])} AppPoints. <small style="color:#64748b;">(Soma bruta: {fmt_br(analytics.get('scenario_points_total', {}).get('blackout', 0))})</small></p>
-                    </div>
-                </div>
-            </div>
-            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
-                <h3 id="eventCeilingLabel" style="margin-top:0; font-size:1.2rem; color:var(--secondary);">Termômetro de Impacto (Limite)</h3>
-                <div style="height: 280px; position: relative;">
-                    <canvas id="eventChart"></canvas>
-                </div>
-                <div id="eventOutputBox" style="padding: 1rem; text-align: center; font-weight: bold; border-radius: 6px; font-size: 1.1rem; margin-top: 1rem; background: #ecfdf5; color:#047857;">
-                    Selecione um cenário ao lado...
-                </div>
-            </div>
-        </div>
-    </div>
-    """
-
-
-def _render_tab_peak(analytics):
-    """Renders the Peak tab with aligned hourly series."""
-
-    def rows_to_map(rows, value_keys):
-        if isinstance(rows, dict):
-            return {str(k): v for k, v in rows.items() if k}
-
-        mapped = {}
-        if isinstance(rows, list):
-            for entry in rows:
-                if isinstance(entry, (list, tuple)) and len(entry) >= 2:
-                    mapped[str(entry[0])] = entry[1]
-                elif isinstance(entry, dict):
-                    hour = entry.get('hour') or entry.get('ts') or entry.get('time')
-                    value = None
-                    for key in value_keys:
-                        if entry.get(key) is not None:
-                            value = entry.get(key)
-                            break
-                    if hour:
-                        mapped[str(hour)] = value
-        return mapped
-
-    users_by_hour = rows_to_map(
-        analytics.get('concurrency_hourly', {}) or analytics.get('concurrency_peak_users_hours', []),
-        ('users', 'count', 'value'),
-    )
-    points_by_hour = rows_to_map(
-        analytics.get('concurrency_hourly_app_points', {}) or analytics.get('concurrency_peak_hours', []),
-        ('app_points', 'points', 'count', 'value'),
-    )
-    nem_by_hour = rows_to_map(
-        analytics.get('concurrency_hourly_app_points_nem', {}),
-        ('app_points_nem', 'app_points', 'points', 'count', 'value'),
-    )
-
-    if not nem_by_hour:
-        nem_by_hour = points_by_hour.copy()
-
-    all_hours = set(users_by_hour) | set(points_by_hour) | set(nem_by_hour)
-    
-    # Se não há dados suficientes, criar mensagem informativa
-    if not all_hours:
-        return f"""
-        <div id="tab-peak" class="container tab-content">
-            <div class="card">
-                <h2 class="card-header">⛰️ Peak Hours (High-Water Mark) - Ecocardiograma</h2>
-                <div class="alert-box">
-                    <strong>📊 Dados de Pico Não Disponíveis</strong>
-                    <p>O arquivo <code>true_capacity_metrics.json</code> não contém dados horários de pico.</p>
-                    <p style="margin-top: 0.5rem;"><strong>Métrica Disponível:</strong> Pico Real (P100) = {analytics.get('concurrency_peak_count', 0)} AppPoints</p>
-                    <p style="font-size: 0.9rem; color: #64748b; margin-top: 0.5rem;">Para visualizar o ecocardiograma, execute o <code>true_capacity_calculator.py</code> com dados de logintracking completos.</p>
-                </div>
-            </div>
-        </div>
-        """
-    
-    peak_hours = sorted(
-        all_hours,
-        key=lambda hour: max(
-            float(points_by_hour.get(hour) or 0),
-            float(nem_by_hour.get(hour) or 0),
-            float(users_by_hour.get(hour) or 0),
-        ),
-        reverse=True,
-    )[:24]
-    labels = sorted(peak_hours)
-
-    def series_values(source):
-        values = []
-        for hour in labels:
-            try:
-                values.append(round(float(source.get(hour) or 0), 2))
-            except (TypeError, ValueError):
-                values.append(0)
-        return values
-
-    labels_json = json.dumps(labels, ensure_ascii=False)
-    users_data_json = json.dumps(series_values(users_by_hour), ensure_ascii=False)
-    points_data_json = json.dumps(series_values(points_by_hour), ensure_ascii=False)
-    nem_data_json = json.dumps(series_values(nem_by_hour), ensure_ascii=False)
-
-    # Estatísticas resumidas
-    p100 = analytics.get('concurrency_peak_count', 0)
-    p95 = analytics.get('scenario_points', {}).get('p95', 0)
-    peak_hours_list = analytics.get('concurrency_peak_hours', [])
-    peak_info = peak_hours_list[0] if peak_hours_list else ['N/A', 0]
-    peak_time = peak_info[0] if len(peak_info) > 0 else 'N/A'
-    peak_value = peak_info[1] if len(peak_info) > 1 else 0
-
-    return f"""
-    <div id="tab-peak" class="container tab-content">
-        <div class="card">
-            <h2 class="card-header">⛰️ Peak Hours (High-Water Mark) - Ecocardiograma</h2>
-            <p style="color:#475569;">Passe o mouse para ver usuários simultâneos e consumo de AppPoints no mesmo horário.</p>
-            
-            <div class="stats-grid" style="margin-bottom: 1.5rem;">
-                <div class="stat-card border-danger">
-                    <div class="stat-value" style="color: var(--danger);">{fmt_br(p100)}</div>
-                    <div class="stat-title">Pico Real (P100)</div>
-                    <div class="stat-subtitle">Máximo histórico</div>
-                </div>
-                <div class="stat-card border-warning">
-                    <div class="stat-value" style="color: var(--warning);">{fmt_br(p95)}</div>
-                    <div class="stat-title">Pico Seguro (P95)</div>
-                    <div class="stat-subtitle">Percentil 95</div>
-                </div>
-                <div class="stat-card border-accent">
-                    <div class="stat-value" style="color: var(--accent);">{fmt_br(peak_value)}</div>
-                    <div class="stat-title">Maior Pico Registrado</div>
-                    <div class="stat-subtitle">{peak_time}</div>
-                </div>
-            </div>
-
-            <div class="chart-box" style="height: 380px; align-items: stretch; padding: 1.5rem;">
-                <canvas id="peakLineChart"
-                        data-labels='{labels_json}'
-                        data-users-data='{users_data_json}'
-                        data-points-data='{points_data_json}'
-                        data-nem-data='{nem_data_json}'></canvas>
-            </div>
-        </div>
-    </div>
-    """
-
-
-def _render_tab_tabela(app_points_rows):
-    """Renders the 'Plano de Ação' tab content."""
-    return f"""
-    <div id="tab-tabela" class="container tab-content">
-        <div class="card" style="background-color: #ffffff; border-color: #cbd5e1;">
-            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3 style="margin: 0; color: var(--primary);">📋 Plano de Ação Mestre e Fatores de Escala</h3>
-                <button class="btn-export" onclick="exportTableToCSV('table-apppoints', 'Planejamento_Capacity_Maximo.csv')">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 4px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    Exportar para Excel (CSV)
-                </button>
-            </div>
-            <div class="search-container">
-                <input type="text" id="searchAppPoints" class="search-bar" onkeyup="filterAppPoints()" placeholder="Pesquisar por ID, Nome, Cargo...">
-                <select id="filterRec" class="filter-select" onchange="filterAppPoints()">
-                    <option value="">💡 Filtro de Ação</option>
-                    <option value="INATIVO">🔴 Inativos (>90d)</option>
-                    <option value="DOWNGRADE">🟡 Requer Downgrade (Premium p/ Base)</option>
-                    <option value="P/ CONCURRENT">🔵 Escala Offshore (Concurrent)</option>
-                    <option value="CONFIRMADO">🟢 Autorizado Fixo (Authorized)</option>
-                </select>
-                <select id="filterEnt" class="filter-select" onchange="filterAppPoints()">
-                    <option value="">🔰 Todos Níveis (Entitlement)</option>
-                    <option value="PREMIUM">Premium</option>
-                    <option value="BASE">Base</option>
-                </select>
-            </div>
-            {render_table(['USERID', 'Nome', 'Recomendação', 'Entitlement', 'Licença To-Be', 'AppPoints Ref.', 'Fator Analytics', 'Logins 90d', 'Unidade', 'Cargo'], app_points_rows, 'table-apppoints', 'filterable-app-table')}
-        </div>
-    </div>
-    """
-
-
 def _render_scripts(analytics, identity_analytics):
-    """Renders the JavaScript for the report."""
-    scenarios_json = json.dumps(analytics['scenarios_data'])
+    """Renders the JavaScript for charts and interactivity."""
+    scenarios_by_scope_json = json.dumps(analytics.get('scenarios_by_scope', {}))
     points_json = json.dumps(analytics['scenario_points'])
-    total_points_json = json.dumps(analytics.get('scenario_points_total', {}))
     ceiling_limit = analytics.get('ceiling_limit', 1200)
-
     domain_keys = json.dumps(list(identity_analytics['domain_counts'].keys()))
     domain_values = json.dumps(list(identity_analytics['domain_counts'].values()))
 
     return f"""
     <script>
-        const rawScenarios = {scenarios_json};
+        const scenariosByScope = {scenarios_by_scope_json};
         const scenarioPoints = {points_json};
-        const scenarioPointsTotal = {total_points_json};
         const ceilingLimit = {ceiling_limit};
+        let currentScope = 'foresea';  // Estado global do filtro de escopo
 
         function openTab(evt, tabName) {{
             let i, tabcontent, tablinks;
@@ -630,35 +155,39 @@ def _render_scripts(analytics, identity_analytics):
         function loadScenario(scenarioKey, btnElement) {{
             document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
             if(btnElement) btnElement.classList.add('active');
-
+            
             const isFactoredScenario = scenarioKey === 'otimizado_p95' || scenarioKey === 'otimizado_p50';
             const physicalCountsKey = isFactoredScenario ? 'otimizado' : scenarioKey;
-            const data = rawScenarios[physicalCountsKey];
+            
+            // Usa o escopo corrente filtrado
+            const data = scenariosByScope[currentScope][physicalCountsKey];
 
             document.getElementById('inpPremAuth').value = data.pA;
             document.getElementById('inpPremConc').value = data.pC;
             document.getElementById('inpBaseAuth').value = data.bA;
             document.getElementById('inpBaseConc').value = data.bC;
 
+            // CÁLCULO CORRETO:
+            // - AS-IS/SANEADO: Soma de licenças físicas (inventário)
+            // - OTIMIZADO P95/P50: NEM real baseado em sessões concorrentes
             let totalPoints = 0;
             if (scenarioKey === 'otimizado_p95') {{
-                totalPoints = Math.round(scenarioPoints.p95);
+                totalPoints = Math.round(scenarioPoints.p95);  // NEM real (~705)
             }} else if (scenarioKey === 'otimizado_p50') {{
-                totalPoints = Math.round(scenarioPoints.p50);
+                totalPoints = Math.round(scenarioPoints.p50);  // NEM mediana (~480)
             }} else {{
+                // AS-IS ou SANEADO: soma do inventário de licenças
                 totalPoints = (data.pA * 5) + (data.pC * 15) + (data.bA * 3) + (data.bC * 10);
             }}
 
             document.getElementById('calcTotalDisplay').innerText = totalPoints.toLocaleString('pt-BR');
             updateCalculatorDisplay(totalPoints);
-            updateChartFromInputs(); // Agora isso reflete os valores dos inputs, que são consistentes
+            updateChartFromInputs();
         }}
 
         let simChartInstance = null;
         function updateCalculator() {{
-            // Quando o usuário edita manualmente, desativa qualquer preset
             document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-
             const pAuth = parseInt(document.getElementById('inpPremAuth').value) || 0;
             const pConc = parseInt(document.getElementById('inpPremConc').value) || 0;
             const bAuth = parseInt(document.getElementById('inpBaseAuth').value) || 0;
@@ -672,17 +201,11 @@ def _render_scripts(analytics, identity_analytics):
 
         function updateCalculatorDisplay(totalPoints) {{
             const alertEl = document.getElementById('calcAlertBox');
-            const rawSumEl = document.getElementById('rawSumDisplay');
-            try {{
-                if (rawSumEl && scenarioPointsTotal && scenarioPointsTotal.p95) {{
-                    rawSumEl.innerText = Number(scenarioPointsTotal.p95).toLocaleString('pt-BR');
-                }}
-            }} catch(e) {{ console.warn('raw sum display error', e); }}
 
             if (totalPoints > ceilingLimit) {{
                 document.getElementById('calcTotalDisplay').style.color = 'var(--danger)';
                 alertEl.style.display = 'block';
-                alertEl.innerText = `⚠️ TETO EXCEDIDO (>${{ceilingLimit.toLocaleString('pt-BR')}})`;
+                alertEl.innerText = '⚠️ TETO EXCEDIDO (>' + ceilingLimit.toLocaleString('pt-BR') + ')';
             }} else {{
                 document.getElementById('calcTotalDisplay').style.color = 'var(--success)';
                 alertEl.style.display = 'none';
@@ -722,7 +245,7 @@ def _render_scripts(analytics, identity_analytics):
             else if (type === 'blackout') {{ titleText = "⚡ Blackout Total (100%)"; description = "Cenário extremo com todos os usuários ativos simultâneos."; }}
 
             const outBox = document.getElementById('eventOutputBox');
-            outBox.innerText = `${{titleText}}: ${{totalPoints.toLocaleString('pt-BR')}} AppPoints. ${{description}}`;
+            outBox.innerText = titleText + ': ' + totalPoints.toLocaleString('pt-BR') + ' AppPoints. ' + description;
             outBox.style.background = totalPoints > ceilingLimit ? '#fef2f2' : '#ecfdf5';
             outBox.style.color = totalPoints > ceilingLimit ? 'var(--danger)' : '#047857';
 
@@ -802,7 +325,6 @@ def _render_scripts(analytics, identity_analytics):
         }}
 
         document.addEventListener('DOMContentLoaded', function() {{
-            // ---- Peak Line Chart (ecocardiograma-like) ----
             try {{
                 const canvasEl = document.getElementById('peakLineChart');
                 if (canvasEl) {{
@@ -810,7 +332,6 @@ def _render_scripts(analytics, identity_analytics):
                     const usersData = JSON.parse(canvasEl.getAttribute('data-users-data') || '[]');
                     const pointsData = JSON.parse(canvasEl.getAttribute('data-points-data') || '[]');
                     const nemData = JSON.parse(canvasEl.getAttribute('data-nem-data') || '[]');
-
                     const ctxPeak = canvasEl.getContext('2d');
                     new Chart(ctxPeak, {{
                         type: 'line',
@@ -847,86 +368,106 @@ def _render_scripts(analytics, identity_analytics):
                             }}]
                         }},
                         options: {{
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            interaction: {{
-                                mode: 'index',
-                                intersect: false,
-                            }},
+                            responsive: true, maintainAspectRatio: false,
+                            interaction: {{ mode: 'index', intersect: false }},
                             plugins: {{
                                 legend: {{ position: 'bottom' }},
                                 tooltip: {{
-                                    position: 'nearest',
-                                    padding: 10,
-                                    titleFont: {{ weight: 'bold' }},
-                                    bodySpacing: 5,
+                                    position: 'nearest', padding: 10,
+                                    titleFont: {{ weight: 'bold' }}, bodySpacing: 5,
                                     callbacks: {{
                                         label: function(ctx) {{
                                             const label = ctx.dataset.label || '';
                                             const unit = ctx.dataset.unit || '';
-                                            const rawValue = ctx.parsed.y;
-                                            const value = Number(rawValue || 0).toLocaleString('pt-BR');
-                                            return `${{label}}: ${{value}} ${{unit}}`.trim();
+                                            const value = Number(ctx.parsed.y || 0).toLocaleString('pt-BR');
+                                            return label + ': ' + value + ' ' + unit;
                                         }}
                                     }}
                                 }}
                             }},
                             scales: {{
-                                x: {{
-                                    title: {{ display: true, text: 'Hora do Dia' }}
-                                }},
-                                'y-users': {{
-                                    type: 'linear',
-                                    position: 'left',
-                                    beginAtZero: true,
-                                    title: {{ display: true, text: 'Nº de Usuários Simultâneos', color: '#7c3aed' }}
-                                }},
-                                'y-points': {{
-                                    type: 'linear',
-                                    position: 'right',
-                                    beginAtZero: true,
-                                    title: {{ display: true, text: 'AppPoints Consumidos', color: '#f59e0b' }},
-                                    grid: {{
-                                        drawOnChartArea: false, // Só desenha o grid para o eixo Y da esquerda
-                                    }},
-                                }}
+                                x: {{ title: {{ display: true, text: 'Hora do Dia' }} }},
+                                'y-users': {{ type: 'linear', position: 'left', beginAtZero: true, title: {{ display: true, text: 'Nº de Usuários Simultâneos', color: '#7c3aed' }} }},
+                                'y-points': {{ type: 'linear', position: 'right', beginAtZero: true, title: {{ display: true, text: 'AppPoints Consumidos', color: '#f59e0b' }}, grid: {{ drawOnChartArea: false }} }}
                             }}
                         }}
                     }});
                 }}
-            }} catch(e) {{
-                console.error('peakLineChart init failed', e);
-            }}
+            }} catch(e) {{ console.error('peakLineChart init failed', e); }}
 
-            // Force correct initialization with the pre-calculated scenario points
             const initialPoints = Math.round(scenarioPoints.p95);
             document.getElementById('calcTotalDisplay').innerText = initialPoints.toLocaleString('pt-BR');
-            // Populate raw sum display if available
-            try {{
-                const rawSumEl = document.getElementById('rawSumDisplay');
-                if (rawSumEl && scenarioPointsTotal && scenarioPointsTotal.p95) {{
-                    rawSumEl.innerText = Number(scenarioPointsTotal.p95).toLocaleString('pt-BR');
-                }}
-            }} catch(e) {{ console.warn('raw sum init error', e); }}
-
-            // Set ceiling label dynamically
             try {{
                 const ceilLabel = document.getElementById('eventCeilingLabel');
-                if (ceilLabel) ceilLabel.innerText = `Termômetro de Impacto (Limite: ${{ceilingLimit.toLocaleString('pt-BR')}})`;
+                if (ceilLabel) ceilLabel.innerText = 'Termômetro de Impacto (Limite: ' + ceilingLimit.toLocaleString('pt-BR') + ')';
             }} catch(e) {{ }}
 
             loadScenario('otimizado_p95', document.getElementById('btnOtimizado'));
-            triggerEventScenario('p95'); // Initial trigger for the event chart
+            triggerEventScenario('p95');
         }});
+
+        // ---- Escopo Filter Toggle (Aba 3) ----
+        function updateScopeFilter() {{
+            var els = document.getElementsByName('scopeFilter');
+            var newScope = 'foresea';
+            for (var i = 0; i < els.length; i++) {{
+                if (els[i].checked) {{ 
+                    newScope = els[i].value; 
+                    break; 
+                }}
+            }}
+            
+            // Atualiza variável global
+            currentScope = newScope;
+            
+            // Atualiza label de escopo
+            const scopeLabelEl = document.getElementById('currentScopeLabel');
+            if (scopeLabelEl) {{
+                if (newScope === 'foresea') {{
+                    scopeLabelEl.innerText = 'Escopo: FORESEA + PARCEIRO';
+                }} else if (newScope === 'terceiros') {{
+                    scopeLabelEl.innerText = 'Escopo: TERCEIROS';
+                }} else if (newScope === 'integracao') {{
+                    scopeLabelEl.innerText = 'Escopo: INTEGRAÇÃO (Oracle/Serviço)';
+                }} else {{
+                    scopeLabelEl.innerText = 'Escopo: TODOS';
+                }}
+            }}
+            
+            console.log("Filtro de escopo alterado para:", newScope);
+            
+            // Recarrega o cenário atualmente selecionado com novo escopo
+            const activeBtn = document.querySelector('.preset-btn.active');
+            if (activeBtn) {{
+                const scenarioMap = {{
+                    'btnAsIs': 'asis',
+                    'btnSaneado': 'saneado',
+                    'btnOtimizado': 'otimizado_p95',
+                    'btnOtimizadoP50': 'otimizado_p50'
+                }};
+                const scenarioKey = scenarioMap[activeBtn.id] || 'otimizado_p95';
+                loadScenario(scenarioKey, activeBtn);
+            }} else {{
+                loadScenario('otimizado_p95', document.getElementById('btnOtimizado'));
+            }}
+        }}
+
+        // ---- Escopo Filter Toggle (Aba 6) ----
+        function updateScopeFilterPeak() {{
+            var els2 = document.getElementsByName('scopeFilterPeak');
+            var sc2 = 'foresea';
+            for (var j = 0; j < els2.length; j++) {{
+                if (els2[j].checked) {{ sc2 = els2[j].value; break; }}
+            }}
+            console.log("Filtro de escopo Peak alterado para:", sc2);
+        }}
     </script>
     """
 
 
-# --- Main Orchestrator Function ---
-
 def render_html(data):
     """
-    Orchestrates the rendering of the full HTML report by assembling its components.
+    Orchestrates the rendering of the full HTML report by assembling components from each aba module.
     """
     analytics = data['analytics']
     gov_tables = data['gov_tables']
@@ -944,12 +485,12 @@ def render_html(data):
 </head>
 <body>
     {_render_header_and_tabs()}
-    {_render_tab_painel(analytics, identity_analytics)}
-    {_render_tab_gov(gov_tables)}
-    {_render_tab_apppoints(analytics)}
-    {_render_tab_eventos(analytics)}
-    {_render_tab_peak(analytics)}
-    {_render_tab_tabela(app_points_rows)}
+    {render_tab_painel(analytics, identity_analytics)}
+    {render_tab_gov(gov_tables)}
+    {render_tab_apppoints(analytics)}
+    {render_tab_eventos(analytics)}
+    {render_tab_peak(analytics)}
+    {render_tab_tabela(app_points_rows)}
     {_render_scripts(analytics, identity_analytics)}
 </body>
 </html>"""

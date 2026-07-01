@@ -19,6 +19,18 @@ SESSION_MINUTES = 60
 LOOKBACK_DAYS = 90
 
 
+def _normalize_userid(uid):
+    """
+    Normalizes USERID for consistent matching across datasets.
+    Removes whitespace and converts to uppercase.
+    
+    Critical for cross-referencing logintracking with user profiles.
+    """
+    if not uid:
+        return ""
+    return str(uid).strip().upper().replace(" ", "")
+
+
 def _load_csv(path):
     if not path.exists():
         return []
@@ -63,10 +75,10 @@ def main():
         print("❌ Dados insuficientes para cálculo de capacidade.")
         return
 
-    # Golden record
+    # Golden record with normalized USERIDs for robust matching
     golden = {}
     for row in optimizations:
-        userid = (row.get("USERID") or "").strip().upper()
+        userid = _normalize_userid(row.get("USERID"))
         if not userid:
             continue
 
@@ -80,37 +92,8 @@ def main():
         if userid not in golden or cost > golden[userid]["cost"]:
             golden[userid] = {"cost": cost, "license": lic}
 
-    # --- DIAGNOSTIC START ---
-    print("\n--- USERID MISMATCH DIAGNOSTIC ---")
-    golden_keys = set(golden.keys())
-    login_userids_raw = set((r.get("USERID") or "").strip().upper() for r in login_rows if r.get("USERID"))
-    
-    # Proposed normalization function for consistency
-    def normalize_userid(uid):
-        return (uid or "").strip().upper().replace(" ", "")
-
-    login_userids_normalized = set(normalize_userid(r.get("USERID")) for r in login_rows if r.get("USERID"))
-    golden_keys_normalized = set(normalize_userid(k) for k in golden_keys)
-
-    print(f"Total Golden Users: {len(golden_keys)}")
-    print(f"Total unique users in logintrack: {len(login_userids_raw)}")
-    
-    intersect_raw = golden_keys.intersection(login_userids_raw)
-    print(f"Users in both (raw match): {len(intersect_raw)}")
-
-    intersect_normalized = golden_keys_normalized.intersection(login_userids_normalized)
-    print(f"Users in both (after .replace(' ', '') normalization): {len(intersect_normalized)}")
-    
-    if len(intersect_raw) == 0 and len(login_userids_raw) > 0:
-        print("\n  [!!] DIAGNOSIS: Mismatch confirmed. No raw USERIDs from logs match the golden record.")
-        print(f"  Golden sample: {sorted(list(golden_keys))[:5]}")
-        print(f"  Logins sample: {sorted(list(login_userids_raw))[:5]}")
-    
-    if len(intersect_normalized) > len(intersect_raw):
-        print("  [>>] DIAGNOSIS: Normalization with .replace(' ', '') finds more matching users.")
-    
-    print("--- DIAGNOSTIC END ---\n")
-    # --- END DIAGNOSTIC ---
+    # Normalization now applied consistently above - diagnostic validated and removed
+    print(f"✓ Loaded {len(golden)} active users from optimization recommendations")
 
     # Authorized fixo
     authorized_reserved = sum(
@@ -142,7 +125,7 @@ def main():
         if result != "LOGIN":
             continue
 
-        userid = (rec.get("USERID") or "").strip().upper()
+        userid = _normalize_userid(rec.get("USERID"))
         dt = _parse_dt(rec.get("ATTEMPTDATE"))
 
         if not userid or not dt or dt < window_start:
@@ -187,6 +170,31 @@ def main():
     peak_hour = max(hourly_app_points_nem.items(), key=lambda x: x[1])
     true_total_app_points = peak_hour[1]
 
+    # IMPLEMENTAÇÃO: Peak Contributors
+    # Identifica usuários ativos no horário de pico e sua contribuição
+    peak_hour_dt = peak_hour[0]
+    peak_contributors_list = []
+    
+    if peak_hour_dt in concurrent_users_by_hour:
+        peak_users = concurrent_users_by_hour[peak_hour_dt]
+        
+        for uid in peak_users:
+            record = golden.get(uid)
+            if not record:
+                continue
+            
+            peak_contributors_list.append({
+                "userid": uid,
+                "app_points": record["cost"],
+                "license_type": record["license"]
+            })
+    
+    # Ordena por contribuição (maior para menor)
+    peak_contributors_list.sort(key=lambda x: x["app_points"], reverse=True)
+    
+    # Limita aos top 50 contribuidores
+    peak_contributors = peak_contributors_list[:50]
+
     metrics = {
         "unique_human_users": len(golden),
         "authorized_reserved_points": authorized_reserved,
@@ -201,8 +209,8 @@ def main():
             key=lambda x: x[1],
             reverse=True
         )[:24],
-        "peak_contributors": [],
-        "peak_contributors_count": 0,
+        "peak_contributors": peak_contributors,
+        "peak_contributors_count": len(peak_contributors),
     }
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)

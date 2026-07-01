@@ -111,18 +111,84 @@ class DataProcessor:
                 scenario_points['p100'] = int(max(values))
                 scenario_points['blackout'] = int(max(values))
 
-        # Somatório bruto (per-user) apenas para referência (XLSX)
-        # Usa apenas usuários FORESEA + PARCEIRO (mesmo escopo dos cenários)
-        foresea_parceiro_total = sum(
-            float(u.get('APP_POINTS', 0) or 0) 
-            for u in foresea_parceiro_users
-        )
-        scenario_points_total = {
-            'p50': int(foresea_parceiro_total),
-            'p95': int(foresea_parceiro_total),
-            'p100': int(foresea_parceiro_total),
-            'blackout': int(foresea_parceiro_total)
+        # REFACTORED: Segregar dados por escopo para filtros funcionarem
+        # Calcula cenários para cada escopo: FORESEA+PARCEIRO, TERCEIROS, INTEGRACAO, TODOS
+        scenarios_by_scope = {
+            'foresea': {'asis': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}, 
+                       'saneado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0},
+                       'otimizado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}},
+            'terceiros': {'asis': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0},
+                         'saneado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0},
+                         'otimizado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}},
+            'integracao': {'asis': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0},
+                          'saneado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0},
+                          'otimizado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}},
+            'todos': {'asis': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0},
+                     'saneado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0},
+                     'otimizado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}}
         }
+        
+        # Reprocessar todos os usuários com segregação por escopo
+        for u in self.app_points:
+            domain_cat = u.get('DOMAIN_CATEGORY', '')
+            is_foresea = domain_cat in ('FORESEA', 'PARCEIRO')
+            is_integracao = domain_cat == 'INTEGRACAO'
+            is_terceiro = domain_cat not in ('FORESEA', 'PARCEIRO', 'INTEGRACAO', 'SEM DOMINIO')
+            
+            if is_foresea:
+                scope_key = 'foresea'
+            elif is_integracao:
+                scope_key = 'integracao'
+            elif is_terceiro:
+                scope_key = 'terceiros'
+            else:
+                continue  # Ignora SEM DOMINIO para cálculos de cenários
+            
+            lic = u.get('LICENSE_MODEL', 'CONCURRENT')
+            ent = u.get('ENTITLEMENT', 'BASE')
+            rec = u.get('OPTIMIZATION_REC', 'OK')
+            
+            is_prem = (ent == 'PREMIUM')
+            is_auth = (lic == 'AUTHORIZED')
+            
+            # AS-IS para este escopo
+            if is_prem:
+                scenarios_by_scope[scope_key]['asis']['pA' if is_auth else 'pC'] += 1
+            else:
+                scenarios_by_scope[scope_key]['asis']['bA' if is_auth else 'bC'] += 1
+            
+            # Inativo não entra nas próximas camadas
+            if rec == 'INATIVO (>90d)':
+                continue
+            
+            # SANEADO para este escopo
+            if is_prem:
+                scenarios_by_scope[scope_key]['saneado']['pA' if is_auth else 'pC'] += 1
+            else:
+                scenarios_by_scope[scope_key]['saneado']['bA' if is_auth else 'bC'] += 1
+            
+            # OTIMIZADO para este escopo
+            final_ent = 'BASE' if (rec == 'DOWNGRADE_CANDIDATE' and ent == 'PREMIUM') else ent
+            final_lic = 'CONCURRENT' if rec == 'MOVE_TO_CONCURRENT' else lic
+            f_is_prem = (final_ent == 'PREMIUM')
+            f_is_auth = (final_lic == 'AUTHORIZED')
+            
+            if f_is_prem:
+                scenarios_by_scope[scope_key]['otimizado']['pA' if f_is_auth else 'pC'] += 1
+            else:
+                scenarios_by_scope[scope_key]['otimizado']['bA' if f_is_auth else 'bC'] += 1
+        
+        # Calcular cenário TODOS (soma de foresea + terceiros + integracao)
+        for scenario in ['asis', 'saneado', 'otimizado']:
+            for key in ['pA', 'pC', 'bA', 'bC']:
+                scenarios_by_scope['todos'][scenario][key] = (
+                    scenarios_by_scope['foresea'][scenario][key] + 
+                    scenarios_by_scope['terceiros'][scenario][key] +
+                    scenarios_by_scope['integracao'][scenario][key]
+                )
+        
+        # Manter scenarios_data original para compatibilidade (escopo FORESEA+PARCEIRO)
+        scenarios_data = scenarios_by_scope['foresea']
 
         # ------------------------------------------------------
         # Aba 1 alinhada ao Excel (summary_data)
@@ -158,13 +224,15 @@ class DataProcessor:
             'downgrade_count': downgrade_count,
             'concurrent_count': concurrent_count,
             'scenarios_data': scenarios_data,
+            'scenarios_by_scope': scenarios_by_scope,  # NOVO: dados segregados por escopo
             'scenario_points': scenario_points,
-            'scenario_points_total': scenario_points_total,
 
             # NEM real / picos
             'concurrency_peak_count': true_peak,
             'concurrency_peak_hours': concurrency_summary.get('peak_hours', []),
             'concurrency_peak_users_hours': concurrency_summary.get('peak_hours_users', []),
+            'concurrency_peak_contributors': concurrency_summary.get('peak_contributors', []),
+            'concurrency_peak_contributors_count': concurrency_summary.get('peak_contributors_count', 0),
             'concurrency_hourly': concurrency_summary.get('hourly_counts', {}),
             'concurrency_hourly_app_points': concurrency_summary.get('hourly_app_points', {}),
             'concurrency_hourly_concurrent_app_points': concurrency_summary.get('hourly_concurrent_app_points', {}),

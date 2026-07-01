@@ -3,8 +3,24 @@ from collections import defaultdict
 from scripts.config import get_foresea_domains
 
 def get_user_domain_category(email):
+    """
+    Classifica usuários por categoria de domínio.
+    
+    Categorias:
+    - INTEGRACAO: Contas de serviço (WSORACLE, etc.)
+    - FORESEA: Funcionários Foresea
+    - PARCEIRO: Parceiros estratégicos
+    - TERCEIRO: Contractors externos
+    - SEM DOMINIO: Sem email válido
+    """
     if not email or '@' not in email:
         return 'SEM DOMINIO'
+    
+    # Identifica contas de integração/serviço Oracle
+    # Formato: WSORACLE ou similar
+    if email.upper().startswith('WSORACLE') or 'ORACLE' in email.upper():
+        return 'INTEGRACAO'
+    
     domain = email.split('@')[1].lower()
     foresea_domains = get_foresea_domains()
     if domain == foresea_domains[0]:
@@ -29,9 +45,19 @@ def build_user_profiles(identities, access_rows, email_rows=None, person_rows=No
         profile['ENVS'].add(r.get('ENV_DB', '').strip())
         if r.get('STATUS', '').upper() == 'ACTIVE': profile['STATUS'] = 'ACTIVE'
         email = r.get('PRIMARYEMAIL', '').strip()
-        if email and not profile['EMAIL']:
+        
+        # CORREÇÃO: Detectar contas de integração pelo USERID quando não há email
+        if not email and userid.upper().startswith('WSORACLE'):
+            profile['EMAIL'] = userid  # Usa USERID como identificador
+            profile['DOMAIN_CATEGORY'] = 'INTEGRACAO'
+        elif email and not profile['EMAIL']:
             profile['EMAIL'] = email
             profile['DOMAIN_CATEGORY'] = get_user_domain_category(email)
+        elif not profile['EMAIL']:
+            # Fallback: se não tem email, verifica se é conta de sistema pelo USERID
+            if 'ORACLE' in userid.upper() or userid.upper().startswith('WS'):
+                profile['EMAIL'] = userid
+                profile['DOMAIN_CATEGORY'] = 'INTEGRACAO'
 
     for r in email_rows or []:
         userid = (r.get('PERSONID') or r.get('USERID') or '').strip().upper()

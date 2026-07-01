@@ -8754,6 +8754,192 @@
       205
     ]
   ],
-  "peak_contributors": [],
-  "peak_contributors_count": 0
+  "peak_contributors": [
+    {
+      "userid": "VICENTESENA",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "RENATOCARDOSO",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "MARCIOBRITO",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "DANIELFERNANDES",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "PEDROVIEIRA",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "SORAYAMARTINS",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "ISMAELARAUJO",
+      "app_points": 5,
+      "license_type": "BASE_CONCURRENT"
+    },
+    {
+      "userid": "MAXADMIN",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "SERGIORAMALHO",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "VICTORCOSTA",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "CLARISSERODRIGUES",
+      "app_points": 5,
+      "license_type": "BASE_CONCURRENT"
+    },
+    {
+      "userid": "AURELIOMARTINS",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "FRANKNOGUEIRA",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "GREGORYMATOS",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "JOSESILVA",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "ALINEAMANCIO",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "JEFERSONWILLIAMS",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "CAROLINABRAGA",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "PEDROMACHADO",
+      "app_points": 5,
+      "license_type": "BASE_CONCURRENT"
+    },
+    {
+      "userid": "FABIOFIGUEIRA",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "LUCASSOUZA",
+      "app_points": 5,
+      "license_type": "BASE_CONCURRENT"
+    },
+    {
+      "userid": "MAXIMOLEITE",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "GEORGEMEDEIROS",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "NEIDSONSOUZA",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "RAFAELDEALMEIDA",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "MAURICIOCORREIA",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "LEONARDOFRANCISCO",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "ITEAM",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "JOSETIAGO",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "WILLAMISSILVA",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "IGORRODRIGUES",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "WLADMYRCALLADO",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "ANTONIO.GONCALVES",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "CARLOSMARIANO",
+      "app_points": 5,
+      "license_type": "BASE_CONCURRENT"
+    },
+    {
+      "userid": "ARLANFERREIRA",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "MAURICIOSILVA",
+      "app_points": 5,
+      "license_type": "BASE_AUTHORIZED"
+    },
+    {
+      "userid": "MARLLONRIVALDO",
+      "app_points": 5,
+      "license_type": "BASE_CONCURRENT"
+    }
+  ],
+  "peak_contributors_count": 37
 }

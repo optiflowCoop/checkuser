@@ -32,10 +32,11 @@ def analyze_usage(user_profiles):
         elif profile.get('ENTITLEMENT') == 'PREMIUM' and not used_premium:
              recommendation = "DOWNGRADE_CANDIDATE"
              reason = "Possui permissão Premium, mas não utiliza módulos O&G."
-        elif profile.get('LICENSE_MODEL') == 'AUTHORIZED' and login_count < 20:
+        # CANONICAL RULE: MOVE_TO_CONCURRENT uses < 30 threshold (aligned with documentation)
+        elif profile.get('LICENSE_MODEL') == 'AUTHORIZED' and login_count < 30:
              recommendation = "MOVE_TO_CONCURRENT"
              reason = "Custo Authorized, mas com baixa frequência de acesso."
-        elif profile.get('LICENSE_MODEL') == 'AUTHORIZED' and login_count >= 20:
+        elif profile.get('LICENSE_MODEL') == 'AUTHORIZED' and login_count >= 30:
              recommendation = "CONFIRMED_AUTHORIZED"
              reason = "Alto uso confirmado."
 

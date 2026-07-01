@@ -37,6 +37,8 @@ def get_unique_users_data():
             domain_counts['foresea'] += 1
         elif domain == 'PARCEIRO':
             domain_counts['foresea_partner'] += 1
+        elif domain == 'INTEGRACAO':
+            domain_counts['integracao'] += 1
         elif domain == 'TERCEIRO':
             domain_counts['other'] += 1
         else:

@@ -1,9 +1,24 @@
 # analysis/licensing.py
-from scripts.config import get_app_points_config, get_critical_titles, get_foresea_domains
+# CANONICAL MODULE: License model assignment logic
+# Single source of truth for determining AUTHORIZED vs CONCURRENT
+from scripts.config import get_critical_titles, get_foresea_domains
 from .classification import classify_usage_profile, determine_user_entitlement
+from .entitlement import calculate_app_points  # Import from canonical location
 
 def assign_license_model(usage_profile, user_titles):
-    """Determines the license model based on usage profile and titles."""
+    """
+    CANONICAL: Determines the license model based on usage profile and titles.
+    
+    This is the single source of truth for license model assignment.
+    Used by all simulation and optimization modules.
+    
+    Args:
+        usage_profile: POWER, MEDIUM, or LIGHT
+        user_titles: List of job titles for critical role detection
+        
+    Returns:
+        'AUTHORIZED' or 'CONCURRENT'
+    """
     critical_titles = get_critical_titles()
     user_titles_str = " ".join(user_titles).upper()
     is_critical = any(crit_title in user_titles_str for crit_title in critical_titles)
@@ -11,11 +26,6 @@ def assign_license_model(usage_profile, user_titles):
     if usage_profile == "POWER" or is_critical:
         return "AUTHORIZED"
     return "CONCURRENT"
-
-def calculate_app_points(entitlement, license_model):
-    """Calculates AppPoints based on entitlement and license model."""
-    config = get_app_points_config()
-    return config.get(entitlement, {}).get(license_model, 0)
 
 def simulate_app_points(active_profiles):
     """

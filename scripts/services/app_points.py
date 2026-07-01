@@ -156,7 +156,8 @@ def _recommend(profile, entitlement, license_model, login_count, operational_pre
             return 'OK', 'Premium mantido: acesso O&G detectado via grupos.'
         return 'DOWNGRADE_CANDIDATE', 'Acesso Premium com uso muito baixo; validar necessidade O&G.'
 
-    if license_model == 'AUTHORIZED' and login_count < 20:
+    # CANONICAL RULE: MOVE_TO_CONCURRENT applies when login_count < 30 (documented standard)
+    if license_model == 'AUTHORIZED' and login_count < 30:
         return 'MOVE_TO_CONCURRENT', 'Baixa frequencia para usuario dedicado; avaliar pool concorrente.'
     if license_model == 'AUTHORIZED':
         return 'CONFIRMED_AUTHORIZED', 'Uso/cargo justifica disponibilidade fixa.'
