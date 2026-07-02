@@ -1,16 +1,10 @@
 #!/usr/bin/env python3
 """
-Maximo Identity Sanity - Pipeline Executor (VERSAO COM SOLID REFACTORING)
+Maximo Identity Sanity - Pipeline Executor
 
 Runs all scripts in the correct order to extract, consolidate, 
 classify identities, and generate the final risk reports.
 
-MUDANCAS:
-✓ Usa analyze_usage.py (com UserClassificationEngine + SOLID)
-✓ Usa license_optimizer.py (com LicenseOptimizer + SOLID)
-✓ Logs MUITO detalhados em cada fase
-✓ 100% dados REAIS (não mocks/random)
-✓ Suporta --skip-extract para re-run rápido
 """
 import subprocess
 import sys
@@ -26,64 +20,64 @@ PIPELINE_STEPS = [
         "skippable": True
     },
     {
-        "name": "2. Consolidando Textos Brutos (consolidate_outputs.py)",
-        "cmd": [sys.executable, str(ROOT / "scripts" / "consolidate_outputs.py")],
-        "skippable": True
-    },
-    {
-        "name": "2.5. Gerando Logintracking Consolidado com Ambientes (generate_logintrack_from_sources.py)",
+        "name": "2. Extraindo Logintracking (generate_logintrack_from_sources.py)",
         "cmd": [sys.executable, str(ROOT / "scripts" / "generate_logintrack_from_sources.py")],
         "skippable": True
     },
     {
-        "name": "3. Montando Base de Acessos (consolidate_user_access.py)",
+        "name": "3. Consolidando Textos Brutos (consolidate_outputs.py)",
+        "cmd": [sys.executable, str(ROOT / "scripts" / "consolidate_outputs.py")],
+        "skippable": True
+    },
+    {
+        "name": "4. Montando Base de Acessos (consolidate_user_access.py)",
         "cmd": [sys.executable, str(ROOT / "src" / "consolidate_user_access.py")],
         "skippable": False
     },
     {
-        "name": "4. Normalizando e Tipificando Contas (normalize.py)",
+        "name": "5. Normalizando e Tipificando Contas (normalize.py)",
         "cmd": [sys.executable, str(ROOT / "src" / "normalize.py")],
         "skippable": False
     },
     {
-        "name": "5. Detectando Reuso de USERID (cross_env_userid_reuse.py)",
+        "name": "6. Detectando Reuso de USERID (cross_env_userid_reuse.py)",
         "cmd": [sys.executable, str(ROOT / "src" / "cross_env_userid_reuse.py")],
         "skippable": False
     },
     {
-        "name": "6. Detectando Conflitos de Login (login_conflicts.py)",
+        "name": "7. Detectando Conflitos de Login (login_conflicts.py)",
         "cmd": [sys.executable, str(ROOT / "src" / "login_conflicts.py")],
         "skippable": False
     },
     {
-        "name": "7. Classificando Identidades e Worklist (identity_classification.py)",
+        "name": "8. Classificando Identidades e Worklist (identity_classification.py)",
         "cmd": [sys.executable, str(ROOT / "src" / "identity_classification.py")],
         "skippable": False
     },
     {
-        "name": "8. Consolidando Licenças (consolidate_license_footprint.py)",
+        "name": "9. Consolidando Licenças (consolidate_license_footprint.py)",
         "cmd": [sys.executable, str(ROOT / "src" / "consolidate_license_footprint.py")],
         "skippable": False
     },
     {
-        "name": "9. [FASE 3] Analisando Histórico de Uso - SOLID (analyze_usage.py)",
+        "name": "10. [FASE 3] Analisando Histórico de Uso (analyze_usage.py)",
         "cmd": [sys.executable, str(ROOT / "src" / "analyze_usage.py")],
         "skippable": False,
-        "features": "✓ Dados REAIS (não mocks) ✓ UserClassificationEngine (SOLID) ✓ 6 rules independentes"
+        "features": "✓ Dados REAIS ✓ UserClassificationEngine ✓ 6 rules independentes"
     },
     {
-        "name": "10. [FASE 3-B] Detector de Otimização - SOLID (license_optimizer.py)",
+        "name": "11. [FASE 3-B] Detector de Otimização (license_optimizer.py)",
         "cmd": [sys.executable, str(ROOT / "src" / "license_optimizer.py")],
         "skippable": False,
-        "features": "✓ LicenseOptimizer (SOLID) ✓ 6 estratégias ✓ Batch processing ✓ Summary stats"
+        "features": "✓ LicenseOptimizer ✓ 6 estratégias ✓ Batch processing ✓ Summary stats"
     },
     {
-        "name": "11. Gerando Uso Real (true_capacity_calculator.py)",
+        "name": "12. Gerando Uso Real (true_capacity_calculator.py)",
         "cmd": [sys.executable, str(ROOT / "src" / "true_capacity_calculator.py")],
         "skippable": False
     },
     {
-        "name": "12. Gerando Dashboards e Excel de Risco (generate_risk_report.py)",
+        "name": "13. Gerando Dashboards e Excel de Risco (generate_risk_report.py)",
         "cmd": [sys.executable, str(ROOT / "scripts" / "generate_risk_report.py")],
         "skippable": False
     }
@@ -92,18 +86,18 @@ PIPELINE_STEPS = [
 
 def main():
     print("\n" + "=" * 100)
-    print("MAXIMO IDENTITY SANITY PIPELINE - COM REFACTORING SOLID")
+    print("MAXIMO IDENTITY SANITY PIPELINE")
     print("=" * 100)
-    print("\nVersão: 1.0 SOLID (com UserClassificationEngine + LicenseOptimizer)")
-    print("Dados: 100% REAIS de consolidated_logintracking.csv (nenhum mock, nenhum random)")
+    print("\nVersão: 1.0 (com UserClassificationEngine + LicenseOptimizer)")
+    print("Dados: 100% REAIS de consolidated_logintracking.csv ")
     print("Padrões: Strategy Pattern + SOLID Principles")
     
     # Parse arguments
     skip_extract = '--skip-extract' in sys.argv
     skip_steps = []
     if skip_extract:
-        print("\nModo: --skip-extract (pulando extração do DB2)")
-        skip_steps = [0, 1]  # Skip steps 1 and 2 (extraction)
+        print("\nModo: --skip-extract (pulando extração de dados brutos)")
+        skip_steps = [0, 1]  # Skip steps 1 and 2 (DB2 + logintracking extraction)
     
     start_time = time.time()
     step_times = []
@@ -184,8 +178,8 @@ def main():
     print(f"  4. Abrir workbook em: output/reports/maximo_identity_sanity_workbook.xlsx")
     
     print(f"\n[PROXIMA EXECUCAO RAPIDA]")
-    print(f"  $ python run_pipeline_new.py --skip-extract")
-    print(f"  (Pula extração DB2 e roda apenas análise + otimização)")
+    print(f"  $ python run_pipeline.py --skip-extract")
+    print(f"  (Pula extração do DB2, roda logintracking + análise + otimização)")
     
     print(f"\n{'=' * 100}\n")
 

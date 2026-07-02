@@ -50,18 +50,34 @@ MAX_RETRIES = 3
 RETRY_DELAY = 5  # seconds
 
 summary = []
-for conn in connections:
+total_extractions = len(connections) * len(queries_to_run)
+
+for conn_idx, conn in enumerate(connections, 1):
     env = conn.get('env_db') or conn.get('name')
     connstr = f"DATABASE={conn.get('database')};HOSTNAME={conn.get('hostname')};PORT={conn.get('port')};PROTOCOL={conn.get('protocol','TCPIP')};UID={conn.get('username')};PWD={conn.get('password')};"
     
-    for qname in queries_to_run:
+    total_queries = len(queries_to_run)
+    
+    print(f"\n{'=' * 100}")
+    print(f"[GO-LIVE {conn_idx}/{len(connections)}] Extraindo dados do ambiente: {env}")
+    print(f"  Origem: {conn.get('hostname')}:{conn.get('port')}/{conn.get('database')}")
+    print(f"  Total de queries: {total_queries}")
+    print(f"{'=' * 100}")
+    
+    for q_idx, qname in enumerate(queries_to_run, 1):
+        progress_pct = (q_idx / total_queries) * 100
+        
         # Resolve query
         try:
-            import sys; sys.path.insert(0, str(ROOT/'src')); from queries import resolve_query
+            sys.path.insert(0, str(ROOT/'queries'))
+            from queries import resolve_query
             sql = resolve_query(qname)
         except Exception as exc:
+            print(f"⚠️  Erro ao resolver query '{qname}': {exc}")
             sql = qname
             
+        print(f"\n  [{q_idx}/{total_queries}] ({progress_pct:.1f}%) Extraindo: {qname}")
+        
         tf = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.sql', dir=ROOT)
         tf.write(sql.rstrip().rstrip(';') + ';\n')
         tf.flush()
@@ -82,35 +98,51 @@ for conn in connections:
                 if rc == 0:
                     success = True
                     summary.append({'env': env, 'query': qname, 'rc': rc, 'outfile': str(outpath)})
+                    print(f"  ✓ Sucesso! Arquivo: {outpath.name}")
                 else:
                     last_error = proc.stderr[:400]
-                    print(f"[{attempt}/{MAX_RETRIES}] Retry {env}_{qname} due to Return Code {rc}...")
+                    print(f"  ⚠ [{attempt}/{MAX_RETRIES}] Retry {env}_{qname} due to Return Code {rc}...")
                     time.sleep(RETRY_DELAY)
                     attempt += 1
             except subprocess.TimeoutExpired as e:
                 last_error = f"Timed out after 300s"
-                print(f"[{attempt}/{MAX_RETRIES}] Retry {env}_{qname} due to Timeout...")
+                print(f"  ⚠ [{attempt}/{MAX_RETRIES}] Retry {env}_{qname} due to Timeout...")
                 time.sleep(RETRY_DELAY)
                 attempt += 1
             except Exception as e:
                 last_error = str(e)
-                print(f"[{attempt}/{MAX_RETRIES}] Retry {env}_{qname} due to Error: {last_error}")
+                print(f"  ⚠ [{attempt}/{MAX_RETRIES}] Retry {env}_{qname} due to Error: {last_error}")
                 time.sleep(RETRY_DELAY)
                 attempt += 1
                 
         if not success:
             summary.append({'env': env, 'query': qname, 'error': last_error, 'outfile': str(outpath)})
+            print(f"  ✗ Falha após {MAX_RETRIES} tentativas")
             
         try:
             os.remove(tf.name)
         except OSError:
             pass
+    
+    # Resumo do ambiente
+    env_success = sum(1 for s in summary if s.get('env') == env and 'error' not in s)
+    env_failed = sum(1 for s in summary if s.get('env') == env and 'error' in s)
+    print(f"\n  {'=' * 96}")
+    print(f"  Resumo {env}: {env_success} sucesso(s), {env_failed} falha(s)")
+    print(f"  {'=' * 96}")
 
+print(f"\n{'=' * 100}")
+print(f"RESUMO DA EXTRAÇÃO - {total_extractions} consultas executadas")
+print(f"{'=' * 100}")
 for s in summary:
     if 'error' in s:
-        print(f"{s['env']} {s['query']}: ERROR {s['error']}")
+        print(f"  ✗ {s['env']:6s} | {s['query']:20s} | ERROR: {s['error'][:50]}")
     else:
-        status = 'OK' if s.get('rc',1)==0 else f"RC={s.get('rc')}"
-        print(f"{s['env']} {s['query']}: {status} -> {s['outfile']}")
+        status = '✓ OK' if s.get('rc',1)==0 else f"✗ RC={s.get('rc')}"
+        print(f"  {status} | {s['env']:6s} | {s['query']:20s} | {Path(s['outfile']).name}")
 
-print('\nDone. Outputs in output/raw/ folder.')
+successful = sum(1 for s in summary if 'error' not in s)
+failed = sum(1 for s in summary if 'error' in s)
+print(f"\nTotal: {successful} sucesso(s), {failed} falha(s)")
+print(f"Arquivos salvos em: {OUTDIR}")
+print('\nDone.')

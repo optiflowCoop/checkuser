@@ -32,42 +32,70 @@ def render_tab_apppoints(analytics):
                     <span>🌐 TODOS</span>
                 </label>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: start;">
-                <div class="preset-btn-group">
-                    <button class="preset-btn" id="btnAsIs" onclick="loadScenario('asis', this)">
-                        <strong>1. Cenário Atual (As-Is)</strong>
-                        <p>Simula o consumo se todos os usuários atuais fossem migrados sem nenhuma otimização.</p>
+            <div style="display: grid; grid-template-columns: 280px 1fr; gap: 1.5rem; align-items: stretch;">
+                <div class="preset-btn-group" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <button class="preset-btn" id="btnAsIs" onclick="loadScenario('asis', this)" style="flex: 1; min-height: 120px;">
+                        <strong style="font-size: 1rem;">1. Cenário Atual (As-Is)</strong>
+                        <p style="font-size: 0.85rem; margin-top: 0.5rem;">Simula o consumo se todos os usuários atuais fossem migrados sem nenhuma otimização.</p>
                     </button>
-                    <button class="preset-btn" id="btnSaneado" onclick="loadScenario('saneado', this)">
-                        <strong>2. Pós-Saneamento</strong>
-                        <p>Simula o consumo após a desativação de usuários inativos (> 90 dias).</p>
+                    <button class="preset-btn" id="btnSaneado" onclick="loadScenario('saneado', this)" style="flex: 1; min-height: 120px;">
+                        <strong style="font-size: 1rem;">2. Pós-Saneamento</strong>
+                        <p style="font-size: 0.85rem; margin-top: 0.5rem;">Simula o consumo após a desativação de usuários inativos (> 90 dias).</p>
                     </button>
-                    <button class="preset-btn active" id="btnOtimizado" onclick="loadScenario('otimizado_p95', this)">
-                        <strong>3. Otimizado (Pico P95)</strong>
-                        <p>Aplica todas as otimizações (inativos, downgrades, concorrência) usando o fator de pico (P95).</p>
+                    <button class="preset-btn active" id="btnOtimizado" onclick="loadScenario('otimizado_p95', this)" style="flex: 1; min-height: 120px;">
+                        <strong style="font-size: 1rem;">3. Otimizado (Pico P95)</strong>
+                        <p style="font-size: 0.85rem; margin-top: 0.5rem;">Aplica todas as otimizações (inativos, downgrades, concorrência) usando o fator de pico (P95).</p>
                     </button>
-                    <button class="preset-btn" id="btnOtimizadoP50" onclick="loadScenario('otimizado_p50', this)">
-                        <strong>4. Otimizado (Mediana P50)</strong>
-                        <p>Aplica todas as otimizações usando o fator de uso mediano (P50) para um dia comum.</p>
+                    <button class="preset-btn" id="btnOtimizadoP50" onclick="loadScenario('otimizado_p50', this)" style="flex: 1; min-height: 120px;">
+                        <strong style="font-size: 1rem;">4. Otimizado (Mediana P50)</strong>
+                        <p style="font-size: 0.85rem; margin-top: 0.5rem;">Aplica todas as otimizações usando o fator de uso mediano (P50) para um dia comum.</p>
                     </button>
                 </div>
-                <div class="simulator-grid">
-                    <div class="simulator-inputs">
-                        <div class="calc-input-group"><label>Premium Auth <span class="calc-badge-pts">5 pts</span></label><input type="number" id="inpPremAuth" oninput="updateCalculator()"></div>
-                        <div class="calc-input-group"><label>Premium Conc <span class="calc-badge-pts">15 pts</span></label><input type="number" id="inpPremConc" oninput="updateCalculator()"></div>
-                        <div class="calc-input-group"><label>Base Auth <span class="calc-badge-pts">3 pts</span></label><input type="number" id="inpBaseAuth" oninput="updateCalculator()"></div>
-                        <div class="calc-input-group" style="border:none; margin:0; padding:0;"><label>Base Conc <span class="calc-badge-pts">10 pts</span></label><input type="number" id="inpBaseConc" oninput="updateCalculator()"></div>
-                    </div>
-                    <div class="simulator-total">
-                        <h3 style="margin: 0; font-size: 1rem; color: var(--secondary);">AppPoints Requeridos (NEM)</h3>
-                        <div id="calcTotalDisplay" style="font-size: 3.5rem; font-weight: 800; color: var(--success); line-height:1.2; word-break: break-word;">0</div>
-                        <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #64748b;">
-                            <strong id="currentScopeLabel">Escopo: FORESEA + PARCEIRO</strong><br>
-                            <span style="font-size: 0.8rem;">Baseado em concorrência real (NEM)</span>
+                <div class="simulator-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start;">
+                    <div class="simulator-inputs" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div class="calc-input-group" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <label style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-weight: 600; color: var(--secondary);">
+                                <span>Premium Auth</span>
+                                <span class="calc-badge-pts" style="background: #1e3a8a; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">5 pts</span>
+                            </label>
+                            <input type="number" id="inpPremAuth" oninput="updateCalculator()" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 1rem;">
                         </div>
-                        <div id="calcAlertBox" style="margin-top: 1rem; padding: 0.75rem; background: var(--danger); color:white; font-weight:bold; border-radius:6px; display:none; font-size:1.1rem;">⚠️ TETO EXCEDIDO</div>
+                        <div class="calc-input-group" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <label style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-weight: 600; color: var(--secondary);">
+                                <span>Premium Conc</span>
+                                <span class="calc-badge-pts" style="background: #3b82f6; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">15 pts</span>
+                            </label>
+                            <input type="number" id="inpPremConc" oninput="updateCalculator()" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 1rem;">
+                        </div>
+                        <div class="calc-input-group" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <label style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-weight: 600; color: var(--secondary);">
+                                <span>Base Auth</span>
+                                <span class="calc-badge-pts" style="background: #047857; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">3 pts</span>
+                            </label>
+                            <input type="number" id="inpBaseAuth" oninput="updateCalculator()" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 1rem;">
+                        </div>
+                        <div class="calc-input-group" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <label style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-weight: 600; color: var(--secondary);">
+                                <span>Base Conc</span>
+                                <span class="calc-badge-pts" style="background: #10b981; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">10 pts</span>
+                            </label>
+                            <input type="number" id="inpBaseConc" oninput="updateCalculator()" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 1rem;">
+                        </div>
                     </div>
-                    <div class="simulator-chart"><canvas id="simChart"></canvas></div>
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <div class="simulator-total" style="background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); flex: 1;">
+                            <h3 style="margin: 0 0 0.75rem 0; font-size: 0.9rem; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.5px;">AppPoints Requeridos (NEM)</h3>
+                            <div id="calcTotalDisplay" style="font-size: 3.5rem; font-weight: 800; color: var(--success); line-height:1.2; word-break: break-word; margin-bottom: 0.75rem;">0</div>
+                            <div style="font-size: 0.85rem; color: #64748b; padding-top: 0.75rem; border-top: 1px solid #e2e8f0;">
+                                <strong id="currentScopeLabel" style="color: var(--secondary);">Escopo: FORESEA + PARCEIRO</strong><br>
+                                <span style="font-size: 0.8rem;">Baseado em concorrência real (NEM)</span>
+                            </div>
+                            <div id="calcAlertBox" style="margin-top: 1rem; padding: 0.75rem; background: var(--danger); color:white; font-weight:bold; border-radius:6px; display:none; font-size:1.1rem; text-align: center;">⚠️ TETO EXCEDIDO</div>
+                        </div>
+                        <div class="simulator-chart" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); height: 250px;">
+                            <canvas id="simChart" style="max-height: 100%;"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

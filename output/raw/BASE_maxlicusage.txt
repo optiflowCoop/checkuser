@@ -2591,7 +2591,7 @@ FetchAll:  Columns: 5
   MAXADOOG, -, 0, 1, 0
   ALEXANDREBONAVITA, -, 0, 1, 1
   MAXREG, -, 1, 0, 0
-  RONYPESSANHA, -, 0, 1, 1
+  RONYPESSANHA, -, 0, 1, 0
   VICTORPORFIRIO, -, 0, 1, 1
   DANILOPAULA, -, 0, 1, 0
   YASMINRAMOS, -, 0, 1, 1
@@ -2727,7 +2727,7 @@ FetchAll:  Columns: 5
   CLAUDIOFARIAS, -, 0, 1, 1
   RACHELLEAL, -, 0, 1, 0
   MAXREG, -, 1, 0, 0
-  PATRICKSOUSA, -, 0, 1, 1
+  PATRICKSOUSA, -, 0, 1, 0
   MAXREG, -, 1, 0, 0
   MAXREG, -, 1, 0, 0
   ITEAM, -, 0, 1, 0
@@ -2796,11 +2796,14 @@ FetchAll:  Columns: 5
   GLIBMYKH, -, 0, 1, 1
   ANISULLECORDEIR, -, 0, 1, 1
   MAXREG, -, 1, 0, 0
-  ITEAM, -, 0, 1, 1
+  ITEAM, -, 0, 1, 0
   RICARDOVIEIRA, -, 0, 1, 1
   GABRIELHSIQUEIRA, -, 0, 1, 1
   REBECAALBERNI, -, 0, 1, 1
   MAXREG, -, 1, 0, 0
   JOSETIAGO, -, 0, 1, 1
-FetchAll: 2795 rows fetched.
+  ITEAM, -, 0, 1, 1
+  FABIOMURTEIRA, -, 0, 1, 1
+  BRENDAGARCIA, -, 0, 1, 1
+FetchAll: 2798 rows fetched.
 > 

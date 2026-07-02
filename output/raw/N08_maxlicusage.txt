@@ -850,7 +850,7 @@ FetchAll:  Columns: 5
   GOMESRONNEY, -, 0, 1, 0
   ELMOSANTOS_TER, -, 0, 1, 0
   THIAGOLOUZA, -, 0, 1, 0
-  VICTORCADE, -, 0, 1, 1
+  VICTORCADE, -, 0, 1, 0
   SFERNANDES, -, 0, 1, 0
   FELIPEPINA, -, 0, 1, 0
   PAULOJUNIORMATTOS, -, 0, 1, 0
@@ -2461,7 +2461,7 @@ FetchAll:  Columns: 5
   RSMARQUESDEASSIS, -, 0, 1, 0
   HJSOARES, -, 0, 1, 0
   LBCARDOSO, -, 0, 1, 0
-  AMANDASANTOS, -, 0, 1, 1
+  AMANDASANTOS, -, 0, 1, 0
   MBARRETO, -, 0, 1, 0
   ACSASILVA, -, 0, 1, 0
   ABRUBANCK, -, 0, 1, 0
@@ -3091,7 +3091,7 @@ FetchAll:  Columns: 5
   WENDERSONBRITO, -, 0, 1, 0
   ANDREGUIMARAES, -, 0, 1, 0
   DJALMASANTOS, -, 0, 1, 0
-  EDUARDOOLIVEIRA, -, 0, 1, 1
+  EDUARDOOLIVEIRA, -, 0, 1, 0
   KELVENSOUZA, -, 0, 1, 0
   LEONARDOPIRES, -, 0, 1, 0
   ROCHALUCAS, -, 0, 1, 0
@@ -3368,7 +3368,7 @@ FetchAll:  Columns: 5
   ARSILVA, -, 0, 1, 0
   CCHEDIAK, -, 0, 1, 0
   TNASCIMENTO, -, 0, 1, 0
-  TSCAMPOS, -, 0, 1, 1
+  TSCAMPOS, -, 0, 1, 0
   VMORAES, -, 0, 1, 0
   ANOGUEIRA, -, 0, 1, 0
   ANDREYSOUZA, -, 0, 1, 0
@@ -3393,7 +3393,7 @@ FetchAll:  Columns: 5
   FANASTACIO, -, 0, 1, 1
   GREGORYMATOS, -, 0, 1, 0
   ITEAM, -, 0, 1, 0
-  RAMATOS, -, 0, 1, 1
+  RAMATOS, -, 0, 1, 0
   RHUDSONCOUTO, -, 0, 1, 0
   TSOARES, -, 0, 1, 0
   FERNANDOCMENDES, -, 0, 1, 0
@@ -3408,7 +3408,7 @@ FetchAll:  Columns: 5
   HSSOARES, -, 0, 1, 1
   MAXREG, -, 0, 1, 0
   RODOLFOREAL, -, 0, 1, 0
-  ABIANCARDI, -, 0, 1, 1
+  ABIANCARDI, -, 0, 1, 0
   HSOARES, -, 0, 1, 0
   ITEAM, -, 0, 1, 0
   ERIBEIROGUIMARAES, -, 0, 1, 0
@@ -3454,33 +3454,33 @@ FetchAll:  Columns: 5
   SHSOUZA, -, 0, 1, 0
   CASTROJOILSON, -, 0, 1, 0
   CSSANTOS, -, 0, 1, 0
-  AAJUNIOR, -, 0, 1, 1
-  ACSASILVA, -, 0, 1, 1
+  AAJUNIOR, -, 0, 1, 0
+  ACSASILVA, -, 0, 1, 0
   ECSILVA, -, 0, 1, 0
   ITEAM, -, 0, 1, 0
   NYCROBERTO, -, 0, 1, 0
   VDSILVA, -, 0, 1, 0
   WOARAUJO, -, 0, 1, 1
   VINICIUSSTEVO, -, 0, 1, 1
-  FRANCISCOSERAFIM, -, 0, 1, 1
+  FRANCISCOSERAFIM, -, 0, 1, 0
   GREGORYMATOS, -, 0, 1, 0
-  CTHENRY, -, 0, 1, 1
+  CTHENRY, -, 0, 1, 0
   MCCAMPOS, -, 0, 1, 0
   MAXREG, -, 0, 1, 0
-  TIHTHORSEN, -, 0, 1, 1
-  RTCOIMBRA, -, 0, 1, 1
+  TIHTHORSEN, -, 0, 1, 0
+  RTCOIMBRA, -, 0, 1, 0
   MANOELBATISTA, -, 0, 1, 0
-  RODRIGOTOLEDO, -, 0, 1, 1
+  RODRIGOTOLEDO, -, 0, 1, 0
   RAFAELBELO, -, 0, 1, 1
   CGIVIGI, -, 0, 1, 1
-  ALVAROBURGHARDT, -, 0, 1, 1
-  FGSANTOS, -, 0, 1, 1
+  ALVAROBURGHARDT, -, 0, 1, 0
+  FGSANTOS, -, 0, 1, 0
   VICTORQUEIROZ, -, 0, 1, 1
   IANLANZA, -, 0, 1, 0
   CARLOSAUGUSTOPC, -, 0, 1, 0
   GOSANTOS, -, 0, 1, 1
   ELVISMARTINS, -, 0, 1, 0
-  FCRUZ, -, 0, 1, 1
+  FCRUZ, -, 0, 1, 0
   ITEAM, -, 0, 1, 0
   LUISAUGUSTO, -, 0, 1, 1
   ALEXANDREBCOSTA, -, 0, 1, 0
@@ -3488,16 +3488,16 @@ FetchAll:  Columns: 5
   FABRICIOBARCELOS, -, 0, 1, 1
   MAXREG, -, 0, 1, 0
   RDMATA, -, 0, 1, 1
-  RAPHAELPINTO, -, 0, 1, 1
+  RAPHAELPINTO, -, 0, 1, 0
   HASSIS, -, 0, 1, 1
-  RMPINTO, -, 0, 1, 1
+  RMPINTO, -, 0, 1, 0
   MAXREG, -, 0, 1, 0
   ITEAM, -, 0, 1, 0
   JADILSONSOUZA, -, 0, 1, 1
   MAYARAFREITAS, -, 0, 1, 1
   KBMOTA, -, 0, 1, 1
   ANETO, -, 0, 1, 1
-  ESANTOS, -, 0, 1, 1
+  ESANTOS, -, 0, 1, 0
   KBARBOSA, -, 0, 1, 1
   CALEBECAETANO, -, 0, 1, 1
   ALISSONFERREIRA, -, 0, 1, 1
@@ -3505,8 +3505,8 @@ FetchAll:  Columns: 5
   RONALDVIEIRA, -, 0, 1, 1
   MAYCONFERREIRA, -, 0, 1, 1
   GEORGEMEDEIROS, -, 0, 1, 1
-  ADRIANOALVARENGADEBARROS, -, 0, 1, 1
-  RPOSSATI, -, 0, 1, 1
+  ADRIANOALVARENGADEBARROS, -, 0, 1, 0
+  RPOSSATI, -, 0, 1, 0
   MGOMES, -, 0, 1, 1
   RROCHA, -, 0, 1, 1
   JPEREIRA, -, 0, 1, 1
@@ -3638,7 +3638,7 @@ FetchAll:  Columns: 5
   WGOROBERT, -, 0, 1, 1
   MAXREG, -, 0, 1, 0
   VINICIUSDOSSANTOS, -, 0, 1, 1
-  ITEAM, -, 0, 1, 1
+  ITEAM, -, 0, 1, 0
   HUGOTORRES, -, 0, 1, 1
   MARVINM, -, 0, 1, 1
   AALVES, -, 0, 1, 1
@@ -3646,5 +3646,45 @@ FetchAll:  Columns: 5
   DIOGOCARVALHO, -, 0, 1, 1
   EDUARDOBOSCO, -, 0, 1, 1
   ANISULLECORDEIR, -, 0, 1, 1
-FetchAll: 3639 rows fetched.
+  RODNEYKIRLIAN, -, 0, 1, 1
+  MAXREG, -, 0, 1, 0
+  FELIPEMOREIRADOSSANTOS, -, 0, 1, 1
+  PEDROHENRIQUEDEOLIVEIRANOGUEIRA, -, 0, 1, 1
+  JRGSOARES, -, 0, 1, 0
+  MARLONSOARESR, -, 0, 1, 1
+  PEDROBEZERRA, -, 0, 1, 1
+  JUANSOARES, -, 0, 1, 1
+  CARLOSHOLIVEIRA, -, 0, 1, 1
+  FERNANDOPESSANHA, -, 0, 1, 1
+  BRUNOLUIZNUNESCORREA, -, 0, 1, 1
+  ROMULOROBERTOVENTURA, -, 0, 1, 1
+  LUCASCODECO, -, 0, 1, 0
+  LUCASRIBEIROPACHECO, -, 0, 1, 1
+  MIGUELPEREIRA, -, 0, 1, 1
+  MAXREG, -, 0, 1, 0
+  ALEXPEANHA, -, 0, 1, 1
+  GABRIELRODRIGUESDASILVAPEREIRA, -, 0, 1, 1
+  ARRANGEL, -, 0, 1, 1
+  ANDERSONECKHARDT, -, 0, 1, 1
+  DALMEIDA, -, 0, 1, 1
+  ITEAM, -, 0, 1, 0
+  RSBARRETO, -, 0, 1, 1
+  ARODRIGUES, -, 0, 1, 1
+  MAXREG, -, 0, 1, 0
+  LUCASCODECO, -, 0, 1, 1
+  JONESDOSSANTOSSALES, -, 0, 1, 1
+  MRMIRANDA, -, 0, 1, 1
+  WALBERTSANTOS, -, 0, 1, 1
+  JOSUENUNES, -, 0, 1, 1
+  JSALES, -, 0, 1, 1
+  DANIELMENEZES, -, 0, 1, 1
+  MSOUZALIMA, -, 0, 1, 1
+  GABRIELMORAISBRAUNNER, -, 0, 1, 1
+  KDOMINGUES, -, 0, 1, 1
+  JSABINO, -, 0, 1, 1
+  YAGOMAGUIAR, -, 0, 1, 1
+  LEONARDODOURADO, -, 0, 1, 1
+  ITEAM, -, 0, 1, 1
+  SHSOUZA, -, 0, 1, 1
+FetchAll: 3679 rows fetched.
 > 

@@ -523,7 +523,7 @@ FetchAll:  Columns: 1
   CRISTIANILINCA,n09maintcoordinator@foresea.com
   LEOSANDOVAL,leotavares@foresea.com
   EUGENIOCAMPOS,eugeniocampos@foresea.com
-  TARCIANASILVA,tarciana.silva000@gmail.com
+  TARCIANASILVA,tarciana.silva@weatherford.com
   TIAGOFREITAS,tiagofreitas@foresea.com
   LARISSAJUSTINO,larissarafaelly.justino@bakerhughes.com
   PEDRORIOS,pedro.filho@lifting.com.br
@@ -2137,7 +2137,7 @@ FetchAll:  Columns: 1
   RAIANVINICIUSVASCONCELOS,raianaraujo08@gmail.com
   RMPINTO,raphael@gmail.com
   LEOLIMADIAS,leo_l@hotmail.com
-  GABRIELMORAISBRAUNNER,GBRAUNNER@GMAIL.COM
+  GABRIELMORAISBRAUNNER,gabrielprismandt@gmail.com
   MARCELOROBSONMIRANDA,RMIRANDA@HOTMAIL.COM
   SOUZANARCISO,diegodesouza8@gmail.com
   SILVACABOCLO,deivison.easyp@hotmail.com
@@ -2574,5 +2574,36 @@ FetchAll:  Columns: 1
   LUIZPERARO,ljunior15@slb.com
   DIEGOMEIRELES2,diego_dsm2@hotmail.com
   DEBORAH,deborahborgessilva@gmail.com
-FetchAll: 2567 rows fetched.
+  LRODRIGUES,lrodrigues45@slb.com
+  ENZOLOPES,elopes3@slb.com
+  LUISGONCALVES,dedeluis@hotmail.com
+  ALANRICARDOALVES,alan.alves@innovex-inc.com
+  ALEXSANDRODASILVA,alexsandro.silva@innovex-inc.com
+  RAFAELCEREJA,rncereja@gmail.com
+  CRISSILVA,cssantos@tech-.com.br
+  MARCOSCHAGAS,marcosjuniorchagas@gmail.com
+  SOUZAGILVANMDS,souzagilvanmds@SLB.COM
+  CLAUDECIRSILVA,claudecir.galdinodasilva@weatherford.com
+  JADERDIAS,jaderdiasbr@gmail.com
+  VICTORMIOQUE,mioque@hotmail.com
+  FABIOROCHA,fsr2014@yahoo.com.br
+  EMALINEFERRARI,emaline.ferrari@halliburton.com
+  ITALOOLOPEES,italozaquieu01@hotmail.com
+  LANUNES,larissa@hotmail.com
+  HENRIQUEFERREIRA,joaohenriqueferreira79@gmail.com
+  NUNESJUNIOR,vieiraji499@gmail.com
+  MRMIRANDA,mrmiranda@gmail.com
+  OSWALDRABELO,oswald.paiva@gmail.com
+  DANIELMENEZES,daniel.m.rosa.1984@gmail.com
+  CARLOSCANOS,ca_paulino@yahoo.com.br
+  MSOUZALIMA,manoel.souza@halliburton.com
+  KDOMINGUES,br220@welltec.com
+  JSABINO,josileiacaccio@yahoo.com.br
+  JUNIORDIAS,luizcarloscarvalhodias.junior@halliburton.com
+  DEIVIDLEITE,deividleite@foresea.com
+  TAKAFUMI,tsueoka@slb.com
+  SERGIOMOTACARDOSO,csergiomc9@gmail.com
+  FELIXESTEVES,mcfesteves@gmail.com
+  GABRIELXAVIER,gaa-x@live.com
+FetchAll: 2598 rows fetched.
 > 

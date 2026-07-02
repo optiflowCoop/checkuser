@@ -128,6 +128,10 @@ def main():
         userid = identity.get('USERID', '').strip().upper()
         status = identity.get('STATUS', '').strip().upper()
 
+        # Se STATUS estiver vazio, assume como ACTIVE (comum em sistemas)
+        if not status:
+            status = 'ACTIVE'
+        
         if status != 'ACTIVE':
             continue
 
@@ -234,6 +238,21 @@ def main():
             'CLASSIFICATION_RULE': 'SCORE_MODEL'
         })
 
+    # Verificação de segurança para evitar IndexError
+    if not output_rows:
+        print("\n⚠️  AVISO: Nenhum usuário ativo encontrado para análise.")
+        print("   Verifique se o arquivo consolidated_user_identity.csv contém dados.")
+        print("   Criando arquivo vazio com cabeçalho.\n")
+        out_path = OUT_DIR / 'usage_analysis_phase3.csv'
+        with out_path.open('w', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=['USERID', 'DISPLAYNAME', 'EMAIL', 'USER_CATEGORY', 
+                                                   'OPERATIONAL_PRESENCE', 'STATUS', 'TITLE', 
+                                                   'LOGIN_COUNT_90D', 'LAST_LOGIN', 'USER_TIER', 
+                                                   'AUTH_SCORE', 'REQUIRED_LICENSE', 
+                                                   'APP_POINTS_COST', 'CLASSIFICATION_RULE'])
+            writer.writeheader()
+        return
+    
     out_path = OUT_DIR / 'usage_analysis_phase3.csv'
     with out_path.open('w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=list(output_rows[0].keys()))

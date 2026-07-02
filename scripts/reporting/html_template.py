@@ -80,6 +80,21 @@ def _render_styles():
         .calc-input-group label { font-weight: 600; color: var(--text); font-size: 0.95rem; }
         .calc-input-group input { width: 120px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 1.1rem; text-align: center; color: var(--primary); font-weight: bold; }
         .calc-badge-pts { font-size: 0.75rem; background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 4px; margin-left: 8px; }
+        /* Aba 3 - Cenários de AppPoints - Cards Padronizados */
+        #tab-apppoints .preset-btn-group { display: flex; flex-direction: column; gap: 0.75rem; }
+        #tab-apppoints .preset-btn { background: white; border: 2px solid var(--border); padding: 1rem; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; color: var(--secondary); transition: all 0.2s; text-align: left; flex: 1; display: flex; flex-direction: column; justify-content: space-between; min-height: 130px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        #tab-apppoints .preset-btn:hover { background: #f1f5f9; border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        #tab-apppoints .preset-btn.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3); }
+        #tab-apppoints .preset-btn strong { font-size: 1rem; margin-bottom: 0.5rem; display: block; }
+        #tab-apppoints .preset-btn p { margin: 0; font-size: 0.85rem; font-weight: normal; opacity: 0.9; line-height: 1.4; flex-grow: 1; }
+        #tab-apppoints .simulator-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: stretch; }
+        #tab-apppoints .simulator-inputs { display: flex; flex-direction: column; gap: 0.75rem; }
+        #tab-apppoints .simulator-total { display: flex; flex-direction: column; justify-content: center; }
+        #tab-apppoints .simulator-chart { display: flex; align-items: center; justify-content: center; }
+        /* Cards de licença padronizados - sem quebra de linha */
+        #tab-apppoints .calc-input-group { background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+        #tab-apppoints .calc-input-group label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0; font-weight: 600; color: var(--secondary); font-size: 0.95rem; }
+        #tab-apppoints .calc-input-group input { width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 1rem; text-align: center; color: var(--primary); font-weight: bold; }
         .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
         .legend-box { background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); }
         .legend-box h3 { margin-top: 0; color: var(--primary); font-size: 1.05rem; border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; margin-bottom: 1rem; }
