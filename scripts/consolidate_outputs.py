@@ -131,12 +131,24 @@ def consolidate():
                 all_rows.append([env] + row)
         
         csv_path = OUT_DIR / f'consolidated_{query}.csv'
-        with csv_path.open('w', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            writer.writerow(['ENVIRONMENT'] + header)
-            for row in all_rows:
-                writer.writerow(row)
-        print(f"WROTE {csv_path.name}: {len(all_rows)} rows")
+        try:
+            if csv_path.exists():
+                csv_path.unlink()
+            with csv_path.open('w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(['ENVIRONMENT'] + header)
+                for row in all_rows:
+                    writer.writerow(row)
+            print(f"WROTE {csv_path.name}: {len(all_rows)} rows")
+        except (PermissionError, OSError):
+            from datetime import datetime
+            alt_path = OUT_DIR / f'consolidated_{query}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+            with alt_path.open('w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(['ENVIRONMENT'] + header)
+                for row in all_rows:
+                    writer.writerow(row)
+            print(f"WROTE {alt_path.name}: {len(all_rows)} rows (arquivo original estava aberto)")
 
 if __name__ == '__main__':
     consolidate()

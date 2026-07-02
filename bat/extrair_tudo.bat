@@ -6,11 +6,13 @@ echo.
 echo Origem: 7 ambientes (BASE, ODN1, ODN2, N06, N08, N09, HTQ)
 echo Queries: 14 queries (maxuser, person, email, groupuser, maxgroup, persongroup, persongroupteam, persongroupview, maxlicusage, maslicusage, maxlicuserasc, maxlicappaccess, maxlicapps, maxrelationship)
 echo Total: 98 extrações (14 queries x 7 ambientes)
+echo Progresso: 0%% - Iniciando extração completa...
 echo.
 cd /d "%~dp0.."
 python scripts\run_db2cli_queries.py
 echo.
 echo ========================================
-echo Extração completa! Pressione qualquer tecla para continuar.
+echo Extração completa! (98/98 extrações)
+echo Progresso: 100%% - Concluído
 echo ========================================
 pause

@@ -25,59 +25,69 @@ PIPELINE_STEPS = [
         "skippable": True
     },
     {
-        "name": "3. Consolidando Textos Brutos (consolidate_outputs.py)",
+        "name": "3. Extraindo Usuários do AD (extract_ad_users.py)",
+        "cmd": [sys.executable, str(ROOT / "scripts" / "extract_ad_users.py")],
+        "skippable": True
+    },
+    {
+        "name": "4. Extraindo Usuários do Maximo (extract_maximo_users.py)",
+        "cmd": [sys.executable, str(ROOT / "scripts" / "extract_maximo_users.py")],
+        "skippable": True
+    },
+    {
+        "name": "5. Consolidando Textos Brutos (consolidate_outputs.py)",
         "cmd": [sys.executable, str(ROOT / "scripts" / "consolidate_outputs.py")],
         "skippable": True
     },
     {
-        "name": "4. Montando Base de Acessos (consolidate_user_access.py)",
+        "name": "6. Montando Base de Acessos (consolidate_user_access.py)",
         "cmd": [sys.executable, str(ROOT / "src" / "consolidate_user_access.py")],
         "skippable": False
     },
     {
-        "name": "5. Normalizando e Tipificando Contas (normalize.py)",
+        "name": "7. Normalizando e Tipificando Contas (normalize.py)",
         "cmd": [sys.executable, str(ROOT / "src" / "normalize.py")],
         "skippable": False
     },
     {
-        "name": "6. Detectando Reuso de USERID (cross_env_userid_reuse.py)",
+        "name": "8. Detectando Reuso de USERID (cross_env_userid_reuse.py)",
         "cmd": [sys.executable, str(ROOT / "src" / "cross_env_userid_reuse.py")],
         "skippable": False
     },
     {
-        "name": "7. Detectando Conflitos de Login (login_conflicts.py)",
+        "name": "9. Detectando Conflitos de Login (login_conflicts.py)",
         "cmd": [sys.executable, str(ROOT / "src" / "login_conflicts.py")],
         "skippable": False
     },
     {
-        "name": "8. Classificando Identidades e Worklist (identity_classification.py)",
+        "name": "10. Classificando Identidades e Worklist (identity_classification.py)",
         "cmd": [sys.executable, str(ROOT / "src" / "identity_classification.py")],
         "skippable": False
     },
     {
-        "name": "9. Consolidando Licenças (consolidate_license_footprint.py)",
+        "name": "11. Consolidando Licenças (consolidate_license_footprint.py)",
         "cmd": [sys.executable, str(ROOT / "src" / "consolidate_license_footprint.py")],
         "skippable": False
     },
     {
-        "name": "10. [FASE 3] Analisando Histórico de Uso (analyze_usage.py)",
+        "name": "12. [FASE 3] Analisando Histórico de Uso (analyze_usage.py)",
         "cmd": [sys.executable, str(ROOT / "src" / "analyze_usage.py")],
         "skippable": False,
         "features": "✓ Dados REAIS ✓ UserClassificationEngine ✓ 6 rules independentes"
     },
     {
-        "name": "11. [FASE 3-B] Detector de Otimização (license_optimizer.py)",
+        "name": "13. [FASE 3-B] Detector de Otimização (license_optimizer.py)",
         "cmd": [sys.executable, str(ROOT / "src" / "license_optimizer.py")],
         "skippable": False,
         "features": "✓ LicenseOptimizer ✓ 6 estratégias ✓ Batch processing ✓ Summary stats"
     },
     {
-        "name": "12. Gerando Uso Real (true_capacity_calculator.py)",
+        "name": "14. Gerando Uso Real (true_capacity_calculator.py)",
         "cmd": [sys.executable, str(ROOT / "src" / "true_capacity_calculator.py")],
         "skippable": False
     },
     {
-        "name": "13. Gerando Dashboards e Excel de Risco (generate_risk_report.py)",
+        "name": "15. Gerando Dashboards e Excel de Risco (generate_risk_report.py)",
         "cmd": [sys.executable, str(ROOT / "scripts" / "generate_risk_report.py")],
         "skippable": False
     }

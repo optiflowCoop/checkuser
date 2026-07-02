@@ -15,9 +15,21 @@ def read_csv(path):
     if not os.path.exists(path):
         print(f"WARN: missing {path}")
         return []
-    with open(path, newline='', encoding='utf-8-sig') as f:
-        reader = csv.DictReader(f)
-        return list(reader)
+    try:
+        with open(path, newline='', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            rows = []
+            for i, row in enumerate(reader, 1):
+                rows.append(row)
+                if i % 5000 == 0:
+                    print(f"  Lendo {path}: {i} linhas...")
+            return rows
+    except KeyboardInterrupt:
+        print(f"\n  Leitura interrompida pelo usuário: {path}")
+        raise
+    except Exception as e:
+        print(f"  ERRO ao ler {path}: {e}")
+        return []
 
 def main():
     maxuser_f = os.path.join(OUTDIR, "consolidated_maxuser.csv")

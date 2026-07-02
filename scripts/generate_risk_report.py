@@ -22,6 +22,9 @@ from scripts.reporting.html_builder import build_html_structure
 from scripts.reporting.html_helpers import fmt_br, render_table
 # --- NOVA IMPORTAÇÃO CORRIGIDA ---
 from scripts.domain.identity_analyzer import get_unique_users_data
+# --- NOVA IMPORTAÇÃO: SANITY ANALYZER ---
+from scripts.domain.sanity_analyzer import analyze_sanity
+from scripts.domain.migration_advisor import analyze_migration
 
 
 # --- Constants ---
@@ -41,13 +44,25 @@ def load_all_data():
         "emails": load_csv(IN_DIR / 'consolidated_email.csv'),
         "persons": load_csv(IN_DIR / 'consolidated_person.csv') + load_person_supplements(),
         "persongroupview": load_csv(IN_DIR / 'consolidated_persongroupview.csv'),
+        # --- NOVAS FONTES: AD e Maximo ---
+        "ad_users": load_csv(IN_DIR / 'consolidated_ad_users.csv'),
+        "maximo_users": load_csv(IN_DIR / 'consolidated_maximo_users.csv'),
     }
+
+def detect_delimiter(path: Path):
+    """Detecta automaticamente o delimitador de um CSV."""
+    with path.open('r', encoding='utf-8-sig') as f:
+        first_line = f.readline()
+    if ';' in first_line:
+        return ';'
+    return ','
 
 def load_csv(path: Path):
     """Helper to load a single CSV, returning an empty list if not found."""
     if not path.exists(): return []
+    delim = detect_delimiter(path)
     with path.open('r', encoding='utf-8-sig', newline='') as f:
-        return list(csv.DictReader(f))
+        return list(csv.DictReader(f, delimiter=delim))
 
 def load_person_supplements():
     """Loads supplemental PERSON snapshots kept in the knowledge base folder."""
@@ -100,7 +115,7 @@ def write_license_decision_plan(rows):
             writer.writerow(row)
     print(f'✓ WROTE {out_path.name}')
 
-def write_excel_workbook(summary, governance, license_rows, domain_counts, missing_email_rows):
+def write_excel_workbook(summary, governance, license_rows, domain_counts, missing_email_rows, sanity_data=None, migration_data=None, identities=None):
     """Creates the final consolidated governance workbook used by the pipeline."""
     wb = Workbook()
     wb.remove(wb.active)
@@ -215,9 +230,260 @@ def write_excel_workbook(summary, governance, license_rows, domain_counts, missi
         if rows:
             add_sheet(sheet_name, list(rows[0].keys()), rows)
 
+    # Adicionar Aba 7: Saneamento de Identidades (AD vs Maximo)
+    if sanity_data:
+        add_sanity_sheets(wb, sanity_data, add_sheet)
+    
+    # Adicionar Aba 8: Recomendações de Migração
+    if migration_data:
+        add_migration_sheets(wb, migration_data, add_sheet)
+    
+    # Adicionar Aba 18: Usuários Ativos Únicos do Maximo
+    if identities:
+        add_maximo_active_users_sheet(wb, identities, add_sheet)
+
     out_path = OUT_DIR / 'maximo_risk_and_optimization_workbook.xlsx'
-    wb.save(out_path)
-    print(f'✓ WROTE {out_path.name}')
+    try:
+        # Tentar remover arquivo existente se houver
+        if out_path.exists():
+            out_path.unlink()
+        wb.save(out_path)
+        print(f'✓ WROTE {out_path.name}')
+    except PermissionError:
+        # Se não conseguir sobrescrever, usar nome com timestamp
+        alt_path = OUT_DIR / f'maximo_risk_and_optimization_workbook_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        wb.save(alt_path)
+        print(f'✓ WROTE {alt_path.name} (arquivo original estava aberto)')
+
+# --- Sanity Excel Sheets ---
+def add_sanity_sheets(wb, sanity_data, add_sheet):
+    """Adiciona abas do Excel com dados de saneamento de identidades."""
+    
+    # Aba 9: Resumo de Saneamento
+    stats = sanity_data['stats']
+    summary_rows = [
+        ['Métrica', 'Valor'],
+        ['Total AD', stats['total_ad']],
+        ['Total Maximo (identities)', stats['total_maximo_identities']],
+        ['Total Maximo (USERIDs únicos)', stats['total_maximo_userids']],
+        ['', ''],
+        ['MATCH POR EMAIL', ''],
+        ['Match perfeito', stats['match_email']],
+        ['Apenas no AD', stats['only_ad']],
+        ['Apenas no Maximo', stats['only_maximo']],
+        ['', ''],
+        ['DIVERGÊNCIAS', ''],
+        ['Nomes diferentes (mesmo email)', stats['name_divergences']],
+        ['Múltiplos USERIDs (mesmo email)', stats['multi_userid']],
+        ['Domínios divergentes', stats['domain_divergences']],
+        ['', ''],
+        ['MATCH POR PREFIXO (USERID)', ''],
+        ['Match encontrado', stats['prefix_match']],
+        ['Sem match no Maximo', stats['no_match']],
+        ['', ''],
+        ['MAXIMO SEM EMAIL', ''],
+        ['Com match no AD', stats['maximo_sem_email_match']],
+        ['Sem match no AD', stats['maximo_sem_email_nomatch']],
+    ]
+    add_sheet('9_Saneamento_Resumo', ['Métrica', 'Valor'], summary_rows)
+    
+    # Aba 10: Divergências de Nome
+    if sanity_data['analises']['name_divergences']:
+        headers = ['Email', 'Nome AD', 'GivenName AD', 'Surname AD', 'Nomes Maximo', 
+                   'USERIDs Maximo', 'Ambientes Maximo', 'Status Maximo', 'Domínio', 
+                   'AD Habilitado', 'Qtd Grupos AD', 'Tipo']
+        rows = []
+        for d in sanity_data['analises']['name_divergences']:
+            rows.append({
+                'Email': d['email'],
+                'Nome AD': d['ad_displayname'],
+                'GivenName AD': d['ad_givenname'],
+                'Surname AD': d['ad_surname'],
+                'Nomes Maximo': d['maximo_names'],
+                'USERIDs Maximo': d['maximo_userids'],
+                'Ambientes Maximo': d['maximo_envs'],
+                'Status Maximo': d['maximo_statuses'],
+                'Domínio': d['domain'],
+                'AD Habilitado': 'Sim' if d['ad_enabled'] else 'Não',
+                'Qtd Grupos AD': d['ad_groups_count'],
+                'Tipo': d['tipo'],
+            })
+        add_sheet('10_Divergencias_Nome', headers, rows)
+    
+    # Aba 11: Múltiplos USERIDs
+    if sanity_data['analises']['multi_userid']:
+        headers = ['Email', 'Nome AD', 'Qtd USERIDs', 'USERIDs', 'Ambientes', 'Status', 'Domínio', 'Tipo']
+        rows = []
+        for d in sanity_data['analises']['multi_userid']:
+            rows.append({
+                'Email': d['email'],
+                'Nome AD': d['ad_displayname'],
+                'Qtd USERIDs': d['qtd_userids'],
+                'USERIDs': d['userids'],
+                'Ambientes': d['envs'],
+                'Status': d['statuses'],
+                'Domínio': d['domain'],
+                'Tipo': d['tipo'],
+            })
+        add_sheet('11_Multiplos_USERIDs', headers, rows)
+    
+    # Aba 12: Match por Prefixo (USERID)
+    if sanity_data['analises']['prefix_match']:
+        headers = ['Email', 'Nome AD', 'USERID Maximo', 'Nomes Maximo', 'Ambientes Maximo',
+                   'Status Maximo', 'Emails Maximo', 'Domínio', 'AD Habilitado', 'Qtd Grupos AD', 'Tipo']
+        rows = []
+        for d in sanity_data['analises']['prefix_match']:
+            rows.append({
+                'Email': d['email'],
+                'Nome AD': d['ad_displayname'],
+                'USERID Maximo': d['maximo_userid'],
+                'Nomes Maximo': d['maximo_displaynames'],
+                'Ambientes Maximo': d['maximo_envs'],
+                'Status Maximo': d['maximo_statuses'],
+                'Emails Maximo': d['maximo_emails'],
+                'Domínio': d['domain'],
+                'AD Habilitado': 'Sim' if d['ad_enabled'] else 'Não',
+                'Qtd Grupos AD': d['ad_groups_count'],
+                'Tipo': d['tipo'],
+            })
+        add_sheet('12_Match_Prefixo', headers, rows)
+    
+    # Aba 13: Sem Match no Maximo
+    if sanity_data['analises']['no_match']:
+        headers = ['Email', 'Nome AD', 'GivenName AD', 'Surname AD', 'Prefixo', 
+                   'Domínio', 'AD Habilitado', 'Qtd Grupos AD', 'Tipo']
+        rows = []
+        for d in sanity_data['analises']['no_match']:
+            rows.append({
+                'Email': d['email'],
+                'Nome AD': d['ad_displayname'],
+                'GivenName AD': d['ad_givenname'],
+                'Surname AD': d['ad_surname'],
+                'Prefixo': d['prefix'],
+                'Domínio': d['domain'],
+                'AD Habilitado': 'Sim' if d['ad_enabled'] else 'Não',
+                'Qtd Grupos AD': d['ad_groups_count'],
+                'Tipo': d['tipo'],
+            })
+        add_sheet('13_Sem_Match_Maximo', headers, rows)
+    
+    # Aba 14: Maximo sem Email (com match AD)
+    if sanity_data['analises']['maximo_sem_email_match']:
+        headers = ['USERID', 'Nomes Maximo', 'Ambientes Maximo', 'Status Maximo', 'Títulos Maximo',
+                   'Email AD', 'Nome AD', 'AD Habilitado', 'Qtd Grupos AD', 'Tipo']
+        rows = []
+        for d in sanity_data['analises']['maximo_sem_email_match']:
+            rows.append({
+                'USERID': d['userid'],
+                'Nomes Maximo': d['maximo_displaynames'],
+                'Ambientes Maximo': d['maximo_envs'],
+                'Status Maximo': d['maximo_statuses'],
+                'Títulos Maximo': d['maximo_titles'],
+                'Email AD': d['ad_email'],
+                'Nome AD': d['ad_displayname'],
+                'AD Habilitado': 'Sim' if d['ad_enabled'] else 'Não',
+                'Qtd Grupos AD': d['ad_groups_count'],
+                'Tipo': d['tipo'],
+            })
+        add_sheet('14_Maximo_Sem_Email_Match', headers, rows)
+    
+    # Aba 15: Divergências de Domínio
+    if sanity_data['analises']['domain_divergences']:
+        headers = ['Email', 'Nome AD', 'Domínio AD', 'Domínio Maximo', 'USERID Maximo',
+                   'Ambiente Maximo', 'Status Maximo', 'Tipo']
+        rows = []
+        for d in sanity_data['analises']['domain_divergences']:
+            rows.append({
+                'Email': d['email'],
+                'Nome AD': d['ad_displayname'],
+                'Domínio AD': d['ad_domain'],
+                'Domínio Maximo': d['maximo_domain'],
+                'USERID Maximo': d['maximo_userid'],
+                'Ambiente Maximo': d['maximo_env'],
+                'Status Maximo': d['maximo_status'],
+                'Tipo': d['tipo'],
+            })
+        add_sheet('15_Divergencias_Dominio', headers, rows)
+
+
+# --- Maximo Active Users Excel Sheet ---
+def add_maximo_active_users_sheet(wb, identities, add_sheet):
+    """Adiciona aba com todos os usuários únicos ativos no Maximo."""
+    
+    # Filtrar apenas usuários ativos
+    active_users = [r for r in identities if r.get('STATUS', '').strip().upper() == 'ACTIVE']
+    
+    # Deduplicar por USERID (pegar primeiro registro de cada USERID)
+    seen_userids = set()
+    unique_active = []
+    for user in active_users:
+        userid = user.get('USERID', '').strip().upper()
+        if userid and userid not in seen_userids:
+            seen_userids.add(userid)
+            unique_active.append(user)
+    
+    # Preparar headers e rows
+    headers = ['USERID', 'DISPLAYNAME', 'PRIMARYEMAIL', 'ENV_DB', 'STATUS', 
+               'TYPE', 'DEFSITE', 'FIRSTNAME', 'LASTNAME', 'TITLE', 'PERSONGROUP']
+    
+    rows = []
+    for user in unique_active:
+        rows.append({
+            'USERID': user.get('USERID', ''),
+            'DISPLAYNAME': user.get('DISPLAYNAME', ''),
+            'PRIMARYEMAIL': user.get('PRIMARYEMAIL', ''),
+            'ENV_DB': user.get('ENV_DB', ''),
+            'STATUS': user.get('STATUS', ''),
+            'TYPE': user.get('TYPE', ''),
+            'DEFSITE': user.get('DEFSITE', ''),
+            'FIRSTNAME': user.get('FIRSTNAME', ''),
+            'LASTNAME': user.get('LASTNAME', ''),
+            'TITLE': user.get('TITLE', ''),
+            'PERSONGROUP': user.get('PERSONGROUP', ''),
+        })
+    
+    add_sheet('18_Maximo_Usuarios_Ativos', headers, rows)
+    print(f'✓ Aba 18 adicionada: {len(rows)} usuários ativos únicos do Maximo')
+
+
+# --- Migration Excel Sheets ---
+def add_migration_sheets(wb, migration_data, add_sheet):
+    """Adiciona abas do Excel com recomendações de migração."""
+    
+    # Aba 16: Resumo de Recomendações
+    summary_rows = [['Tipo', 'Prioridade', 'Quantidade']]
+    tipo_counts = {}
+    for r in migration_data:
+        tipo = r['tipo']
+        tipo_counts[tipo] = tipo_counts.get(tipo, 0) + 1
+    
+    for tipo, count in sorted(tipo_counts.items()):
+        prioridade = next((r['prioridade'] for r in migration_data if r['tipo'] == tipo), 'N/A')
+        summary_rows.append([tipo, prioridade, count])
+    
+    add_sheet('16_Migracao_Resumo', ['Tipo', 'Prioridade', 'Quantidade'], summary_rows)
+    
+    # Aba 17: Lista Completa de Recomendações
+    headers = ['Tipo', 'Prioridade', 'USERID', 'E-mail', 'Nome AD', 'Nome Maximo',
+               'Status AD', 'Status Maximo', 'Ambientes', 'Grupos AD', 'Motivo', 'Ação']
+    rows = []
+    for r in migration_data:
+        rows.append({
+            'Tipo': r['tipo'],
+            'Prioridade': r['prioridade'],
+            'USERID': r['userid'],
+            'E-mail': r['email'],
+            'Nome AD': r['nome_ad'],
+            'Nome Maximo': r['nome_maximo'],
+            'Status AD': r['status_ad'],
+            'Status Maximo': r['status_maximo'],
+            'Ambientes': r['envs'],
+            'Grupos AD': r['grupos_ad'],
+            'Motivo': r['motivo'],
+            'Ação': r['acao'],
+        })
+    add_sheet('17_Migracao_Detalhada', headers, rows)
+
 
 # --- Main Orchestration ---
 def main():
@@ -385,12 +651,34 @@ def main():
         'user_profiles': user_profiles # Pass consolidated profiles for detailed tables
     }
 
-    # 7. Build and Write HTML
-    html_content = build_html_structure(summary_data, governance_data, app_points_data_optimized, domain_counts, identity_analytics)
+    # 7. Análise de Saneamento de Identidades (AD vs Maximo)
+    print("\n" + "=" * 100)
+    print("ANÁLISE DE SANEAMENTO DE IDENTIDADES (AD vs Maximo)")
+    print("=" * 100)
+    sanity_result = analyze_sanity()
+    
+    # 7b. Análise de Recomendações de Migração
+    print("\n" + "=" * 100)
+    print("ANÁLISE DE RECOMENDAÇÕES DE MIGRAÇÃO")
+    print("=" * 100)
+    migration_recommendations = analyze_migration()
+    
+    # 8. Build and Write HTML (com dados de AD, Maximo, Sanity e Migration)
+    html_content = build_html_structure(
+        summary_data, 
+        governance_data, 
+        app_points_data_optimized, 
+        domain_counts, 
+        identity_analytics,
+        ad_users=all_data.get('ad_users', []),
+        maximo_users=all_data.get('maximo_users', []),
+        sanity_data=sanity_result,
+        migration_data=migration_recommendations
+    )
     html_path = OUT_DIR / 'maximo_unified_dashboard.html'
     html_path.write_text(html_content, encoding='utf-8')
     print(f'WROTE {html_path.name}')
-    write_excel_workbook(summary_data, governance_data, app_points_data_optimized, domain_counts, missing_email_rows)
+    write_excel_workbook(summary_data, governance_data, app_points_data_optimized, domain_counts, missing_email_rows, sanity_result, migration_recommendations, identities=all_data.get('identities', []))
 
 if __name__ == '__main__':
     main()
