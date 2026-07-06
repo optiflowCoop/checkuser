@@ -241,6 +241,15 @@ def write_excel_workbook(summary, governance, license_rows, domain_counts, missi
     # Adicionar Aba 18: Usuários Ativos Únicos do Maximo
     if identities:
         add_maximo_active_users_sheet(wb, identities, add_sheet)
+    
+    # Adicionar Aba 19: Acessos por Tipo de Perfil
+    if identities:
+        add_profile_access_sheet(wb, identities, add_sheet)
+    
+    # Adicionar Aba 20: Auditoria - Data de Concessão de Acesso
+    persongroupview = governance.get('persongroupview', [])
+    if persongroupview:
+        add_audit_sheet(wb, persongroupview, add_sheet)
 
     out_path = OUT_DIR / 'maximo_risk_and_optimization_workbook.xlsx'
     try:
@@ -410,6 +419,13 @@ def add_sanity_sheets(wb, sanity_data, add_sheet):
 def add_maximo_active_users_sheet(wb, identities, add_sheet):
     """Adiciona aba com todos os usuários únicos ativos no Maximo."""
     
+    def clean_value(v):
+        """Remove caracteres ilegais do Excel (caracteres de controle)."""
+        if v is None:
+            return ''
+        s = str(v)
+        return ''.join(c if ord(c) >= 32 or c in '\n\r\t' else '' for c in s)
+    
     # Filtrar apenas usuários ativos
     active_users = [r for r in identities if r.get('STATUS', '').strip().upper() == 'ACTIVE']
     
@@ -429,21 +445,107 @@ def add_maximo_active_users_sheet(wb, identities, add_sheet):
     rows = []
     for user in unique_active:
         rows.append({
-            'USERID': user.get('USERID', ''),
-            'DISPLAYNAME': user.get('DISPLAYNAME', ''),
-            'PRIMARYEMAIL': user.get('PRIMARYEMAIL', ''),
-            'ENV_DB': user.get('ENV_DB', ''),
-            'STATUS': user.get('STATUS', ''),
-            'TYPE': user.get('TYPE', ''),
-            'DEFSITE': user.get('DEFSITE', ''),
-            'FIRSTNAME': user.get('FIRSTNAME', ''),
-            'LASTNAME': user.get('LASTNAME', ''),
-            'TITLE': user.get('TITLE', ''),
-            'PERSONGROUP': user.get('PERSONGROUP', ''),
+            'USERID': clean_value(user.get('USERID', '')),
+            'DISPLAYNAME': clean_value(user.get('DISPLAYNAME', '')),
+            'PRIMARYEMAIL': clean_value(user.get('PRIMARYEMAIL', '')),
+            'ENV_DB': clean_value(user.get('ENV_DB', '')),
+            'STATUS': clean_value(user.get('STATUS', '')),
+            'TYPE': clean_value(user.get('TYPE', '')),
+            'DEFSITE': clean_value(user.get('DEFSITE', '')),
+            'FIRSTNAME': clean_value(user.get('FIRSTNAME', '')),
+            'LASTNAME': clean_value(user.get('LASTNAME', '')),
+            'TITLE': clean_value(user.get('TITLE', '')),
+            'PERSONGROUP': clean_value(user.get('PERSONGROUP', '')),
         })
     
     add_sheet('18_Maximo_Usuarios_Ativos', headers, rows)
     print(f'✓ Aba 18 adicionada: {len(rows)} usuários ativos únicos do Maximo')
+
+
+# --- Profile Access Excel Sheet ---
+def add_profile_access_sheet(wb, identities, add_sheet):
+    """Adiciona aba com detalhamento de acessos por tipo de perfil."""
+    
+    def clean_value(v):
+        """Remove caracteres ilegais do Excel (caracteres de controle)."""
+        if v is None:
+            return ''
+        s = str(v)
+        return ''.join(c if ord(c) >= 32 or c in '\n\r\t' else '' for c in s)
+    
+    # Filtrar apenas usuários ativos
+    active_users = [r for r in identities if r.get('STATUS', '').strip().upper() == 'ACTIVE']
+    
+    # Agrupar por tipo
+    by_type = {}
+    for user in active_users:
+        t = user.get('TYPE', '').strip() or 'N/A'
+        if t not in by_type:
+            by_type[t] = []
+        by_type[t].append(user)
+    
+    # Preparar headers
+    headers = ['Tipo', 'Qtd Usuários', 'USERIDs Únicos', 'Ambientes', 'Títulos', 'PersonGroups']
+    
+    rows = []
+    for tipo, users in sorted(by_type.items()):
+        userids = set()
+        envs = set()
+        titulos = set()
+        persongroups = set()
+        
+        for user in users:
+            userids.add(clean_value(user.get('USERID', '')))
+            envs.add(clean_value(user.get('ENV_DB', '')))
+            titulos.add(clean_value(user.get('TITLE', '')))
+            persongroups.add(clean_value(user.get('PERSONGROUP', '')))
+        
+        rows.append({
+            'Tipo': clean_value(tipo),
+            'Qtd Usuários': len(users),
+            'USERIDs Únicos': len(userids),
+            'Ambientes': '; '.join(sorted(e for e in envs if e)),
+            'Títulos': '; '.join(sorted(t for t in titulos if t))[:100],
+            'PersonGroups': '; '.join(sorted(pg for pg in persongroups if pg))[:100],
+        })
+    
+    add_sheet('19_Acessos_por_Perfil', headers, rows)
+    print(f'✓ Aba 19 adicionada: {len(rows)} tipos de perfil analisados')
+
+
+# --- Audit Excel Sheet ---
+def add_audit_sheet(wb, persongroupview, add_sheet):
+    """Adiciona aba com dados de auditoria - data de concessão de acesso."""
+    
+    def clean_value(v):
+        """Remove caracteres ilegais do Excel (caracteres de controle)."""
+        if v is None:
+            return ''
+        s = str(v)
+        return ''.join(c if ord(c) >= 32 or c in '\n\r\t' else '' for c in s)
+    
+    # Filtrar apenas usuários ativos com statusdate
+    active_with_date = [r for r in persongroupview if r.get('status', '').strip().upper() == 'ACTIVE' and r.get('statusdate', '').strip()]
+    
+    # Preparar headers
+    headers = ['USERID', 'DISPLAYNAME', 'STATUS', 'STATUSDATE', 'TYPE', 'DEFSITE', 'TITLE', 'PERSONGROUP', 'ENVIRONMENT']
+    
+    rows = []
+    for r in active_with_date[:5000]:  # Limitar a 5000 linhas
+        rows.append({
+            'USERID': clean_value(r.get('personid', '')),
+            'DISPLAYNAME': clean_value(r.get('displayname', '')),
+            'STATUS': clean_value(r.get('status', '')),
+            'STATUSDATE': clean_value(r.get('statusdate', '')),
+            'TYPE': clean_value(r.get('employeetype', '')),
+            'DEFSITE': clean_value(r.get('location', '')),
+            'TITLE': clean_value(r.get('title', '')),
+            'PERSONGROUP': clean_value(r.get('persongroup', '')),
+            'ENVIRONMENT': clean_value(r.get('ENVIRONMENT', '')),
+        })
+    
+    add_sheet('20_Auditoria_Acesso', headers, rows)
+    print(f'✓ Aba 20 adicionada: {len(rows)} registros com data de concessão')
 
 
 # --- Migration Excel Sheets ---
@@ -648,7 +750,8 @@ def main():
         'detailed_divergences': detailed_divergences, # Detailed structure for section 5
         'identities': all_data['identities'], # Needed for some original metrics
         'access_rows': all_data['access_rows'], # Needed for some original metrics
-        'user_profiles': user_profiles # Pass consolidated profiles for detailed tables
+        'user_profiles': user_profiles, # Pass consolidated profiles for detailed tables
+        'persongroupview': all_data['persongroupview'], # For audit sheet
     }
 
     # 7. Análise de Saneamento de Identidades (AD vs Maximo)
