@@ -20,6 +20,9 @@ with open(CONFIG, 'r', encoding='utf-8') as f:
 
 # --- Lógica para rodar query específica ---
 only_query = None
+data_inicio = "2026-01-01 00:00:00"
+data_fim = "2026-12-31 23:59:59"
+
 if '--only-query' in sys.argv:
     try:
         query_index = sys.argv.index('--only-query') + 1
@@ -40,6 +43,25 @@ if '--queries' in sys.argv:
     except (ValueError, IndexError):
         print("❌ Erro: --queries precisa de nomes separados por vírgula. Ex: --queries person,email")
         sys.exit(1)
+
+# Suporte para parâmetros de data (via --data-inicio e --data-fim)
+if '--data-inicio' in sys.argv:
+    try:
+        idx = sys.argv.index('--data-inicio') + 1
+        if idx < len(sys.argv):
+            data_inicio = sys.argv[idx]
+            print(f"📅 Data início: {data_inicio}")
+    except (ValueError, IndexError):
+        pass
+
+if '--data-fim' in sys.argv:
+    try:
+        idx = sys.argv.index('--data-fim') + 1
+        if idx < len(sys.argv):
+            data_fim = sys.argv[idx]
+            print(f"📅 Data fim: {data_fim}")
+    except (ValueError, IndexError):
+        pass
 
 queries_to_run = only_query if only_query else cfg.get('queries', [])
 # -----------------------------------------
@@ -71,7 +93,7 @@ for conn_idx, conn in enumerate(connections, 1):
         try:
             sys.path.insert(0, str(ROOT/'queries'))
             from queries import resolve_query
-            sql = resolve_query(qname)
+            sql = resolve_query(qname, data_inicio, data_fim)
         except Exception as exc:
             print(f"⚠️  Erro ao resolver query '{qname}': {exc}")
             sql = qname

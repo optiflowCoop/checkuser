@@ -1,0 +1,66 @@
+IBM Db2 Interactive CLI Sample Program
+(C) COPYRIGHT International Business Machines Corp. 1993,1996
+All Rights Reserved
+Licensed Materials - Property of IBM
+US Government Users Restricted Rights - Use, duplication or
+disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+> SELECT SITEID, COUNT(*) as TOTAL, YEAR(REPORTDATE) as ANO, MONTH(REPORTDATE) as MES FROM WORKORDER WHERE HISTORYFLAG = 0 AND ISTASK = 0 AND STATUS IN ('COMP','CLOSE','INPRG') AND REPORTDATE BETWEEN TIMESTAMP('2026-01-01 00:00:00') AND TIMESTAMP('2026-06-30 23:59:59') GROUP BY SITEID, YEAR(REPORTDATE), MONTH(REPORTDATE) ORDER BY SITEID, ANO, MES;
+FetchAll:  Columns: 4
+  SITEID TOTAL ANO MES 
+  BASE-UNP, 55, 2026, 1
+  BASE-UNP, 38, 2026, 2
+  BASE-UNP, 53, 2026, 3
+  BASE-UNP, 28, 2026, 4
+  BASE-UNP, 37, 2026, 5
+  BASE-UNP, 25, 2026, 6
+  HTQ, 16, 2026, 1
+  HTQ, 1, 2026, 2
+  HTQ, 1, 2026, 3
+  HTQ, 23, 2026, 4
+  HTQ, 31, 2026, 5
+  HTQ, 124, 2026, 6
+  N06, 6, 2026, 1
+  N06, 14, 2026, 2
+  N06, 7, 2026, 3
+  N06, 5, 2026, 4
+  N06, 9, 2026, 5
+  N06, 248, 2026, 6
+  N08, 5, 2026, 1
+  N08, 3, 2026, 2
+  N08, 5, 2026, 3
+  N08, 17, 2026, 4
+  N08, 18, 2026, 5
+  N08, 85, 2026, 6
+  N09, 66, 2026, 1
+  N09, 22, 2026, 2
+  N09, 35, 2026, 3
+  N09, 60, 2026, 4
+  N09, 99, 2026, 5
+  N09, 393, 2026, 6
+  ODN1, 24, 2026, 1
+  ODN1, 6, 2026, 2
+  ODN1, 28, 2026, 3
+  ODN1, 15, 2026, 4
+  ODN1, 32, 2026, 5
+  ODN1, 502, 2026, 6
+  ODN2, 12, 2026, 1
+  ODN2, 27, 2026, 2
+  ODN2, 12, 2026, 3
+  ODN2, 21, 2026, 4
+  ODN2, 28, 2026, 5
+  ODN2, 122, 2026, 6
+  OP-BASE, 6, 2026, 1
+  OP-BASE, 4, 2026, 2
+  OP-BASE, 6, 2026, 3
+  OP-BASE, 8, 2026, 4
+  OP-BASE, 10, 2026, 5
+  OP-BASE, 6, 2026, 6
+  PGC, 1, 2026, 4
+  PGC, 1, 2026, 6
+  POL, 26, 2026, 1
+  POL, 4, 2026, 2
+  POL, 12, 2026, 3
+  POL, 2, 2026, 4
+  POL, 1, 2026, 6
+FetchAll: 55 rows fetched.
+> 

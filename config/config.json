@@ -14,7 +14,11 @@
     "maxlicuserasc",
     "maxlicappaccess",
     "maxlicapps",
-    "maxrelationship"
+    "maxrelationship",
+    "workorder_indicadores",
+    "moc_indicadores",
+    "ptw_indicadores",
+    "loto_indicadores"
   ],
   "connections": [
     {

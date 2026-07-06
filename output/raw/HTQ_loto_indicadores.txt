@@ -1,0 +1,9 @@
+IBM Db2 Interactive CLI Sample Program
+(C) COPYRIGHT International Business Machines Corp. 1993,1996
+All Rights Reserved
+Licensed Materials - Property of IBM
+US Government Users Restricted Rights - Use, duplication or
+disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+> SELECT SITEID, COUNT(*) as TOTAL, YEAR(LCK07) as ANO, MONTH(LCK07) as MES FROM LOCKOUT WHERE LCK07 IS NOT NULL AND LCK07 BETWEEN TIMESTAMP('2026-01-01 00:00:00') AND TIMESTAMP('2026-06-30 23:59:59') GROUP BY SITEID, YEAR(LCK07), MONTH(LCK07) ORDER BY SITEID, ANO, MES;
+FetchAll: 0 rows fetched.
+> 

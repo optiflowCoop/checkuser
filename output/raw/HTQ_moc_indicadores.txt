@@ -1,0 +1,39 @@
+IBM Db2 Interactive CLI Sample Program
+(C) COPYRIGHT International Business Machines Corp. 1993,1996
+All Rights Reserved
+Licensed Materials - Property of IBM
+US Government Users Restricted Rights - Use, duplication or
+disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+> SELECT SITEID, COUNT(*) as TOTAL, YEAR(REPORTDATE) as ANO, MONTH(REPORTDATE) as MES FROM WORKORDER WHERE WOCLASS = 'MOC' AND HISTORYFLAG = 0 AND STATUS IN ('COMP','CLOSE','INPRG') AND REPORTDATE BETWEEN TIMESTAMP('2026-01-01 00:00:00') AND TIMESTAMP('2026-06-30 23:59:59') GROUP BY SITEID, YEAR(REPORTDATE), MONTH(REPORTDATE) ORDER BY SITEID, ANO, MES;
+FetchAll:  Columns: 4
+  SITEID TOTAL ANO MES 
+  HTQ, 1, 2026, 4
+  HTQ, 3, 2026, 5
+  HTQ, 6, 2026, 6
+  N06, 1, 2026, 2
+  N06, 1, 2026, 5
+  N06, 8, 2026, 6
+  N08, 2, 2026, 1
+  N08, 3, 2026, 3
+  N08, 5, 2026, 5
+  N08, 8, 2026, 6
+  N09, 1, 2026, 3
+  N09, 3, 2026, 4
+  N09, 2, 2026, 5
+  N09, 9, 2026, 6
+  ODN1, 1, 2026, 5
+  ODN1, 1, 2026, 6
+  ODN2, 1, 2026, 4
+  ODN2, 2, 2026, 5
+  ODN2, 2, 2026, 6
+  OP-BASE, 4, 2026, 1
+  OP-BASE, 4, 2026, 2
+  OP-BASE, 4, 2026, 3
+  OP-BASE, 8, 2026, 4
+  OP-BASE, 10, 2026, 5
+  OP-BASE, 6, 2026, 6
+  PGC, 1, 2026, 4
+  PGC, 1, 2026, 6
+  POL, 1, 2026, 6
+FetchAll: 28 rows fetched.
+> 

@@ -79,6 +79,7 @@ def write_license_decision_plan(rows):
     if not rows:
         return
     # Build a mapping user -> LOCATION_SITE from usage CSV (if available)
+    # IMPORTANT: Take the FIRST non-empty value found (don't overwrite with empty values)
     usage_map = {}
     usage_path = IN_DIR / 'usage_analysis_phase3.csv'
     if usage_path.exists():
@@ -87,15 +88,19 @@ def write_license_decision_plan(rows):
                 ureader = csv.DictReader(uf)
                 for ur in ureader:
                     uid = str(ur.get('USERID', '')).strip().upper()
-                    if uid:
-                        usage_map[uid] = ur.get('LOCATION_SITE') or ur.get('LOCATION') or ''
+                    if uid and uid not in usage_map:  # Only set if not already set
+                        # O campo no CSV é LOCAL_SITE (não LOCATION_SITE)
+                        location = ur.get('LOCAL_SITE') or ur.get('LOCATION_SITE') or ur.get('LOCATION') or ''
+                        if location:  # Only set if non-empty
+                            usage_map[uid] = location
         except Exception:
             pass
 
-    # Enrich rows with LOCATION_SITE if missing
+    # Enrich rows with LOCATION_SITE if missing or invalid (e.g., '0')
     for row in rows:
         uid = str(row.get('USERID', '')).strip().upper()
-        if uid and (not row.get('LOCATION_SITE')):
+        location_site = row.get('LOCATION_SITE', '')
+        if uid and (not location_site or location_site == '0'):
             row['LOCATION_SITE'] = usage_map.get(uid, '')
 
     fieldnames = [
@@ -609,20 +614,73 @@ def main():
     )
     
     # 2b. Enrich with LOCATION_SITE from persongroupview (ENVIRONMENT column) - BEFORE simulation
+    # Usa lógica inteligente: pega o ambiente do último login ou DEFSITE
     persongroupview_map = {}
     for pgv in all_data.get("persongroupview", []):
         uid = str(pgv.get('personid', '')).strip().upper()
         env = pgv.get('ENVIRONMENT', '').strip()
-        loc = pgv.get('locationsite', '').strip()
+        defsite = pgv.get('sitedefault', '').strip() or pgv.get('locationsite', '').strip()
         if uid and env:
-            # Keep first non-empty environment found
             if uid not in persongroupview_map:
-                persongroupview_map[uid] = {'environment': env, 'locationsite': loc}
+                persongroupview_map[uid] = {'environment': env, 'defsite': defsite}
+    
+    # Carregar logintracking para inferir ambiente real
+    logintrack = load_csv(IN_DIR / 'consolidated_logintracking_from_sources.csv')
+    
+    # Inferir ambiente real do usuário baseado em CLIENTHOST
+    def infer_env_from_clienthost(clienthost):
+        if not clienthost:
+            return None, False
+        host = clienthost.strip().upper()
+        if host.replace('.', '').isdigit():
+            return None, True
+        if 'ODRL-SP-SV' in host:
+            return None, True
+        if 'ODRL-ODN2-SV' in host:
+            return 'ODN2', False
+        if 'ODRL-ODN1-SV' in host:
+            return 'ODN1', False
+        if 'ODRL-N06-SV' in host:
+            return 'N06', False
+        if 'ODRL-N08-SV' in host:
+            return 'N08', False
+        if 'ODRL-N09-SV' in host:
+            return 'N09', False
+        if host.startswith('OD2-') or '-OD2-' in host:
+            return 'ODN2', False
+        if host.startswith('OD1-') or '-OD1-' in host:
+            return 'ODN1', False
+        if host.startswith('ON06-') or '-N06-' in host:
+            return 'N06', False
+        if host.startswith('ON08-') or '-N08-' in host:
+            return 'N08', False
+        if host.startswith('ON09-') or '-N09-' in host:
+            return 'N09', False
+        return None, False
+    
+    # Calcular ambiente real por usuário
+    user_real_env = {}
+    for rec in logintrack:
+        if rec.get('ATTEMPTRESULT', '').strip().upper() != 'LOGIN':
+            continue
+        userid = rec.get('USERID', '').strip().upper()
+        clienthost = rec.get('CLIENTHOST', '').strip()
+        if userid:
+            env, is_shared = infer_env_from_clienthost(clienthost)
+            if env:
+                user_real_env[userid] = env
     
     for profile in user_profiles.values():
         uid = str(profile.get('USERID', '')).strip().upper()
-        if uid in persongroupview_map and not profile.get('LOCATION_SITE'):
-            profile['LOCATION_SITE'] = persongroupview_map[uid]['environment']
+        # Prioridade 1: ambiente real do logintracking
+        if uid in user_real_env:
+            profile['LOCATION_SITE'] = user_real_env[uid]
+        # Prioridade 2: DEFSITE do persongroupview (já é o ambiente correto)
+        elif uid in persongroupview_map:
+            profile['LOCATION_SITE'] = persongroupview_map[uid]['defsite'] or persongroupview_map[uid]['environment']
+        # Prioridade 3: DEFSITE do próprio perfil
+        elif not profile.get('LOCATION_SITE'):
+            profile['LOCATION_SITE'] = profile.get('DEFSITE', '')
     
     active_profiles = [p for p in user_profiles.values() if p['STATUS'] == 'ACTIVE']
 
@@ -660,14 +718,15 @@ def main():
         for p in missing_email_profiles
     ]
 
-    foresea_app_points = simulate_app_points(foresea_profiles)
-    other_app_points = simulate_app_points(other_profiles)
+    foresea_app_points = simulate_app_points(foresea_profiles, user_real_env)
+    other_app_points = simulate_app_points(other_profiles, user_real_env)
 
     # Re-enrich with LOCATION_SITE after simulation (simulate_app_points creates new dicts)
     for row in foresea_app_points + other_app_points:
         uid = str(row.get('USERID', '')).strip().upper()
         if uid in persongroupview_map and not row.get('LOCATION_SITE'):
-            row['LOCATION_SITE'] = persongroupview_map[uid]['environment']
+            # Priorizar defsite (ambiente alocado) sobre environment (ambiente do registro)
+            row['LOCATION_SITE'] = persongroupview_map[uid]['defsite'] or persongroupview_map[uid]['environment']
 
     app_points_by_scope = {
         'foresea': foresea_app_points,

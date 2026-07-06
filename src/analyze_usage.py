@@ -92,6 +92,124 @@ def evaluate_onshore_pattern(login_dates):
     return ratio >= ONSHORE_MIN_RATIO
 
 
+def infer_env_from_clienthost(clienthost):
+    """
+    Infer environment from CLIENTHOST hostname or IP.
+    Returns: (env, is_shared) - env is the inferred environment or None, is_shared indicates IP/shared server
+    """
+    if not clienthost:
+        return None, False
+    
+    host = clienthost.strip().upper()
+    
+    # Mapeamento de IPs dos servidores Maximo para ambientes (Produção)
+    IP_TO_ENV = {
+        '10.119.240.73': 'BASE',      # ODRL-SP-MX01
+        '10.120.216.81': 'ODN1',      # ODRL-ODN1-MX01
+        '10.118.6.88': 'ODN2',        # ODRL-ODN2-MX01
+        '10.120.148.67': 'N06',       # ODRL-N06-MX01
+        '10.120.148.143': 'N08',      # ODRL-N08-MX01
+        '10.120.149.83': 'N09',       # ODRL-N09-MX01
+        '10.119.58.21': 'HTQ',        # ODRL-HTQ-MX05
+    }
+    
+    # IP addresses - mapear para ambiente
+    if host.replace('.', '').isdigit():
+        return IP_TO_ENV.get(host), False
+    
+    # Padrão odrl-sp-sv013.foresea.com - SERVIDOR COMPARTILHADO
+    if 'ODRL-SP-SV' in host:
+        return None, True
+    
+    # Servidores específicos de ambiente
+    if 'ODRL-ODN2-SV' in host:
+        return 'ODN2', False
+    if 'ODRL-ODN1-SV' in host:
+        return 'ODN1', False
+    if 'ODRL-ODN3-SV' in host:
+        return 'ODN3', False
+    if 'ODRL-ODN4-SV' in host:
+        return 'ODN4', False
+    
+    if 'ODRL-N06-SV' in host:
+        return 'N06', False
+    if 'ODRL-N08-SV' in host:
+        return 'N08', False
+    if 'ODRL-N09-SV' in host:
+        return 'N09', False
+    
+    if 'ODRL-HTQ-SV' in host:
+        return 'HTQ', False
+    if 'ODRL-POL-SV' in host:
+        return 'POL', False
+    if 'ODRL-PGA-SV' in host:
+        return 'PGA', False
+    if 'ODRL-PGB-SV' in host:
+        return 'PGB', False
+    
+    # Padrão OD2-, OD1-, ON06- (máquinas específicas)
+    if host.startswith('OD2-') or '-OD2-' in host:
+        return 'ODN2', False
+    if host.startswith('OD1-') or '-OD1-' in host:
+        return 'ODN1', False
+    if host.startswith('ON06-') or '-N06-' in host:
+        return 'N06', False
+    if host.startswith('ON08-') or '-N08-' in host:
+        return 'N08', False
+    if host.startswith('ON09-') or '-N09-' in host:
+        return 'N09', False
+    
+    return None, False
+
+
+def get_user_login_env(logintrack):
+    """
+    Get the environment of the last login for each user.
+    Uses CLIENTHOST to infer environment when ENVIRONMENT is BASE or shared.
+    Returns: {userid: {'env': environment, 'last_login': datetime, 'login_count': int}}
+    """
+    user_logins = defaultdict(list)
+    
+    for rec in logintrack:
+        result = (rec.get('ATTEMPTRESULT') or '').strip().upper()
+        if result != 'LOGIN':
+            continue
+        userid = rec.get('USERID', '').strip().upper()
+        env = (rec.get('ENVIRONMENT') or '').strip()
+        clienthost = rec.get('CLIENTHOST', '').strip()
+        dt = parse_date_safe(rec.get('ATTEMPTDATE'))
+        
+        if userid and dt:
+            # Infer environment from CLIENTHOST if ENVIRONMENT is BASE or shared
+            actual_env, is_shared = infer_env_from_clienthost(clienthost)
+            if actual_env:
+                env = actual_env
+            elif not is_shared:
+                env = env  # Use ENVIRONMENT as-is
+            else:
+                env = None  # Shared server - cannot determine environment
+            
+            if env:
+                user_logins[userid].append({
+                    'env': env,
+                    'datetime': dt
+                })
+    
+    # For each user, get the most recent login environment
+    result = {}
+    for userid, logins in user_logins.items():
+        if logins:
+            logins_sorted = sorted(logins, key=lambda x: x['datetime'], reverse=True)
+            most_recent = logins_sorted[0]
+            result[userid] = {
+                'env': most_recent['env'],
+                'last_login': most_recent['datetime'],
+                'login_count': len(logins)
+            }
+    
+    return result
+
+
 def main():
 
     print("\n" + "=" * 80)
@@ -109,6 +227,9 @@ def main():
 
     identities = load_csv('consolidated_user_identity.csv')
     logintrack = load_csv('consolidated_logintracking_from_sources.csv')
+
+    # Get login environment per user
+    user_login_env = get_user_login_env(logintrack)
 
     usage_by_user = defaultdict(list)
 
@@ -189,6 +310,14 @@ def main():
         if is_foresea:
             auth_score += 20
 
+        # Get LOCAL_SITE from last login environment
+        login_env_info = user_login_env.get(userid, {})
+        local_site = login_env_info.get('env', '')
+        
+        # If no login found, use DEFSITE from identity as fallback
+        if not local_site:
+            local_site = identity.get('DEFSITE', '')
+
         # Engine decide entitlement (Premium/Base)
         user_data = {
             'USERID': userid,
@@ -231,6 +360,7 @@ def main():
             'TITLE': title,
             'LOGIN_COUNT_90D': total_logins,
             'LAST_LOGIN': last_login.strftime('%Y-%m-%d') if last_login else '',
+            'LOCAL_SITE': local_site,
             'USER_TIER': classification.get('tier', 'UNKNOWN'),
             'AUTH_SCORE': auth_score,
             'REQUIRED_LICENSE': required_license,
@@ -247,7 +377,8 @@ def main():
         with out_path.open('w', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=['USERID', 'DISPLAYNAME', 'EMAIL', 'USER_CATEGORY', 
                                                    'OPERATIONAL_PRESENCE', 'STATUS', 'TITLE', 
-                                                   'LOGIN_COUNT_90D', 'LAST_LOGIN', 'USER_TIER', 
+                                                   'LOGIN_COUNT_90D', 'LAST_LOGIN', 'LOCAL_SITE',
+                                                   'USER_TIER', 
                                                    'AUTH_SCORE', 'REQUIRED_LICENSE', 
                                                    'APP_POINTS_COST', 'CLASSIFICATION_RULE'])
             writer.writeheader()

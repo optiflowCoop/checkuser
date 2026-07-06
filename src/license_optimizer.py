@@ -61,7 +61,7 @@ def main():
             'EMAIL': user.get('EMAIL', ''),
             'USER_CATEGORY': user_category,
             'TITLE': user.get('TITLE', ''),
-            'LOCATION_SITE': user.get('LOCATION', 'UNKNOWN'),  # CORREÇÃO: Usar 'LOCATION' em vez de 'OPERATIONAL_PRESENCE'
+            'LOCATION_SITE': user.get('LOCAL_SITE', user.get('LOCATION', 'UNKNOWN')),  # Usar LOCAL_SITE (ambiente real) ou LOCATION como fallback
             'CURRENT_TIER': user.get('USER_TIER', ''),
             'LOGIN_COUNT_90D': user.get('LOGIN_COUNT_90D', 0),
             'REQUIRED_LICENSE': user.get('REQUIRED_LICENSE', ''),

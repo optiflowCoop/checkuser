@@ -222,13 +222,20 @@ def calculate_statistical_concurrency():
         return {}
 
 
-def simulate_app_points(profiles_to_simulate):
+def simulate_app_points(profiles_to_simulate, user_real_env=None):
     """
     Simulação avançada aplicando as Regras Críticas O&G e os Fatores Estatísticos.
+    
+    Args:
+        profiles_to_simulate: lista de perfis de usuário
+        user_real_env: dicionário {userid: env} com ambiente real inferido do logintracking
     """
     app_points_data = []
     stat_map = calculate_statistical_concurrency()
     login_usage = _load_login_usage()
+    
+    if user_real_env is None:
+        user_real_env = {}
 
     for profile in profiles_to_simulate:
         usage = classify_usage_profile(len(profile['GROUPS']))
@@ -259,6 +266,11 @@ def simulate_app_points(profiles_to_simulate):
         f_p95 = max(0.15, min(cargo_stats['p95'], 1.0))
         f_p100 = max(0.20, min(cargo_stats['p100'], 1.0))
 
+        # Determina LOCAL_SITE: prioriza ambiente real do logintracking
+        local_site = user_real_env.get(str(profile['USERID']).upper(), '')
+        if not local_site:
+            local_site = profile.get('LOCATION_SITE', '')
+        
         app_points_data.append({
             'USERID': profile['USERID'],
             'DISPLAYNAME': '; '.join(display_names) if display_names else profile['USERID'],
@@ -268,6 +280,7 @@ def simulate_app_points(profiles_to_simulate):
             'ENTITLEMENT': entitlement,
             'LICENSE_MODEL': license_model,
             'APP_POINTS': points,
+            'LOCATION_SITE': local_site,
             'TITLES': '; '.join(titles) if titles else "N/A",
             'OPERATIONAL_PRESENCE': operational_presence,
             'USAGE_PROFILE': usage,
