@@ -11,7 +11,6 @@ from .ab5_plano_acao import render_tab_tabela
 from .ab6_peak import render_tab_peak
 from .ab7_saneamento import render_tab_saneamento, render_tab_saneamento_scripts
 from .ab8_migracao import render_tab_migracao, render_tab_migracao_scripts
-from .ab9_indicadores import render_tab_indicadores, render_tab_indicadores_scripts, render_tab_indicadores_init
 
 
 def _render_styles():
@@ -132,7 +131,6 @@ def _render_header_and_tabs():
         <button class="tab-button" onclick="openTab(event, 'tab-peak')" style="color:#7c3aed;">6. Peak Contributors</button>
         <button class="tab-button" onclick="openTab(event, 'tab-saneamento')" style="color:#ef4444;">7. Saneamento AD</button>
         <button class="tab-button" onclick="openTab(event, 'tab-migracao')" style="color:#10b981;">8. Recomendações de Migração</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-indicadores')" style="color:#f472b6;">9. Indicadores Mensais</button>
     </div>
     """
 
@@ -501,7 +499,7 @@ def render_html(data):
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Maximo Unificado - Foresea</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js removido - funciona apenas com tabelas para uso offline -->
     {_render_styles()}
 </head>
 <body>
@@ -514,11 +512,8 @@ def render_html(data):
     {render_tab_tabela(app_points_rows)}
     {render_tab_saneamento(data.get('sanity_data'))}
     {render_tab_migracao(data.get('migration_data'))}
-    {render_tab_indicadores(data.get('indicadores_data'))}
     {_render_scripts(analytics, identity_analytics)}
     {render_tab_saneamento_scripts()}
     {render_tab_migracao_scripts()}
-    {render_tab_indicadores_scripts()}
-    {render_tab_indicadores_init()}
 </body>
 </html>"""

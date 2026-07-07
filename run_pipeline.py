@@ -87,12 +87,7 @@ PIPELINE_STEPS = [
         "skippable": False
     },
     {
-        "name": "15. Extraindo Indicadores Mensais (extract_indicadores.py)",
-        "cmd": [sys.executable, str(ROOT / "scripts" / "extract_indicadores.py")],
-        "skippable": False
-    },
-    {
-        "name": "16. Gerando Dashboards e Excel de Risco (generate_risk_report.py)",
+        "name": "15. Gerando Dashboards e Excel de Risco (generate_risk_report.py)",
         "cmd": [sys.executable, str(ROOT / "scripts" / "generate_risk_report.py")],
         "skippable": False
     }
