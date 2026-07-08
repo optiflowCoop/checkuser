@@ -995,7 +995,7 @@ FetchAll:  Columns: 5
   LUIZMONTEIRO, -, 0, 1, 1
   ENZOAZEVEDO, -, 0, 1, 0
   ANDRESANTOS, -, 0, 1, 0
-  EDSONCONCEICAO, -, 0, 1, 1
+  EDSONCONCEICAO, -, 0, 1, 0
   MARCELONOGUEIRA, -, 0, 1, 1
   VICTORCOSTA, -, 0, 1, 0
   ALEXCUNHA, -, 0, 1, 0
@@ -1706,7 +1706,7 @@ FetchAll:  Columns: 5
   FABIANOGAMA, -, 0, 1, 0
   KLEMERSONSALVADORSOARES, -, 0, 1, 0
   ITEAM, -, 0, 1, 0
-  REBECAROCHA, -, 0, 1, 1
+  REBECAROCHA, -, 0, 1, 0
   WILIANRENAN, -, 0, 1, 0
   WRENAN, -, 0, 1, 0
   WILLIANCANDIDO, -, 0, 1, 1
@@ -2525,7 +2525,7 @@ FetchAll:  Columns: 5
   BRITOWELINGTON, -, 0, 1, 1
   AMOSFFERREIRA, -, 0, 1, 1
   KLEMERSONSOARESS, -, 0, 1, 1
-  VINICIUSMENEZES, -, 0, 1, 1
+  VINICIUSMENEZES, -, 0, 1, 0
   ADRIANOMACIEL, -, 0, 1, 0
   FLAVIOROQUE, -, 0, 1, 0
   SILVAVITORINO, -, 0, 1, 0
@@ -2690,7 +2690,7 @@ FetchAll:  Columns: 5
   ADRIANOVIEIRA, -, 0, 1, 1
   GUSTAVOSOZINHO, -, 0, 1, 0
   LUCIANOCRUZ, -, 0, 1, 0
-  RODRIGOSTORRES, -, 0, 1, 1
+  RODRIGOSTORRES, -, 0, 1, 0
   MARCOSCBORBA, -, 0, 1, 1
   CAIOMENDES, -, 0, 1, 1
   MATHEUSCARDOSO, -, 0, 1, 0
@@ -2765,7 +2765,7 @@ FetchAll:  Columns: 5
   LARYSSASILVA, -, 0, 1, 1
   YAGODS, -, 0, 1, 1
   NEWMAR, -, 0, 1, 1
-  FABIOSILVEIRA, -, 0, 1, 1
+  FABIOSILVEIRA, -, 0, 1, 0
   ELIZEUJUNIOR, -, 0, 1, 1
   LUISTRAVASSO, -, 0, 1, 1
   MICSILV, -, 0, 1, 1
@@ -2843,8 +2843,23 @@ FetchAll:  Columns: 5
   SOUZAGILVANMDS, -, 0, 1, 1
   ITALOOLOPEES, -, 0, 1, 1
   OSWALDRABELO, -, 0, 1, 1
-  ITEAM, -, 0, 1, 1
+  ITEAM, -, 0, 1, 0
   CRISTIANOMORAES, -, 0, 1, 1
   LEONARDODOURADO, -, 0, 1, 1
-FetchAll: 2839 rows fetched.
+  TAKAFUMI, -, 0, 1, 1
+  TAKAFUMIS, -, 0, 1, 1
+  MARIASILVAA, -, 0, 1, 1
+  BRUNORIBEIRO, -, 0, 1, 1
+  ALVIMARFERREIRA, -, 0, 1, 1
+  ESLLENSILVA, -, 0, 1, 1
+  EDSONSANTOS, -, 0, 1, 1
+  GABRIELRODRIGUES, -, 0, 1, 1
+  MARIOGONCALVES, -, 0, 1, 1
+  GUILHERMEGARRIDO, -, 0, 1, 1
+  MATHEUSREIS, -, 0, 1, 1
+  ANDRESSAMOTA, -, 0, 1, 1
+  LIDIONETO, -, 0, 1, 1
+  MOTAYURI, -, 0, 1, 1
+  ITEAM, -, 0, 1, 1
+FetchAll: 2854 rows fetched.
 > 

@@ -244,6 +244,7 @@ BASE,PERSON,PLUSGMOCAPPRLIST,PERSON,personid=:approver,-,-,Relationship between 
 BASE,PERSON,PLUSGMOCRVLST,PERSON,personid=:reviewer,-,-,Relationship between PLUSGMOCRVLST and PERSON,96646
 BASE,PERSONGROUP,PLUSGMOCRVLST,PERSONGROUP,personid in (select respparty from persongroupteam where persongroup=:reviewer),-,-,Relationship between PLUSGMOCRVLST and PERSONGROUP,96647
 BASE,PLUSGMOCPOSTLIST,PLUSGMOC,PLUSGMOCPOSTLIST,wonum=:wonum and siteid=:siteid,MULTIPLE,0,Relationship between PLUSGMOC and PLUSGMOCPOSTLIST,96648
+BASE,PERSON,OOG_PJPADDITIONALINFO,PERSON,personid = :OOG_INSPECTOR,-,0,-,100863
 BASE,PLUSGMOCPRELIST,PLUSGMOC,PLUSGMOCPRELIST,wonum=:wonum and siteid=:siteid,-,-,Relationship between PLUSGMOC and PLUSGMOCPRELIST,96649
 BASE,PERSON,PLUSGMOCAUTHLIST,PERSON,personid=:authorizer,-,-,Relationship between PLUSGMOCAUTHLIST and PERSON,96650
 BASE,PLUSGSTDACT,PLUSGMOCPRELIST,PLUSGSTDACT,plusgstdactid=:plusgstdactid,-,-,Relationship between PLUSGSTDACT and PLUSGMOCPRELIST,96651
@@ -9053,7 +9054,7 @@ BASE,OOG_MEETWORKTEAM,SR,OOG_MEETWORKTEAM,ticketid = :ticketid and ticketuid = :
 BASE,ASSETMOBILE,PLUSGIMPROVE,ASSET,:assetnum = assetnum and :siteid = siteid,-,0,Relationship for RES Mobile,100835
 BASE,MOBILELOCATION,PLUSGIMPROVE,LOCATIONS,location = :location and siteid = :siteid,-,0,Relationship for RES Mobile,100836
 BASE,MOBILEWORKLOG,PLUSGIMPROVE,WORKLOG,recordkey=:wonum and class=:woclass and siteid=:siteid,-,0,Relationship for WorkLog Mobile,100837
-BASE,FetchAll:,8909,rows,fetched.,,,,
+BASE,FetchAll:,8910,rows,fetched.,,,,
 BASE,>,,,,,,,
 HTQ,TAGLOCK,TAGOUT,TAGLOCK,tagoutid = :tagoutid and siteid=:siteid,UNDEFINED,0,Relationship to TagLock (taglock.tagoutid = tagout.tagoutid). The result set will contain zero or more objects.,281
 HTQ,ADDRESS,MR,ADDRESS,addresscode = :shipto and orgid=:orgid,UNDEFINED,0,Relationship to the Address table,used to find all ship to records for a given material requisition. (address.addresscode = mr.shipto). The resulting set will contain zero or more objects.
@@ -9171,6 +9172,7 @@ HTQ,WORKLOG,TICKET,WORKLOG,,UNDEFINED,0,Relationship to the ticket's worklog rec
 HTQ,EXCHANGE,CURRENCY,EXCHANGE,currencycode=:currencycode,UNDEFINED,0,Relationship to the Exchange table,used to find all exchange records for a given currency. (currency.currencycode = exchange.currencycode). The resulting set will contain zero or more objects.
 HTQ,SHIFTPATTERNDAY,SHIFT,SHIFTPATTERNDAY,shiftnum=:shiftnum and orgid=:orgid,UNDEFINED,0,Relationship to the Shift's ShiftPatternday record(s). Used to find shiftpatternday set for a given shift. (Shiftpatternday.shiftnum=Shift.shiftnum). The resulting set will contain zero or seven objects.,191
 HTQ,DOCLINKS,HAZARD,DOCLINKS,doclinksid in (select doclinksid from doclinks where (ownertable = 'HAZARD' and ownerid = :hazarduid)  UNION ALL select doclinksid from doclinks where (ownertable  ='PRECAUTION' and ownerid IN (select precaution.precautionuid from  precaution,hazardprec where precaution.precautionid = hazardprec.precautionid and hazardprec.hazardid = :hazardid and hazardprec.orgid = :orgid and precaution.orgid = hazardprec.orgid and precaution.siteid = hazardprec.siteid))),UNDEFINED,0,Relationship to Doclinks table. (doclinks.keytable = 'HAZARD' and doclinks.keycolumn = 'HAZARDID' and doclinks.keyvalue = hazard.hazardid). Used to find associated linked documents. The result set will contain zero or more objects.
+HTQ,PERSON,OOG_PJPADDITIONALINFO,PERSON,personid = :OOG_INSPECTOR,-,0,-,4000000017
 HTQ,DRILLDOWN,WOTAGLOCK,DRILLDOWN,-,UNDEFINED,0,Relationship from the WOTAGLOCK to the non-persistent DrillDown table. (No where clause). The resulting set will contain zero objects. This relationship is used when the DrillDown page is launched from a location or asset field.,211
 HTQ,CONDITION,WFNODE,WFCONDITION,processname=:processname and processrev=:processrev and nodeid=:nodeid,UNDEFINED,0,Relationship to the WFCondition table,used to find the companion Mbo for a condition node. (wfnode.processid=wfstart.processid and wfnode.processrev=wfstart.processrev and wfnode.nodeid=wfstart.nodeid). This resulting set will contain one record if the nodetype is 'WFCONDITION' and zero otherwise.
 HTQ,PM_STORELOC,LOCATIONS,PM,storeloc = :location and siteid=:siteid,UNDEFINED,0,Relationship to the PM table,used to find preventive maintenance records which use a given storeroom location. (locations.location = pm.storeloc). The resulting set will contain zero or more objects.
@@ -18100,7 +18102,7 @@ HTQ,OOG_JOBPLAN,SR,JOBPLAN,RSR_TICKETID = :TICKETID,-,0,-,100753
 HTQ,A1,OOG_SIMOOPS,ALNDOMAIN,domainid = 'OOG_SIMOOPS' and value = :oog_simoops1,-,0,Pega a descri��o da atividade 1,100763
 HTQ,A2,OOG_SIMOOPS,ALNDOMAIN,domainid = 'OOG_SIMOOPS' and value = :oog_simoops2,-,0,Pega a descri��o da atividade 2,100764
 HTQ,DOCLINKS,OOG_RSK_PNL_ALERTS,DOCLINKS,ownertable='OOG_RSK_PNL_ALERTS' and ownerid=:OOG_RSK_PNL_ALERTSID,-,0,-,100761
-HTQ,FetchAll:,8902,rows,fetched.,,,,
+HTQ,FetchAll:,8903,rows,fetched.,,,,
 HTQ,>,,,,,,,
 N06,TAGLOCK,TAGOUT,TAGLOCK,tagoutid = :tagoutid and siteid=:siteid,UNDEFINED,0,Relationship to TagLock (taglock.tagoutid = tagout.tagoutid). The result set will contain zero or more objects.,281
 N06,ADDRESS,MR,ADDRESS,addresscode = :shipto and orgid=:orgid,UNDEFINED,0,Relationship to the Address table,used to find all ship to records for a given material requisition. (address.addresscode = mr.shipto). The resulting set will contain zero or more objects.
@@ -18218,6 +18220,7 @@ N06,WORKLOG,TICKET,WORKLOG,,UNDEFINED,0,Relationship to the ticket's worklog rec
 N06,EXCHANGE,CURRENCY,EXCHANGE,currencycode=:currencycode,UNDEFINED,0,Relationship to the Exchange table,used to find all exchange records for a given currency. (currency.currencycode = exchange.currencycode). The resulting set will contain zero or more objects.
 N06,SHIFTPATTERNDAY,SHIFT,SHIFTPATTERNDAY,shiftnum=:shiftnum and orgid=:orgid,UNDEFINED,0,Relationship to the Shift's ShiftPatternday record(s). Used to find shiftpatternday set for a given shift. (Shiftpatternday.shiftnum=Shift.shiftnum). The resulting set will contain zero or seven objects.,191
 N06,DOCLINKS,HAZARD,DOCLINKS,doclinksid in (select doclinksid from doclinks where (ownertable = 'HAZARD' and ownerid = :hazarduid)  UNION ALL select doclinksid from doclinks where (ownertable  ='PRECAUTION' and ownerid IN (select precaution.precautionuid from  precaution,hazardprec where precaution.precautionid = hazardprec.precautionid and hazardprec.hazardid = :hazardid and hazardprec.orgid = :orgid and precaution.orgid = hazardprec.orgid and precaution.siteid = hazardprec.siteid))),UNDEFINED,0,Relationship to Doclinks table. (doclinks.keytable = 'HAZARD' and doclinks.keycolumn = 'HAZARDID' and doclinks.keyvalue = hazard.hazardid). Used to find associated linked documents. The result set will contain zero or more objects.
+N06,PERSON,OOG_PJPADDITIONALINFO,PERSON,personid = :OOG_INSPECTOR,-,0,-,5000000017
 N06,DRILLDOWN,WOTAGLOCK,DRILLDOWN,-,UNDEFINED,0,Relationship from the WOTAGLOCK to the non-persistent DrillDown table. (No where clause). The resulting set will contain zero objects. This relationship is used when the DrillDown page is launched from a location or asset field.,211
 N06,CONDITION,WFNODE,WFCONDITION,processname=:processname and processrev=:processrev and nodeid=:nodeid,UNDEFINED,0,Relationship to the WFCondition table,used to find the companion Mbo for a condition node. (wfnode.processid=wfstart.processid and wfnode.processrev=wfstart.processrev and wfnode.nodeid=wfstart.nodeid). This resulting set will contain one record if the nodetype is 'WFCONDITION' and zero otherwise.
 N06,PM_STORELOC,LOCATIONS,PM,storeloc = :location and siteid=:siteid,UNDEFINED,0,Relationship to the PM table,used to find preventive maintenance records which use a given storeroom location. (locations.location = pm.storeloc). The resulting set will contain zero or more objects.
@@ -27142,7 +27145,7 @@ N06,PLUSGLOCREVACT,PLUSGSTDACTGRP,PLUSGLOCREVACT,plusgstdactgrpid = :plusgstdact
 N06,PLUSGLOCREVACT,PERSON,PLUSGLOCREVACT,actionbyid =:personuid,-,-,Relationship to location to retrieve its details.,99257
 N06,OOG_SAFETYCASE_DOMAIN,LOCATIONS,ALNDOMAIN,domainid = 'OOG_SAFETYCASE' and value = :OOG_SAFETYCASE_BARRIER,-,0,-,99855
 N06,OOG_SYSTEM_DOMAIN,LOCATIONS,ALNDOMAIN,domainid = 'OOG_SYSTEM_TECACC' and value = :OOG_SYSTEM,-,0,-,99856
-N06,FetchAll:,8900,rows,fetched.,,,,
+N06,FetchAll:,8901,rows,fetched.,,,,
 N06,>,,,,,,,
 N08,PLUSGINCEVENTSPECCLASS,PLUSGINCEVENT,PLUSGINCEVENTSPEC,plusginceventid = :plusginceventid and classstructureid = :classstructureid,-,-,Relationship to the plusginceventspec table,used to find the plusginceventspec records for a given incident event (plusginceventid
 N08,PLUSGINCEVENT,INCIDENT,PLUSGINCEVENT,ticketid = :ticketid,-,-,Relationship from INCIDENT to PLUSGINCEVENT.,100398
@@ -27296,6 +27299,7 @@ N08,FLOORCLASS,BIMCONFIGURATION,CLASSSTRUCTURE,classstructureid = :FLOORCLASSIFI
 N08,SPACECLASS,BIMCONFIGURATION,CLASSSTRUCTURE,classstructureid = :SPACECLASSIFICATIONID,-,-,Relationship to the ClassStructure table,used to find the class structure which contains the operating location's ClassStructureId. (BIMCONFIGURATION.classstructureid =classstructure.classstructureid). The resulting set will contain zero or one object.
 N08,ZONECLASS,BIMCONFIGURATION,CLASSSTRUCTURE,classstructureid = :ZONECLASSIFICATIONID,-,-,Relationship to the ClassStructure table,used to find the class structure which contains the operating location's ClassStructureId. (BIMCONFIGURATION.classstructureid =classstructure.classstructureid). The resulting set will contain zero or one object.
 N08,SYSTEMCLASS,BIMCONFIGURATION,CLASSSTRUCTURE,classstructureid = :SYSTEMCLASSIFICATIONID,-,-,Relationship to the ClassStructure table,used to find the class structure which contains the operating location's ClassStructureId. (BIMCONFIGURATION.classstructureid =classstructure.classstructureid). The resulting set will contain zero or one object.
+N08,PERSON,OOG_PJPADDITIONALINFO,PERSON,personid = :OOG_INSPECTOR,-,0,-,7000000018
 N08,OPERLOCCLASS,BIMCONFIGURATION,CLASSSTRUCTURE,classstructureid = :OPERLOCCLASSIFICATIONID,-,-,Relationship to the ClassStructure table,used to find the class structure which contains the operating location's ClassStructureId. (BIMCONFIGURATION.classstructureid =classstructure.classstructureid). The resulting set will contain zero or one object.
 N08,ASSETCLASS,BIMCONFIGURATION,CLASSSTRUCTURE,classstructureid = :ASSETCLASSIFICATIONID,-,-,Relationship to the ClassStructure table,used to find the class structure which contains the asset's ClassStructureId. (BIMCONFIGURATION.ASSETCLASSIFICATIONID =classstructure.classstructureid). The resulting set will contain zero or one object.
 N08,PRODUCTCLASS,BIMCONFIGURATION,CLASSSTRUCTURE,classstructureid = :PRODUCTCLASSIFICATIONID,-,-,Relationship to the ClassStructure table,used to find the class structure which contains the products's ClassStructureId. (BIMCONFIGURATION.PRODUCTCLASSIFICATIONID =classstructure.classstructureid). The resulting set will contain zero or one object.
@@ -36192,7 +36196,7 @@ N08,PLUSGPERSON,PLUSGPERWORKSTDACT,PERSON,personuid = :actionbyid,-,-,Relationsh
 N08,PLUSGPERWORKSTDACT,PERSON,PLUSGPERWORKSTDACT,actionbyid = :personuid,-,-,Relationship to permit to work's person that will take an action into an action.,97964
 N08,OOG_SOMA,SR,OOG_CUSTOS,OOG_OS = :ticketid fetch first 1 rows only,-,-,Relationship between SR and OOG_CUSTOS and return only one row,99774
 N08,OOG_ASSOCLOC,MASTERPM,LOCOPER,:applympmtoloc=:yes and location not in(select location from pm where masterpm=:masterpmnum and location is not null) and location in (select location from locations where status not in (select value from synonymdomain where maxvalue in ('DECOMMISSIONED') and domainid='LOCSTAT')) and :sitefiltering,-,0,-,97453
-N08,FetchAll:,8905,rows,fetched.,,,,
+N08,FetchAll:,8906,rows,fetched.,,,,
 N08,>,,,,,,,
 N09,TAGLOCK,TAGOUT,TAGLOCK,tagoutid = :tagoutid and siteid=:siteid,UNDEFINED,0,Relationship to TagLock (taglock.tagoutid = tagout.tagoutid). The result set will contain zero or more objects.,281
 N09,ADDRESS,MR,ADDRESS,addresscode = :shipto and orgid=:orgid,UNDEFINED,0,Relationship to the Address table,used to find all ship to records for a given material requisition. (address.addresscode = mr.shipto). The resulting set will contain zero or more objects.
@@ -36310,6 +36314,7 @@ N09,WORKLOG,TICKET,WORKLOG,,UNDEFINED,0,Relationship to the ticket's worklog rec
 N09,EXCHANGE,CURRENCY,EXCHANGE,currencycode=:currencycode,UNDEFINED,0,Relationship to the Exchange table,used to find all exchange records for a given currency. (currency.currencycode = exchange.currencycode). The resulting set will contain zero or more objects.
 N09,SHIFTPATTERNDAY,SHIFT,SHIFTPATTERNDAY,shiftnum=:shiftnum and orgid=:orgid,UNDEFINED,0,Relationship to the Shift's ShiftPatternday record(s). Used to find shiftpatternday set for a given shift. (Shiftpatternday.shiftnum=Shift.shiftnum). The resulting set will contain zero or seven objects.,191
 N09,DOCLINKS,HAZARD,DOCLINKS,doclinksid in (select doclinksid from doclinks where (ownertable = 'HAZARD' and ownerid = :hazarduid)  UNION ALL select doclinksid from doclinks where (ownertable  ='PRECAUTION' and ownerid IN (select precaution.precautionuid from  precaution,hazardprec where precaution.precautionid = hazardprec.precautionid and hazardprec.hazardid = :hazardid and hazardprec.orgid = :orgid and precaution.orgid = hazardprec.orgid and precaution.siteid = hazardprec.siteid))),UNDEFINED,0,Relationship to Doclinks table. (doclinks.keytable = 'HAZARD' and doclinks.keycolumn = 'HAZARDID' and doclinks.keyvalue = hazard.hazardid). Used to find associated linked documents. The result set will contain zero or more objects.
+N09,PERSON,OOG_PJPADDITIONALINFO,PERSON,personid = :OOG_INSPECTOR,-,0,-,1000000017
 N09,DRILLDOWN,WOTAGLOCK,DRILLDOWN,-,UNDEFINED,0,Relationship from the WOTAGLOCK to the non-persistent DrillDown table. (No where clause). The resulting set will contain zero objects. This relationship is used when the DrillDown page is launched from a location or asset field.,211
 N09,CONDITION,WFNODE,WFCONDITION,processname=:processname and processrev=:processrev and nodeid=:nodeid,UNDEFINED,0,Relationship to the WFCondition table,used to find the companion Mbo for a condition node. (wfnode.processid=wfstart.processid and wfnode.processrev=wfstart.processrev and wfnode.nodeid=wfstart.nodeid). This resulting set will contain one record if the nodetype is 'WFCONDITION' and zero otherwise.
 N09,PM_STORELOC,LOCATIONS,PM,storeloc = :location and siteid=:siteid,UNDEFINED,0,Relationship to the PM table,used to find preventive maintenance records which use a given storeroom location. (locations.location = pm.storeloc). The resulting set will contain zero or more objects.
@@ -45252,7 +45257,7 @@ N09,MODAVAIL,LABOR,MODAVAIL,personid = (select personid from labor where laborco
 N09,EXPORTTYPE,SKDCALENDAREXPORT,SYNONYMDOMAIN,domainid='EXPORTTYPE' and value = :type,-,-,Get synonym domain values for Calendar Export.,100657
 N09,ROLLDATESELECTOR,SKDPROJECT,DATESELECTOR,pattern = :rolldateschedule,-,-,Date selector pattern for Cron Task,100658
 N09,SKDOPTPARAMTEMPALL,SKDPROJECT,SKDOPTPARAM,projectname='TEMPLATE' and scenarioname='TEMPLATE'  and istemplate=1  and additional=1,-,-,Model Optimization  Parameters,100659
-N09,FetchAll:,8915,rows,fetched.,,,,
+N09,FetchAll:,8916,rows,fetched.,,,,
 N09,>,,,,,,,
 ODN1,TAGLOCK,TAGOUT,TAGLOCK,tagoutid = :tagoutid and siteid=:siteid,UNDEFINED,0,Relationship to TagLock (taglock.tagoutid = tagout.tagoutid). The result set will contain zero or more objects.,281
 ODN1,ADDRESS,MR,ADDRESS,addresscode = :shipto and orgid=:orgid,UNDEFINED,0,Relationship to the Address table,used to find all ship to records for a given material requisition. (address.addresscode = mr.shipto). The resulting set will contain zero or more objects.
@@ -45370,6 +45375,7 @@ ODN1,WORKLOG,TICKET,WORKLOG,,UNDEFINED,0,Relationship to the ticket's worklog re
 ODN1,EXCHANGE,CURRENCY,EXCHANGE,currencycode=:currencycode,UNDEFINED,0,Relationship to the Exchange table,used to find all exchange records for a given currency. (currency.currencycode = exchange.currencycode). The resulting set will contain zero or more objects.
 ODN1,SHIFTPATTERNDAY,SHIFT,SHIFTPATTERNDAY,shiftnum=:shiftnum and orgid=:orgid,UNDEFINED,0,Relationship to the Shift's ShiftPatternday record(s). Used to find shiftpatternday set for a given shift. (Shiftpatternday.shiftnum=Shift.shiftnum). The resulting set will contain zero or seven objects.,191
 ODN1,DOCLINKS,HAZARD,DOCLINKS,doclinksid in (select doclinksid from doclinks where (ownertable = 'HAZARD' and ownerid = :hazarduid)  UNION ALL select doclinksid from doclinks where (ownertable  ='PRECAUTION' and ownerid IN (select precaution.precautionuid from  precaution,hazardprec where precaution.precautionid = hazardprec.precautionid and hazardprec.hazardid = :hazardid and hazardprec.orgid = :orgid and precaution.orgid = hazardprec.orgid and precaution.siteid = hazardprec.siteid))),UNDEFINED,0,Relationship to Doclinks table. (doclinks.keytable = 'HAZARD' and doclinks.keycolumn = 'HAZARDID' and doclinks.keyvalue = hazard.hazardid). Used to find associated linked documents. The result set will contain zero or more objects.
+ODN1,PERSON,OOG_PJPADDITIONALINFO,PERSON,personid = :OOG_INSPECTOR,-,0,-,2000000017
 ODN1,DRILLDOWN,WOTAGLOCK,DRILLDOWN,-,UNDEFINED,0,Relationship from the WOTAGLOCK to the non-persistent DrillDown table. (No where clause). The resulting set will contain zero objects. This relationship is used when the DrillDown page is launched from a location or asset field.,211
 ODN1,CONDITION,WFNODE,WFCONDITION,processname=:processname and processrev=:processrev and nodeid=:nodeid,UNDEFINED,0,Relationship to the WFCondition table,used to find the companion Mbo for a condition node. (wfnode.processid=wfstart.processid and wfnode.processrev=wfstart.processrev and wfnode.nodeid=wfstart.nodeid). This resulting set will contain one record if the nodetype is 'WFCONDITION' and zero otherwise.
 ODN1,PM_STORELOC,LOCATIONS,PM,storeloc = :location and siteid=:siteid,UNDEFINED,0,Relationship to the PM table,used to find preventive maintenance records which use a given storeroom location. (locations.location = pm.storeloc). The resulting set will contain zero or more objects.
@@ -54303,7 +54309,7 @@ ODN1,PLUSGSTDACTGRP,PLUSGLOCREVACT,PLUSGSTDACTGRP,plusgstdactgrpid = :plusgstdac
 ODN1,PLUSGLOCREVACT,PLUSGSTDACT,PLUSGLOCREVACT,plusgstdactid = :plusgstdactid,-,-,Relationship to location's standard action list.,99255
 ODN1,PLUSGLOCREVACT,PLUSGSTDACTGRP,PLUSGLOCREVACT,plusgstdactgrpid = :plusgstdactgrpid,-,-,Relationship to location's standard action list.,99256
 ODN1,PLUSGLOCREVACT,PERSON,PLUSGLOCREVACT,actionbyid =:personuid,-,-,Relationship to location to retrieve its details.,99257
-ODN1,FetchAll:,8906,rows,fetched.,,,,
+ODN1,FetchAll:,8907,rows,fetched.,,,,
 ODN1,>,,,,,,,
 ODN2,TAGLOCK,TAGOUT,TAGLOCK,tagoutid = :tagoutid and siteid=:siteid,UNDEFINED,0,Relationship to TagLock (taglock.tagoutid = tagout.tagoutid). The result set will contain zero or more objects.,281
 ODN2,ADDRESS,MR,ADDRESS,addresscode = :shipto and orgid=:orgid,UNDEFINED,0,Relationship to the Address table,used to find all ship to records for a given material requisition. (address.addresscode = mr.shipto). The resulting set will contain zero or more objects.
@@ -54421,6 +54427,7 @@ ODN2,WORKLOG,TICKET,WORKLOG,,UNDEFINED,0,Relationship to the ticket's worklog re
 ODN2,EXCHANGE,CURRENCY,EXCHANGE,currencycode=:currencycode,UNDEFINED,0,Relationship to the Exchange table,used to find all exchange records for a given currency. (currency.currencycode = exchange.currencycode). The resulting set will contain zero or more objects.
 ODN2,SHIFTPATTERNDAY,SHIFT,SHIFTPATTERNDAY,shiftnum=:shiftnum and orgid=:orgid,UNDEFINED,0,Relationship to the Shift's ShiftPatternday record(s). Used to find shiftpatternday set for a given shift. (Shiftpatternday.shiftnum=Shift.shiftnum). The resulting set will contain zero or seven objects.,191
 ODN2,DOCLINKS,HAZARD,DOCLINKS,doclinksid in (select doclinksid from doclinks where (ownertable = 'HAZARD' and ownerid = :hazarduid)  UNION ALL select doclinksid from doclinks where (ownertable  ='PRECAUTION' and ownerid IN (select precaution.precautionuid from  precaution,hazardprec where precaution.precautionid = hazardprec.precautionid and hazardprec.hazardid = :hazardid and hazardprec.orgid = :orgid and precaution.orgid = hazardprec.orgid and precaution.siteid = hazardprec.siteid))),UNDEFINED,0,Relationship to Doclinks table. (doclinks.keytable = 'HAZARD' and doclinks.keycolumn = 'HAZARDID' and doclinks.keyvalue = hazard.hazardid). Used to find associated linked documents. The result set will contain zero or more objects.
+ODN2,PERSON,OOG_PJPADDITIONALINFO,PERSON,personid = :OOG_INSPECTOR,-,0,-,3000000017
 ODN2,DRILLDOWN,WOTAGLOCK,DRILLDOWN,-,UNDEFINED,0,Relationship from the WOTAGLOCK to the non-persistent DrillDown table. (No where clause). The resulting set will contain zero objects. This relationship is used when the DrillDown page is launched from a location or asset field.,211
 ODN2,CONDITION,WFNODE,WFCONDITION,processname=:processname and processrev=:processrev and nodeid=:nodeid,UNDEFINED,0,Relationship to the WFCondition table,used to find the companion Mbo for a condition node. (wfnode.processid=wfstart.processid and wfnode.processrev=wfstart.processrev and wfnode.nodeid=wfstart.nodeid). This resulting set will contain one record if the nodetype is 'WFCONDITION' and zero otherwise.
 ODN2,PM_STORELOC,LOCATIONS,PM,storeloc = :location and siteid=:siteid,UNDEFINED,0,Relationship to the PM table,used to find preventive maintenance records which use a given storeroom location. (locations.location = pm.storeloc). The resulting set will contain zero or more objects.
@@ -63348,5 +63355,5 @@ ODN2,PLUSGLOCCALCULATE,PLUSGCERT,PLUSGLOCCALCULATE,plusgcertid = :plusgcertid,-,
 ODN2,PLUSGCERT,PLUSGLOCCALCULATE,PLUSGCERT,plusgcertid = :plusgcertid,-,-,Retrieves the Certification for a PLUSGLOCCALCULATE.,99400
 ODN2,PLUSGASSCALCULATE,ASSET,PLUSGASSCALCULATE,assetuid = :assetuid,-,-,Retrieves the PLUSGASSCALCULATE for a Certification.,99401
 ODN2,PLUSGASSCALCULATE,PERSON,PLUSGASSCALCULATE,validatebyid = :personuid,-,-,Shows PLUSGASSCALCULATE of a person.,99402
-ODN2,FetchAll:,8900,rows,fetched.,,,,
+ODN2,FetchAll:,8901,rows,fetched.,,,,
 ODN2,>,,,,,,,

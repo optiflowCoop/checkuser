@@ -1986,7 +1986,7 @@ FetchAll:  Columns: 5
   ITEAM, -, 0, 1, 0
   EMERSONGONCALVES, -, 0, 1, 0
   ALESSANDROPASINI, -, 0, 1, 0
-  DIEGOOTAVIO, -, 0, 1, 1
+  DIEGOOTAVIO, -, 0, 1, 0
   CECILIASARMENTO, -, 0, 1, 0
   RUTHSILVA, -, 0, 1, 0
   CARLOSEDUARDO, -, 0, 1, 1
@@ -2802,8 +2802,14 @@ FetchAll:  Columns: 5
   REBECAALBERNI, -, 0, 1, 1
   MAXREG, -, 1, 0, 0
   JOSETIAGO, -, 0, 1, 1
-  ITEAM, -, 0, 1, 1
+  ITEAM, -, 0, 1, 0
   FABIOMURTEIRA, -, 0, 1, 1
   BRENDAGARCIA, -, 0, 1, 1
-FetchAll: 2798 rows fetched.
+  PALOMABASTOS, -, 0, 1, 1
+  MAXREG, -, 1, 0, 0
+  EDSONSANTOS, -, 0, 1, 1
+  ESLLENSILVA, -, 0, 1, 1
+  ITEAM, -, 0, 1, 1
+  MAXREG, -, 1, 0, 1
+FetchAll: 2804 rows fetched.
 > 

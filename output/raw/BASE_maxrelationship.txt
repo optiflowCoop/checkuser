@@ -252,6 +252,7 @@ and addresscode in (select addresscode from address where description='OPEX'), -
   PERSON, PLUSGMOCRVLST, PERSON, personid=:reviewer, -, -, Relationship between PLUSGMOCRVLST and PERSON, 96646
   PERSONGROUP, PLUSGMOCRVLST, PERSONGROUP, personid in (select respparty from persongroupteam where persongroup=:reviewer), -, -, Relationship between PLUSGMOCRVLST and PERSONGROUP, 96647
   PLUSGMOCPOSTLIST, PLUSGMOC, PLUSGMOCPOSTLIST, wonum=:wonum and siteid=:siteid, MULTIPLE, 0, Relationship between PLUSGMOC and PLUSGMOCPOSTLIST, 96648
+  PERSON, OOG_PJPADDITIONALINFO, PERSON, personid = :OOG_INSPECTOR, -, 0, -, 100863
   PLUSGMOCPRELIST, PLUSGMOC, PLUSGMOCPRELIST, wonum=:wonum and siteid=:siteid, -, -, Relationship between PLUSGMOC and PLUSGMOCPRELIST, 96649
   PERSON, PLUSGMOCAUTHLIST, PERSON, personid=:authorizer, -, -, Relationship between PLUSGMOCAUTHLIST and PERSON, 96650
   PLUSGSTDACT, PLUSGMOCPRELIST, PLUSGSTDACT, plusgstdactid=:plusgstdactid, -, -, Relationship between PLUSGSTDACT and PLUSGMOCPRELIST, 96651
@@ -9062,5 +9063,5 @@ AND CREATEDATE = (
   ASSETMOBILE, PLUSGIMPROVE, ASSET, :assetnum = assetnum and :siteid = siteid, -, 0, Relationship for RES Mobile, 100835
   MOBILELOCATION, PLUSGIMPROVE, LOCATIONS, location = :location and siteid = :siteid, -, 0, Relationship for RES Mobile, 100836
   MOBILEWORKLOG, PLUSGIMPROVE, WORKLOG, recordkey=:wonum and class=:woclass and siteid=:siteid, -, 0, Relationship for WorkLog Mobile, 100837
-FetchAll: 8909 rows fetched.
+FetchAll: 8910 rows fetched.
 > 

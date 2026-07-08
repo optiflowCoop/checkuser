@@ -3326,7 +3326,7 @@ FetchAll:  Columns: 5
   GREGORYMATOS, -, 0, 1, 0
   JSILVA, -, 0, 1, 0
   MAXREG, -, 0, 1, 0
-  MMLSILVA, -, 0, 1, 1
+  MMLSILVA, -, 0, 1, 0
   MSMAURITY, -, 0, 1, 0
   TRSALVADOR, -, 0, 1, 0
   JVFERREIRA, -, 0, 1, 0
@@ -3353,7 +3353,7 @@ FetchAll:  Columns: 5
   RMOTA, -, 0, 1, 0
   RVAZQUEZ, -, 0, 1, 0
   ACARVALHO, -, 0, 1, 0
-  AFILHO, -, 0, 1, 1
+  AFILHO, -, 0, 1, 0
   BDIAS, -, 0, 1, 0
   KAIOSILVA, -, 0, 1, 0
   MARTINSNUNES, -, 0, 1, 0
@@ -3382,15 +3382,15 @@ FetchAll:  Columns: 5
   MAURICIOGSOUZA, -, 0, 1, 0
   VMMACHADO, -, 0, 1, 0
   FCAPUTO, -, 0, 1, 0
-  FSOUZA, -, 0, 1, 1
+  FSOUZA, -, 0, 1, 0
   JLSANTANA, -, 0, 1, 0
-  MGONCALVES, -, 0, 1, 1
+  MGONCALVES, -, 0, 1, 0
   NIRRALIAM, -, 0, 1, 1
   RDAMASIO, -, 0, 1, 0
   VAGNERMACHADO, -, 0, 1, 0
   VALTERJUNIOR, -, 0, 1, 0
   VJUNIOR, -, 0, 1, 0
-  FANASTACIO, -, 0, 1, 1
+  FANASTACIO, -, 0, 1, 0
   GREGORYMATOS, -, 0, 1, 0
   ITEAM, -, 0, 1, 0
   RAMATOS, -, 0, 1, 0
@@ -3435,7 +3435,7 @@ FetchAll:  Columns: 5
   MARCELOGUEDES, -, 0, 1, 0
   DMROSA, -, 0, 1, 0
   MARCOSOUSA, -, 0, 1, 0
-  MCPINHEIRO, -, 0, 1, 1
+  MCPINHEIRO, -, 0, 1, 0
   GUSTAVOSOUZASANTOS, -, 0, 1, 0
   MAXREG, -, 0, 1, 0
   NTHOMAS, -, 0, 1, 0
@@ -3485,49 +3485,49 @@ FetchAll:  Columns: 5
   LUISAUGUSTO, -, 0, 1, 1
   ALEXANDREBCOSTA, -, 0, 1, 0
   MARIAPEREIRA, -, 0, 1, 0
-  FABRICIOBARCELOS, -, 0, 1, 1
+  FABRICIOBARCELOS, -, 0, 1, 0
   MAXREG, -, 0, 1, 0
-  RDMATA, -, 0, 1, 1
+  RDMATA, -, 0, 1, 0
   RAPHAELPINTO, -, 0, 1, 0
-  HASSIS, -, 0, 1, 1
+  HASSIS, -, 0, 1, 0
   RMPINTO, -, 0, 1, 0
   MAXREG, -, 0, 1, 0
   ITEAM, -, 0, 1, 0
-  JADILSONSOUZA, -, 0, 1, 1
+  JADILSONSOUZA, -, 0, 1, 0
   MAYARAFREITAS, -, 0, 1, 1
-  KBMOTA, -, 0, 1, 1
+  KBMOTA, -, 0, 1, 0
   ANETO, -, 0, 1, 1
   ESANTOS, -, 0, 1, 0
-  KBARBOSA, -, 0, 1, 1
+  KBARBOSA, -, 0, 1, 0
   CALEBECAETANO, -, 0, 1, 1
   ALISSONFERREIRA, -, 0, 1, 1
   GREGORYMATOS, -, 0, 1, 0
   RONALDVIEIRA, -, 0, 1, 1
-  MAYCONFERREIRA, -, 0, 1, 1
+  MAYCONFERREIRA, -, 0, 1, 0
   GEORGEMEDEIROS, -, 0, 1, 1
   ADRIANOALVARENGADEBARROS, -, 0, 1, 0
   RPOSSATI, -, 0, 1, 0
-  MGOMES, -, 0, 1, 1
-  RROCHA, -, 0, 1, 1
+  MGOMES, -, 0, 1, 0
+  RROCHA, -, 0, 1, 0
   JPEREIRA, -, 0, 1, 1
-  FLAVIOBRANDAODESOUZA, -, 0, 1, 1
+  FLAVIOBRANDAODESOUZA, -, 0, 1, 0
   ITEAM, -, 0, 1, 0
   ADRIANOCUNHA, -, 0, 1, 1
-  MARCONESILVA, -, 0, 1, 1
+  MARCONESILVA, -, 0, 1, 0
   LOSROCHA, -, 0, 1, 1
-  RRMARTINS, -, 0, 1, 1
+  RRMARTINS, -, 0, 1, 0
   ALNASCIMENTO, -, 0, 1, 1
-  HCARABALLO, -, 0, 1, 1
-  FRANCISCOFERNANDO, -, 0, 1, 1
-  JANDERSONLIMA, -, 0, 1, 1
+  HCARABALLO, -, 0, 1, 0
+  FRANCISCOFERNANDO, -, 0, 1, 0
+  JANDERSONLIMA, -, 0, 1, 0
   MAXREG, -, 0, 1, 0
-  RRCERQUEIRA, -, 0, 1, 1
+  RRCERQUEIRA, -, 0, 1, 0
   RSCALDAS, -, 0, 1, 1
-  JSOLIVEIRA, -, 0, 1, 1
-  MPSILVA, -, 0, 1, 1
+  JSOLIVEIRA, -, 0, 1, 0
+  MPSILVA, -, 0, 1, 0
   JVFARIA, -, 0, 1, 1
-  FGONCALVES, -, 0, 1, 1
-  ESANTOSSILVA, -, 0, 1, 1
+  FGONCALVES, -, 0, 1, 0
+  ESANTOSSILVA, -, 0, 1, 0
   GREGORYMATOS, -, 0, 1, 0
   CAUAADAMS, -, 0, 1, 0
   MAXREG, -, 0, 1, 0
@@ -3535,8 +3535,8 @@ FetchAll:  Columns: 5
   MJSILVA, -, 0, 1, 1
   ODINILSONALBUQUERQUE, -, 0, 1, 1
   SILVIOANTONIO, -, 0, 1, 1
-  DGTEIXEIRA, -, 0, 1, 1
-  JSCOFANO, -, 0, 1, 1
+  DGTEIXEIRA, -, 0, 1, 0
+  JSCOFANO, -, 0, 1, 0
   ALANNAPOLEAO, -, 0, 1, 1
   JULIOSCOFANO, -, 0, 1, 1
   ITEAM, -, 0, 1, 0
@@ -3684,7 +3684,38 @@ FetchAll:  Columns: 5
   JSABINO, -, 0, 1, 1
   YAGOMAGUIAR, -, 0, 1, 1
   LEONARDODOURADO, -, 0, 1, 1
-  ITEAM, -, 0, 1, 1
+  ITEAM, -, 0, 1, 0
   SHSOUZA, -, 0, 1, 1
-FetchAll: 3679 rows fetched.
+  MAXREG, -, 0, 1, 0
+  GREGORYMATOS, -, 0, 1, 0
+  JOECISANTOS, -, 0, 1, 1
+  JUANVELASQUEZ, -, 0, 1, 1
+  CARLOSROJAS, -, 0, 1, 1
+  ESLLENSILVA, -, 0, 1, 1
+  EDSONSANTOS, -, 0, 1, 1
+  BRUNOCOUTINHO, -, 0, 1, 1
+  VRODRIGUES, -, 0, 1, 1
+  GUSTAVOPOTROCIO, -, 0, 1, 1
+  NATHSANTOS, -, 0, 1, 1
+  GILMARIOGSANTOS, -, 0, 1, 1
+  JEANAZEVEDO, -, 0, 1, 1
+  DJALMASANTOS, -, 0, 1, 1
+  MVSGJUNIOR, -, 0, 1, 1
+  DLBRANCO, -, 0, 1, 1
+  TBFERNANDES, -, 0, 1, 1
+  RODOLFOREAL, -, 0, 1, 1
+  MGVIANA, -, 0, 1, 1
+  RODOLFOBATISTA, -, 0, 1, 0
+  TARCISIOBATISTA, -, 0, 1, 1
+  DBRANCO, -, 0, 1, 1
+  CTGMAFRA, -, 0, 1, 1
+  JRFCOSTA, -, 0, 1, 1
+  VRFLORO, -, 0, 1, 1
+  MAJUNIOR, -, 0, 1, 1
+  PCCTORRES, -, 0, 1, 1
+  MAXREG, -, 0, 1, 1
+  ITEAM, -, 0, 1, 1
+  MANOELBATISTA, -, 0, 1, 1
+  GDAMASCENO, -, 0, 1, 1
+FetchAll: 3710 rows fetched.
 > 

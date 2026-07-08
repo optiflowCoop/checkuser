@@ -2,7 +2,7 @@
 from .html_data_processor import DataProcessor
 from .html_template import render_html
 
-def build_html_structure(summary, governance, app_points, domains, identity_analytics, ad_users=None, maximo_users=None, sanity_data=None, migration_data=None):
+def build_html_structure(summary, governance, app_points, domains, identity_analytics, ad_users=None, maximo_users=None, sanity_data=None, migration_data=None, allocation_data=None):
     """
     Orchestrates the data processing and HTML rendering.
     """
@@ -15,4 +15,6 @@ def build_html_structure(summary, governance, app_points, domains, identity_anal
     processed_data['sanity_data'] = sanity_data
     # Injeta dados de migration analysis
     processed_data['migration_data'] = migration_data
+    # Injeta dados de allocation analysis (Maximo 9)
+    processed_data['allocation_data'] = allocation_data
     return render_html(processed_data)

@@ -2467,7 +2467,7 @@ FetchAll:  Columns: 1
   HUGOTORRES,hugo.trancosotorres@halliburton.com
   MARVINM,marvin.xaviermachado@halliburton.com
   GENIVALDOBATISTA,genivaldobastista@prisma.com.br
-  GENIVALDO,genivaldo@prisma.com
+  GENIVALDO,genivaldo7cristo@gmail.com
   LUCASIGNACIO,lucas.hespanhol@foresea.com
   FELIPEPIZZO,felipe.mattos@fugro.com
   CECILIANOSANDRO,ceciliano.amaral@fugro.com
@@ -2575,7 +2575,7 @@ FetchAll:  Columns: 1
   VICTORMIOQUE,mioque@hotmail.com
   FABIOROCHA,fsr2014@yahoo.com.br
   DANIELMENEZES,daniel.m.rosa.1984@gmail.com
-  CARLOSCANOS,ca_paulino@yahoo.com.br
+  CARLOSCANOS,ca_@yahoo.com.br
   MSOUZALIMA,manoel.souza@halliburton.com
   KDOMINGUES,br220@welltec.com
   JSABINO,josileiacaccio@yahoo.com.br
@@ -2588,5 +2588,61 @@ FetchAll:  Columns: 1
   GABRIELXAVIER,gaa-x@live.com
   GUISANTOS,guilherme@hotmail.com
   TAFREITAS,tadeu@hotmail.com
-FetchAll: 2581 rows fetched.
+  JOECISANTOS,johe.direito@gmail.com
+  TAKAFUMIS,takafumis@slb.com
+  MARIASILVAA,msilva168@slb.com
+  JOAOVICTOR,joao.victor.2014.jvs@gmail.com
+  BRUNORIBEIRO,bruno.ribeiro@fugro.com
+  ALANSOARES,asoares@slb.com
+  MARCOSNASCIMENTO,mnascimento6@slb.com
+  VICTORPESSOA,vpessoa@slb.com
+  LPINHEIRO,lpinheiro@slb.com
+  YCONCEICAO,Yconceicao2@slb.com
+  FSEVENINI,fsevenini@slb.com
+  JUANVELASQUEZ,juan.velasquez2014@gmail.com
+  CARLOSROJAS,cr1991.20@gmail.com
+  ESEQUIELBARROS,esequielbarros@foresea.com
+  ESLLENSILVA,esllensilva@foresea-partner.com
+  EDSONSANTOS,edsonsantos@foresea-partner.com
+  PAOLAOLIVEIRA,paolaoliveira@foresea.com
+  GABRIELRODRIGUES,gsouza@foresea.com
+  HUMBERTOMARIO,hgoncalves3@slb.com
+  VRODRIGUES,victorrodrigues.cabral@halliburton.com
+  MARIOGONCALVES,goncalveshumberto173@gmail.com
+  GUSTAVOPOTROCIO,gustavopatrocionio5@gmail.com
+  NATHSANTOS,nathaliacostados.santos@halliburton.com
+  GUILHERMEGARRIDO,ggarrido@slb.com
+  JONATHANHENRIQUE,jonathan.heriquedebrittodonascimento@halliburton.com
+  MATHEUSREIS,mpereira28@slb.com
+  ANDRESSAMOTA,andressa.rodriguesmota@weatherford.com
+  MOTAYURI,yurimota770@gmail.com
+  MARCUSLEITE,mleite7@slb.com
+  DLBRANCO,dlbranco@gmail.com
+  TBFERNANDES,tbfernandes@gmail.com
+  JMACIEL,jmaciel@slb.com
+  TARCISIOBATISTA,fernandestarcisio35@gmail.com
+  DBRANCO,daniel.lima.branco000@gmail.com
+  FABIANOVIRGILIO,fabianodccosta@hotmail.com
+  EMANUELCOSTA,costaemanuel416@gmail.com
+  CTGMAFRA,ctgmafra
+  JRFCOSTA,jrfcosta@gmail.com
+  SERGIOIVERSON,sergioiverson@aasj.com
+  MARLEYRABELO,marleyrabelo@qualitech.com
+  ANDERSONBOBI,andersonbobi@qualitech.com
+  DIEGOMACHADO,diegomachado@qualitech.com
+  BARBOSAALEXANDRE,alexandrebarbosa@aasj.com
+  RONESIOCASCAES,ronesiocascaes@ibp.com
+  CHARLESJESUS,chales.jesus@technipfmc.com
+  VRFLORO,vanessarangelf@gmail.com
+  MAJUNIOR,majunior@gmail.com
+  PCCTORRES,pcctorres@gmail.com
+  EVERTONASILVA,evertomsolda@gmail.com
+  FERNADODUTRA,fernandofp@gmail.com
+  FILIPERODRIGUES,filipe.silva@qualitechirm.com.br
+  ANDERSONFERREIRA,andersonbobiferreira@yahoo.com.br
+  CARLOSANDRADE,carlosandrade@prospecta.com
+  RALPHSANTOS,ralphsantos@prospecta.com
+  GDAMASCENO,gdamasceno3@gmail.com
+  ANDREMARIANO,tecnicos4.dti@deepsea-tech.com.br
+FetchAll: 2637 rows fetched.
 > 

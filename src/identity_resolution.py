@@ -9,7 +9,13 @@ Outputs:
 from __future__ import annotations
 import csv
 import os
+import sys
 from collections import defaultdict
+
+ROOT = os.path.dirname(os.path.dirname(__file__))
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from scripts.domain.env_normalizer import normalize_env
 
 ROOT = os.path.dirname(os.path.dirname(__file__))
 OUTDIR = os.path.join(ROOT, 'output', 'consolidated')
@@ -49,7 +55,7 @@ def main():
     # 1. Process USERID Clusters (Cross-Env Reuse)
     for uid, members in clusters.items():
         if len(members) > 1:
-            envs = set(m.get('ENV_DB', '').strip() for m in members)
+            envs = set(normalize_env(m.get('ENV_DB', '').strip()) for m in members)
             
             if len(envs) > 1:
                 personids = set(m.get('PERSONID', '').strip().upper() for m in members if m.get('PERSONID', '').strip())
@@ -99,7 +105,7 @@ def main():
                 
                 # Generate worklist items
                 for m in members:
-                    env = m.get('ENV_DB', '').strip()
+                    env = normalize_env(m.get('ENV_DB', '').strip())
                     worklist_rows.append({
                         'RAW_ID': f"{env}|{m.get('USERID', '')}",
                         'ENV_DB': env,
@@ -123,7 +129,7 @@ def main():
     # 2. Process LOGINID Clusters (Finding Login Conflicts)
     for lid, members in login_clusters.items():
         if len(members) > 1:
-            envs = set(m.get('ENV_DB', '').strip() for m in members)
+            envs = set(normalize_env(m.get('ENV_DB', '').strip()) for m in members)
             userids = set(m.get('USERID', '').strip().upper() for m in members)
             personids = set(m.get('PERSONID', '').strip().upper() for m in members if m.get('PERSONID', '').strip())
 

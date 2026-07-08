@@ -25,6 +25,7 @@ from scripts.domain.identity_analyzer import get_unique_users_data
 # --- NOVA IMPORTAÇÃO: SANITY ANALYZER ---
 from scripts.domain.sanity_analyzer import analyze_sanity
 from scripts.domain.migration_advisor import analyze_migration
+from scripts.domain.allocation_analyzer import analyze_allocation
 
 
 # --- Constants ---
@@ -120,7 +121,7 @@ def write_license_decision_plan(rows):
             writer.writerow(row)
     print(f'✓ WROTE {out_path.name}')
 
-def write_excel_workbook(summary, governance, license_rows, domain_counts, missing_email_rows, sanity_data=None, migration_data=None, identities=None):
+def write_excel_workbook(summary, governance, license_rows, domain_counts, missing_email_rows, sanity_data=None, migration_data=None, identities=None, allocation_data=None):
     """Creates the final consolidated governance workbook used by the pipeline."""
     wb = Workbook()
     wb.remove(wb.active)
@@ -238,19 +239,23 @@ def write_excel_workbook(summary, governance, license_rows, domain_counts, missi
     # Adicionar Aba 7: Saneamento de Identidades (AD vs Maximo)
     if sanity_data:
         add_sanity_sheets(wb, sanity_data, add_sheet)
-    
+
     # Adicionar Aba 8: Recomendações de Migração
     if migration_data:
         add_migration_sheets(wb, migration_data, add_sheet)
-    
+
+    # Adicionar Aba 21/22: Saneamento de Alocação (Maximo 9)
+    if allocation_data:
+        add_allocation_sheets(wb, allocation_data, add_sheet)
+
     # Adicionar Aba 18: Usuários Ativos Únicos do Maximo
     if identities:
         add_maximo_active_users_sheet(wb, identities, add_sheet)
-    
+
     # Adicionar Aba 19: Acessos por Tipo de Perfil
     if identities:
         add_profile_access_sheet(wb, identities, add_sheet)
-    
+
     # Adicionar Aba 20: Auditoria - Data de Concessão de Acesso
     persongroupview = governance.get('persongroupview', [])
     if persongroupview:
@@ -272,7 +277,7 @@ def write_excel_workbook(summary, governance, license_rows, domain_counts, missi
 # --- Sanity Excel Sheets ---
 def add_sanity_sheets(wb, sanity_data, add_sheet):
     """Adiciona abas do Excel com dados de saneamento de identidades."""
-    
+
     # Aba 9: Resumo de Saneamento
     stats = sanity_data['stats']
     summary_rows = [
@@ -300,11 +305,11 @@ def add_sanity_sheets(wb, sanity_data, add_sheet):
         ['Sem match no AD', stats['maximo_sem_email_nomatch']],
     ]
     add_sheet('9_Saneamento_Resumo', ['Métrica', 'Valor'], summary_rows)
-    
+
     # Aba 10: Divergências de Nome
     if sanity_data['analises']['name_divergences']:
-        headers = ['Email', 'Nome AD', 'GivenName AD', 'Surname AD', 'Nomes Maximo', 
-                   'USERIDs Maximo', 'Ambientes Maximo', 'Status Maximo', 'Domínio', 
+        headers = ['Email', 'Nome AD', 'GivenName AD', 'Surname AD', 'Nomes Maximo',
+                   'USERIDs Maximo', 'Ambientes Maximo', 'Status Maximo', 'Domínio',
                    'AD Habilitado', 'Qtd Grupos AD', 'Tipo']
         rows = []
         for d in sanity_data['analises']['name_divergences']:
@@ -323,7 +328,7 @@ def add_sanity_sheets(wb, sanity_data, add_sheet):
                 'Tipo': d['tipo'],
             })
         add_sheet('10_Divergencias_Nome', headers, rows)
-    
+
     # Aba 11: Múltiplos USERIDs
     if sanity_data['analises']['multi_userid']:
         headers = ['Email', 'Nome AD', 'Qtd USERIDs', 'USERIDs', 'Ambientes', 'Status', 'Domínio', 'Tipo']
@@ -340,7 +345,7 @@ def add_sanity_sheets(wb, sanity_data, add_sheet):
                 'Tipo': d['tipo'],
             })
         add_sheet('11_Multiplos_USERIDs', headers, rows)
-    
+
     # Aba 12: Match por Prefixo (USERID)
     if sanity_data['analises']['prefix_match']:
         headers = ['Email', 'Nome AD', 'USERID Maximo', 'Nomes Maximo', 'Ambientes Maximo',
@@ -361,10 +366,10 @@ def add_sanity_sheets(wb, sanity_data, add_sheet):
                 'Tipo': d['tipo'],
             })
         add_sheet('12_Match_Prefixo', headers, rows)
-    
+
     # Aba 13: Sem Match no Maximo
     if sanity_data['analises']['no_match']:
-        headers = ['Email', 'Nome AD', 'GivenName AD', 'Surname AD', 'Prefixo', 
+        headers = ['Email', 'Nome AD', 'GivenName AD', 'Surname AD', 'Prefixo',
                    'Domínio', 'AD Habilitado', 'Qtd Grupos AD', 'Tipo']
         rows = []
         for d in sanity_data['analises']['no_match']:
@@ -380,7 +385,7 @@ def add_sanity_sheets(wb, sanity_data, add_sheet):
                 'Tipo': d['tipo'],
             })
         add_sheet('13_Sem_Match_Maximo', headers, rows)
-    
+
     # Aba 14: Maximo sem Email (com match AD)
     if sanity_data['analises']['maximo_sem_email_match']:
         headers = ['USERID', 'Nomes Maximo', 'Ambientes Maximo', 'Status Maximo', 'Títulos Maximo',
@@ -400,7 +405,7 @@ def add_sanity_sheets(wb, sanity_data, add_sheet):
                 'Tipo': d['tipo'],
             })
         add_sheet('14_Maximo_Sem_Email_Match', headers, rows)
-    
+
     # Aba 15: Divergências de Domínio
     if sanity_data['analises']['domain_divergences']:
         headers = ['Email', 'Nome AD', 'Domínio AD', 'Domínio Maximo', 'USERID Maximo',
@@ -423,17 +428,17 @@ def add_sanity_sheets(wb, sanity_data, add_sheet):
 # --- Maximo Active Users Excel Sheet ---
 def add_maximo_active_users_sheet(wb, identities, add_sheet):
     """Adiciona aba com todos os usuários únicos ativos no Maximo."""
-    
+
     def clean_value(v):
         """Remove caracteres ilegais do Excel (caracteres de controle)."""
         if v is None:
             return ''
         s = str(v)
         return ''.join(c if ord(c) >= 32 or c in '\n\r\t' else '' for c in s)
-    
+
     # Filtrar apenas usuários ativos
     active_users = [r for r in identities if r.get('STATUS', '').strip().upper() == 'ACTIVE']
-    
+
     # Deduplicar por USERID (pegar primeiro registro de cada USERID)
     seen_userids = set()
     unique_active = []
@@ -442,11 +447,11 @@ def add_maximo_active_users_sheet(wb, identities, add_sheet):
         if userid and userid not in seen_userids:
             seen_userids.add(userid)
             unique_active.append(user)
-    
+
     # Preparar headers e rows
-    headers = ['USERID', 'DISPLAYNAME', 'PRIMARYEMAIL', 'ENV_DB', 'STATUS', 
+    headers = ['USERID', 'DISPLAYNAME', 'PRIMARYEMAIL', 'ENV_DB', 'STATUS',
                'TYPE', 'DEFSITE', 'FIRSTNAME', 'LASTNAME', 'TITLE', 'PERSONGROUP']
-    
+
     rows = []
     for user in unique_active:
         rows.append({
@@ -462,7 +467,7 @@ def add_maximo_active_users_sheet(wb, identities, add_sheet):
             'TITLE': clean_value(user.get('TITLE', '')),
             'PERSONGROUP': clean_value(user.get('PERSONGROUP', '')),
         })
-    
+
     add_sheet('18_Maximo_Usuarios_Ativos', headers, rows)
     print(f'✓ Aba 18 adicionada: {len(rows)} usuários ativos únicos do Maximo')
 
@@ -470,17 +475,17 @@ def add_maximo_active_users_sheet(wb, identities, add_sheet):
 # --- Profile Access Excel Sheet ---
 def add_profile_access_sheet(wb, identities, add_sheet):
     """Adiciona aba com detalhamento de acessos por tipo de perfil."""
-    
+
     def clean_value(v):
         """Remove caracteres ilegais do Excel (caracteres de controle)."""
         if v is None:
             return ''
         s = str(v)
         return ''.join(c if ord(c) >= 32 or c in '\n\r\t' else '' for c in s)
-    
+
     # Filtrar apenas usuários ativos
     active_users = [r for r in identities if r.get('STATUS', '').strip().upper() == 'ACTIVE']
-    
+
     # Agrupar por tipo
     by_type = {}
     for user in active_users:
@@ -488,23 +493,23 @@ def add_profile_access_sheet(wb, identities, add_sheet):
         if t not in by_type:
             by_type[t] = []
         by_type[t].append(user)
-    
+
     # Preparar headers
     headers = ['Tipo', 'Qtd Usuários', 'USERIDs Únicos', 'Ambientes', 'Títulos', 'PersonGroups']
-    
+
     rows = []
     for tipo, users in sorted(by_type.items()):
         userids = set()
         envs = set()
         titulos = set()
         persongroups = set()
-        
+
         for user in users:
             userids.add(clean_value(user.get('USERID', '')))
             envs.add(clean_value(user.get('ENV_DB', '')))
             titulos.add(clean_value(user.get('TITLE', '')))
             persongroups.add(clean_value(user.get('PERSONGROUP', '')))
-        
+
         rows.append({
             'Tipo': clean_value(tipo),
             'Qtd Usuários': len(users),
@@ -513,7 +518,7 @@ def add_profile_access_sheet(wb, identities, add_sheet):
             'Títulos': '; '.join(sorted(t for t in titulos if t))[:100],
             'PersonGroups': '; '.join(sorted(pg for pg in persongroups if pg))[:100],
         })
-    
+
     add_sheet('19_Acessos_por_Perfil', headers, rows)
     print(f'✓ Aba 19 adicionada: {len(rows)} tipos de perfil analisados')
 
@@ -521,20 +526,20 @@ def add_profile_access_sheet(wb, identities, add_sheet):
 # --- Audit Excel Sheet ---
 def add_audit_sheet(wb, persongroupview, add_sheet):
     """Adiciona aba com dados de auditoria - data de concessão de acesso."""
-    
+
     def clean_value(v):
         """Remove caracteres ilegais do Excel (caracteres de controle)."""
         if v is None:
             return ''
         s = str(v)
         return ''.join(c if ord(c) >= 32 or c in '\n\r\t' else '' for c in s)
-    
+
     # Filtrar apenas usuários ativos com statusdate
     active_with_date = [r for r in persongroupview if r.get('status', '').strip().upper() == 'ACTIVE' and r.get('statusdate', '').strip()]
-    
+
     # Preparar headers
     headers = ['USERID', 'DISPLAYNAME', 'STATUS', 'STATUSDATE', 'TYPE', 'DEFSITE', 'TITLE', 'PERSONGROUP', 'ENVIRONMENT']
-    
+
     rows = []
     for r in active_with_date[:5000]:  # Limitar a 5000 linhas
         rows.append({
@@ -548,28 +553,76 @@ def add_audit_sheet(wb, persongroupview, add_sheet):
             'PERSONGROUP': clean_value(r.get('persongroup', '')),
             'ENVIRONMENT': clean_value(r.get('ENVIRONMENT', '')),
         })
-    
+
     add_sheet('20_Auditoria_Acesso', headers, rows)
     print(f'✓ Aba 20 adicionada: {len(rows)} registros com data de concessão')
+
+
+# --- Allocation Excel Sheets (Maximo 9) ---
+def add_allocation_sheets(wb, allocation_data, add_sheet):
+    """Adiciona abas do Excel com o saneamento de alocação (Maximo 9)."""
+    stats = allocation_data['stats']
+    analises = allocation_data['analises']
+
+    # Aba 21: Resumo de Alocação
+    summary_rows = [
+        ['Métrica', 'Valor'],
+        ['Usuários analisados', stats['total_users']],
+        ['Usuários com login nos últimos 90d', stats['users_with_logins_90d']],
+        ['Usuários inativos (no Maximo)', stats['users_inactive']],
+        ['Usuários que exigem conta em >1 ambiente', stats['users_multi_env']],
+        ['Total de contas sugeridas (soma)', stats['total_suggested_accounts']],
+        ['Limite mín. de acessos p/ ambiente secundário', stats['min_secundario']],
+        ['Janela de análise (início)', stats['window_start']],
+        ['Janela de análise (fim)', stats['window_end']],
+    ]
+    add_sheet('21_Alocacao_Resumo', ['Métrica', 'Valor'], summary_rows)
+
+    # Aba 22: Detalhamento de Alocação / Sugestão (com colunas individuais por ambiente)
+    ENV_COLS = ['BASE', 'ODN1', 'ODN2', 'N06', 'N08', 'N09', 'HTQ', 'POL', 'OUTROS']
+    headers = (['USERID', 'NOME', 'STATUS', 'EMAIL', 'ALOCACAO_PRINCIPAL',
+                'AMBIENTE_PRINCIPAL_USO', 'LOGINS_90D', 'ULTIMO_LOGIN'] +
+               ENV_COLS +
+               ['AMBIENTES_SECUNDARIOS', 'CONTAS_SUGERIDAS', 'HISTORICO_90D', 'MOTIVO'])
+    rows = []
+    for a in analises:
+        detail = a.get('env_logins_detail', {})
+        env_vals = [detail.get(e, 0) for e in ENV_COLS]
+        rows.append({
+            'USERID': a['userid'],
+            'NOME': a['displayname'],
+            'STATUS': a['status'],
+            'EMAIL': a['email'],
+            'ALOCACAO_PRINCIPAL': a['allocation_primary'],
+            'AMBIENTE_PRINCIPAL_USO': a['primary_env'],
+            'LOGINS_90D': a['total_logins_90d'],
+            'ULTIMO_LOGIN': a['last_login'],
+            **dict(zip(ENV_COLS, env_vals)),
+            'AMBIENTES_SECUNDARIOS': '; '.join(a['secondary_envs']),
+            'CONTAS_SUGERIDAS': '; '.join(a['suggested_accounts']),
+            'HISTORICO_90D': a['detail'],
+            'MOTIVO': a['reason'],
+        })
+    add_sheet('22_Alocacao_Sugestao', headers, rows)
 
 
 # --- Migration Excel Sheets ---
 def add_migration_sheets(wb, migration_data, add_sheet):
     """Adiciona abas do Excel com recomendações de migração."""
-    
+
     # Aba 16: Resumo de Recomendações
     summary_rows = [['Tipo', 'Prioridade', 'Quantidade']]
     tipo_counts = {}
     for r in migration_data:
         tipo = r['tipo']
         tipo_counts[tipo] = tipo_counts.get(tipo, 0) + 1
-    
+
     for tipo, count in sorted(tipo_counts.items()):
         prioridade = next((r['prioridade'] for r in migration_data if r['tipo'] == tipo), 'N/A')
         summary_rows.append([tipo, prioridade, count])
-    
+
     add_sheet('16_Migracao_Resumo', ['Tipo', 'Prioridade', 'Quantidade'], summary_rows)
-    
+
     # Aba 17: Lista Completa de Recomendações
     headers = ['Tipo', 'Prioridade', 'USERID', 'E-mail', 'Nome AD', 'Nome Maximo',
                'Status AD', 'Status Maximo', 'Ambientes', 'Grupos AD', 'Motivo', 'Ação']
@@ -612,7 +665,7 @@ def main():
         all_data["persons"],
         all_data["persongroupview"],
     )
-    
+
     # 2b. Enrich with LOCATION_SITE from persongroupview (ENVIRONMENT column) - BEFORE simulation
     # Usa lógica inteligente: pega o ambiente do último login ou DEFSITE
     persongroupview_map = {}
@@ -623,10 +676,10 @@ def main():
         if uid and env:
             if uid not in persongroupview_map:
                 persongroupview_map[uid] = {'environment': env, 'defsite': defsite}
-    
+
     # Carregar logintracking para inferir ambiente real
     logintrack = load_csv(IN_DIR / 'consolidated_logintracking_from_sources.csv')
-    
+
     # Inferir ambiente real do usuário baseado em CLIENTHOST
     def infer_env_from_clienthost(clienthost):
         if not clienthost:
@@ -657,7 +710,7 @@ def main():
         if host.startswith('ON09-') or '-N09-' in host:
             return 'N09', False
         return None, False
-    
+
     # Calcular ambiente real por usuário
     user_real_env = {}
     for rec in logintrack:
@@ -669,7 +722,7 @@ def main():
             env, is_shared = infer_env_from_clienthost(clienthost)
             if env:
                 user_real_env[userid] = env
-    
+
     for profile in user_profiles.values():
         uid = str(profile.get('USERID', '')).strip().upper()
         # Prioridade 1: ambiente real do logintracking
@@ -681,7 +734,7 @@ def main():
         # Prioridade 3: DEFSITE do próprio perfil
         elif not profile.get('LOCATION_SITE'):
             profile['LOCATION_SITE'] = profile.get('DEFSITE', '')
-    
+
     active_profiles = [p for p in user_profiles.values() if p['STATUS'] == 'ACTIVE']
 
     # 3. Perform Governance Analysis
@@ -737,8 +790,8 @@ def main():
     # Usuários SEM DOMINIO são incluídos mas marcados para revisão
     sem_dominio_rows = [
         {
-            **p, 
-            'DOMAIN_CATEGORY': 'SEM DOMINIO', 
+            **p,
+            'DOMAIN_CATEGORY': 'SEM DOMINIO',
             'MIGRATION_SCOPE': 'REVIEW_MISSING_EMAIL',
             'LICENSE_MODEL': 'CONCURRENT',
             'ENTITLEMENT': 'BASE',
@@ -758,17 +811,7 @@ def main():
     # 5b. Compute High-Water Mark and peak contributors for CONCURRENT pool
     concurrency_summary = {}
     try:
-        # O true_capacity_calculator.py atual gera apenas true_capacity_metrics.json com agregados,
-        # sem detalhes de "hora" e sem lista de contribuintes.
-        # A UI (scripts/reporting/html_template.py) e o DataProcessor esperam um schema:
-        #   - hourly_counts: dict (hour -> points/count)
-        #   - peak_hours: list/dict (rows para a tabela)
-        #   - peak_contributors: list (USERID/dicts)
-        # Então, quando só houver métricas agregadas, preenchemos o mínimo sem quebrar a UI.
-        # Trecho ajustado do bloco de concorrência
-
         metrics_path = ROOT / 'output' / 'consolidated' / 'true_capacity_metrics.json'
-
         concurrency_summary = {}
 
         if metrics_path.exists():
@@ -818,29 +861,36 @@ def main():
     print("ANÁLISE DE SANEAMENTO DE IDENTIDADES (AD vs Maximo)")
     print("=" * 100)
     sanity_result = analyze_sanity()
-    
+
     # 7b. Análise de Recomendações de Migração
     print("\n" + "=" * 100)
     print("ANÁLISE DE RECOMENDAÇÕES DE MIGRAÇÃO")
     print("=" * 100)
     migration_recommendations = analyze_migration()
-    
-    # 8. Build and Write HTML (com dados de AD, Maximo, Sanity e Migration)
+
+    # 7c. Saneamento de Alocação (histórico de logins + sugestão de ambientes)
+    print("\n" + "=" * 100)
+    print("SANEAMENTO DE ALOCAÇÃO (Maximo 9)")
+    print("=" * 100)
+    allocation_result = analyze_allocation()
+
+    # 8. Build and Write HTML (com dados de AD, Maximo, Sanity, Migration e Allocation)
     html_content = build_html_structure(
-        summary_data, 
-        governance_data, 
-        app_points_data_optimized, 
-        domain_counts, 
+        summary_data,
+        governance_data,
+        app_points_data_optimized,
+        domain_counts,
         identity_analytics,
         ad_users=all_data.get('ad_users', []),
         maximo_users=all_data.get('maximo_users', []),
         sanity_data=sanity_result,
-        migration_data=migration_recommendations
+        migration_data=migration_recommendations,
+        allocation_data=allocation_result
     )
     html_path = OUT_DIR / 'maximo_unified_dashboard.html'
     html_path.write_text(html_content, encoding='utf-8')
     print(f'WROTE {html_path.name}')
-    write_excel_workbook(summary_data, governance_data, app_points_data_optimized, domain_counts, missing_email_rows, sanity_result, migration_recommendations, identities=all_data.get('identities', []))
+    write_excel_workbook(summary_data, governance_data, app_points_data_optimized, domain_counts, missing_email_rows, sanity_result, migration_recommendations, identities=all_data.get('identities', []), allocation_data=allocation_result)
 
 if __name__ == '__main__':
     main()

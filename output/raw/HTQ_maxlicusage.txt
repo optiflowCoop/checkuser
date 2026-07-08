@@ -1926,7 +1926,7 @@ FetchAll:  Columns: 5
   GIANVALIATT, -, 0, 1, 0
   RICARDOSOTERO, -, 0, 1, 0
   RAFAELSABADINI, -, 0, 1, 0
-  PATRICIOGOMES, -, 0, 1, 1
+  PATRICIOGOMES, -, 0, 1, 0
   CLEUMIRJUNIOR, -, 0, 1, 0
   JJUNIORSLB, -, 0, 1, 0
   MAYCONFROSSARD, -, 0, 1, 0
@@ -2514,7 +2514,7 @@ FetchAll:  Columns: 5
   VITORBRAGA, -, 0, 1, 0
   WILLIANNASCIMENTOO, -, 0, 1, 0
   BRUNOPECANHA, -, 0, 1, 0
-  JOSESIQUEIRA, -, 0, 1, 1
+  JOSESIQUEIRA, -, 0, 1, 0
   LEONARDOPINTO, -, 0, 1, 0
   JOAONELSON, -, 0, 1, 0
   MAXREG, -, 0, 1, 0
@@ -2577,9 +2577,9 @@ FetchAll:  Columns: 5
   CARLOSMANHAES, -, 0, 1, 0
   GABRIELMORAIS, -, 0, 1, 0
   JULIOMACHADO, -, 0, 1, 1
-  PEDROMUNIZ, -, 0, 1, 1
+  PEDROMUNIZ, -, 0, 1, 0
   FRANCISRODRIGUES, -, 0, 1, 0
-  DEIVISONROSA, -, 0, 1, 1
+  DEIVISONROSA, -, 0, 1, 0
   MAXREG, -, 0, 1, 0
   ITEAM, -, 0, 1, 0
   HOTTOJUNIOR, -, 0, 1, 0
@@ -2595,13 +2595,13 @@ FetchAll:  Columns: 5
   VANDERSONLOBO, -, 0, 1, 1
   GREGORYMATOS, -, 0, 1, 0
   LUCASBANDEIRA, -, 0, 1, 1
-  LEANDROPERES, -, 0, 1, 1
-  LUISMARTINS, -, 0, 1, 1
+  LEANDROPERES, -, 0, 1, 0
+  LUISMARTINS, -, 0, 1, 0
   ITEAM, -, 0, 1, 0
   TIAGOMELILA, -, 0, 1, 1
   GESPINDOLA, -, 0, 1, 1
   YAGORABELO, -, 0, 1, 1
-  SAMUELPESSANHA, -, 0, 1, 1
+  SAMUELPESSANHA, -, 0, 1, 0
   GREGORYMATOS, -, 0, 1, 0
   KARENMOTA, -, 0, 1, 1
   MARCOCARVALHO, -, 0, 1, 1
@@ -2686,7 +2686,23 @@ FetchAll:  Columns: 5
   NUNESJUNIOR, -, 0, 1, 1
   BRUNOGBASTOS, -, 0, 1, 1
   MANOELALVES, -, 0, 1, 1
-  ITEAM, -, 0, 1, 1
+  ITEAM, -, 0, 1, 0
   LEONARDODOURADO, -, 0, 1, 1
-FetchAll: 2681 rows fetched.
+  GREGORYMATOS, -, 0, 1, 0
+  ADILIOMEDEIROS, -, 0, 1, 1
+  MAXREG, -, 0, 1, 0
+  JOAOVICTOR, -, 0, 1, 1
+  ALEXSANDROSANTOS, -, 0, 1, 1
+  ESLLENSILVA, -, 0, 1, 1
+  EDSONSANTOS, -, 0, 1, 1
+  FABRICIOALVES, -, 0, 1, 1
+  ISRAELCANUTO, -, 0, 1, 1
+  CHARLESJESUS, -, 0, 1, 1
+  MAXREG, -, 0, 1, 1
+  ITEAM, -, 0, 1, 1
+  GREGORYMATOS, -, 0, 1, 1
+  BRUNOSILVA, -, 0, 1, 1
+  MATHEUSDENTALLI, -, 0, 1, 1
+  ANDREMARIANO, -, 0, 1, 1
+FetchAll: 2697 rows fetched.
 > 

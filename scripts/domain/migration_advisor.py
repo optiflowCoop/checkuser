@@ -83,7 +83,11 @@ def analyze_migration():
             if displayname:
                 maximo_by_userid[userid]['displaynames'].add(displayname)
             if env:
-                maximo_by_userid[userid]['envs'].add(env)
+                # Normalizar NORBE06/08/09 -> N06/N08/N09
+                env_norm = env.upper().strip()
+                mapping = {'NORBE06': 'N06', 'NORBE08': 'N08', 'NORBE09': 'N09', 'BASE-UNP': 'BASE', 'OP-BASE': 'BASE', 'ODRL-SP': 'BASE'}
+                env_norm = mapping.get(env_norm, env_norm)
+                maximo_by_userid[userid]['envs'].add(env_norm)
             if status:
                 maximo_by_userid[userid]['statuses'].add(status)
     

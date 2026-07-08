@@ -4,13 +4,13 @@ import json
 
 from .html_helpers import fmt_br, render_table
 from .ab1_painel import render_tab_painel
-from .ab2_governanca import render_tab_gov
+from .ab2_governanca import render_tab_gov, render_allocation_summary
 from .ab3_cenarios import render_tab_apppoints
 from .ab4_eventos import render_tab_eventos
 from .ab5_plano_acao import render_tab_tabela
 from .ab6_peak import render_tab_peak
 from .ab7_saneamento import render_tab_saneamento, render_tab_saneamento_scripts
-from .ab8_migracao import render_tab_migracao, render_tab_migracao_scripts
+from .ab8_migracao import render_tab_migracao, render_tab_migracao_scripts, render_allocation_detail
 
 
 def _render_styles():
@@ -505,13 +505,14 @@ def render_html(data):
 <body>
     {_render_header_and_tabs()}
     {render_tab_painel(analytics, identity_analytics)}
-    {render_tab_gov(gov_tables)}
+    {render_tab_gov(gov_tables, data.get('allocation_data'))}
     {render_tab_apppoints(analytics)}
     {render_tab_eventos(analytics)}
     {render_tab_peak(analytics)}
     {render_tab_tabela(app_points_rows)}
     {render_tab_saneamento(data.get('sanity_data'))}
-    {render_tab_migracao(data.get('migration_data'))}
+    {render_tab_migracao(data.get('migration_data'), data.get('allocation_data'))}
+    {render_allocation_detail(data.get('allocation_data'))}
     {_render_scripts(analytics, identity_analytics)}
     {render_tab_saneamento_scripts()}
     {render_tab_migracao_scripts()}

@@ -2,9 +2,14 @@
 """Identifies USERIDs that are reused across multiple environments."""
 import csv
 import os
+import sys
 from collections import defaultdict
 
 ROOT = os.path.dirname(os.path.dirname(__file__))
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from scripts.domain.env_normalizer import normalize_env
+
 IN_FILE = os.path.join(ROOT, 'output', 'consolidated', 'consolidated_user_identity.csv')
 OUT_FILE = os.path.join(ROOT, 'output', 'consolidated', 'cross_env_userid_reuse.csv')
 
@@ -23,7 +28,7 @@ def main():
             
     out = []
     for uid, members in clusters.items():
-        envs = set(m.get('ENV_DB','') for m in members if m.get('ENV_DB'))
+        envs = set(normalize_env(m.get('ENV_DB','')) for m in members if m.get('ENV_DB'))
         if len(envs) > 1:
             out.append({
                 'USERID': uid,

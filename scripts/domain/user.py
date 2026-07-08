@@ -1,11 +1,13 @@
 # domain/user.py
 from collections import defaultdict
-from scripts.config import get_foresea_domains
+from scripts.config import get_foresea_domains, get_app_points_config, get_entitlement_keywords, get_critical_titles
+from scripts.domain.env_normalizer import normalize_env
+
 
 def get_user_domain_category(email):
     """
     Classifica usuários por categoria de domínio.
-    
+
     Categorias:
     - INTEGRACAO: Contas de serviço (WSORACLE, etc.)
     - FORESEA: Funcionários Foresea
@@ -15,12 +17,11 @@ def get_user_domain_category(email):
     """
     if not email or '@' not in email:
         return 'SEM DOMINIO'
-    
+
     # Identifica contas de integração/serviço Oracle
-    # Formato: WSORACLE ou similar
     if email.upper().startswith('WSORACLE') or 'ORACLE' in email.upper():
         return 'INTEGRACAO'
-    
+
     domain = email.split('@')[1].lower()
     foresea_domains = get_foresea_domains()
     if domain == foresea_domains[0]:
@@ -29,23 +30,26 @@ def get_user_domain_category(email):
         return 'PARCEIRO'
     return 'TERCEIRO'
 
+
 def build_user_profiles(identities, access_rows, email_rows=None, person_rows=None, persongroupview_rows=None):
     user_profiles = defaultdict(lambda: {
         'USERID': '', 'DISPLAYNAME': set(), 'STATUS': 'INACTIVE', 'EMAIL': '',
         'DOMAIN_CATEGORY': 'SEM DOMINIO', 'PERSONGROUPS': set(), 'TITLES': set(),
         'GROUPS': set(), 'ENVS': set(), 'TYPE': set(),
     })
-    
+
     for r in identities:
         userid = r.get('USERID', '').strip().upper()
-        if not userid: continue
+        if not userid:
+            continue
         profile = user_profiles[userid]
         profile['USERID'] = userid
         profile['DISPLAYNAME'].add(r.get('DISPLAYNAME', '').strip())
-        profile['ENVS'].add(r.get('ENV_DB', '').strip())
-        if r.get('STATUS', '').upper() == 'ACTIVE': profile['STATUS'] = 'ACTIVE'
+        profile['ENVS'].add(normalize_env(r.get('ENV_DB', '').strip()))
+        if r.get('STATUS', '').upper() == 'ACTIVE':
+            profile['STATUS'] = 'ACTIVE'
         email = r.get('PRIMARYEMAIL', '').strip()
-        
+
         # CORREÇÃO: Detectar contas de integração pelo USERID quando não há email
         if not email and userid.upper().startswith('WSORACLE'):
             profile['EMAIL'] = userid  # Usa USERID como identificador
@@ -112,5 +116,5 @@ def build_user_profiles(identities, access_rows, email_rows=None, person_rows=No
                 profile['GROUPS'].add(group)
             if account_type:
                 profile['TYPE'].add(account_type)
-            
+
     return user_profiles

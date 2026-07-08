@@ -7,6 +7,23 @@ def _br_number(n):
     return f"{n:,}".replace(',', '.')
 
 
+def _ad_status_badge(value):
+    """Converte status AD (bool/string) em badge HTML com contraste consistente."""
+    if isinstance(value, bool):
+        return '<span class="badge badge-success">Ativo</span>' if value else '<span class="badge badge-danger">Inativo</span>'
+
+    if value is None:
+        return '<span class="badge badge-neutral">N/A</span>'
+
+    value_str = str(value).strip().upper()
+    if value_str in {'ATIVO', 'ACTIVE', 'TRUE', '1', 'ENABLED'}:
+        return '<span class="badge badge-success">Ativo</span>'
+    if value_str in {'INATIVO', 'INACTIVE', 'FALSE', '0', 'DISABLED'}:
+        return '<span class="badge badge-danger">Inativo</span>'
+
+    return '<span class="badge badge-neutral">N/A</span>'
+
+
 def render_tab_saneamento(sanity_data):
     """
     Renders the 'Saneamento de Identidades' tab content.
@@ -76,6 +93,11 @@ def render_tab_saneamento(sanity_data):
                     <div class="stat-title">Sem Match</div>
                     <div class="stat-subtitle">No Maximo</div>
                 </div>
+                <div class="stat-card" style="border-bottom: 4px solid #dc2626; cursor: pointer; animation: pulse 2s infinite;" onclick="filterByType('ad_disabled_ativo')" id="card-ad_disabled_ativo">
+                    <div class="stat-value" style="color: #dc2626;">{_br_number(stats.get('ad_disabled_ativos_maximo', 0))}</div>
+                    <div class="stat-title">🚨 AD Desabilitado + Maximo Ativo</div>
+                    <div class="stat-subtitle">Risco de auditoria</div>
+                </div>
             </div>
             
             <div class="search-container">
@@ -85,6 +107,7 @@ def render_tab_saneamento(sanity_data):
                     <option value="ad_only">Apenas no AD</option>
                     <option value="maximo_only">Apenas no Maximo</option>
                     <option value="match">Match Perfeito</option>
+                    <option value="ad_disabled_ativo">🚨 AD Desabilitado + Maximo Ativo</option>
                 </select>
                 <button class="btn-export" onclick="filterByType('all')" style="background-color: #64748b;">🔄 Limpar Filtro</button>
                 <button class="btn-export" onclick="exportSaneamentoCSV()">📥 Exportar CSV</button>
@@ -108,6 +131,9 @@ def render_tab_saneamento(sanity_data):
                 </table>
             </div>
         </div>
+        
+        <!-- Seção de Auditoria: AD Desabilitado + Maximo Ativo -->
+        {_render_auditoria_desabilitados(analises.get('ad_disabled_ativos_maximo', []))}
         
         <div class="card" style="border-top: 4px solid var(--accent);">
             <h2 class="card-header" style="border:none; margin-bottom:0.5rem;">📋 Regras de Saneamento</h2>
@@ -151,7 +177,7 @@ def _render_saneamento_rows(analises, ad_by_email):
     
     # 1. Divergências de Nome (prioridade alta) - data-tipo="name_divergence"
     for d in analises['name_divergences'][:200]:
-        status_badge = '<span class="badge badge-success">Ativo</span>' if d['ad_enabled'] else '<span class="badge badge-danger">Inativo</span>'
+        status_badge = _ad_status_badge(d.get('ad_enabled'))
         acao = '<span class="badge badge-critical">Divergência Nome</span>'
         
         rows.append(f"""
@@ -167,7 +193,7 @@ def _render_saneamento_rows(analises, ad_by_email):
     
     # 2. Múltiplos USERIDs - data-tipo="multi_userid"
     for d in analises['multi_userid'][:100]:
-        status_badge = '<span class="badge badge-success">Ativo</span>' if d.get('ad_enabled', True) else '<span class="badge badge-danger">Inativo</span>'
+        status_badge = _ad_status_badge(d.get('ad_enabled', True))
         acao = '<span class="badge badge-high">Múltiplos IDs</span>'
         
         rows.append(f"""
@@ -184,7 +210,7 @@ def _render_saneamento_rows(analises, ad_by_email):
     # 3. Apenas no AD (only_ad) - data-tipo="ad_only" (corresponde ao card "Apenas no AD")
     # Usa os mesmos dados de no_match + prefix_match para totalizar only_ad
     for d in analises['no_match'][:200]:
-        status_badge = '<span class="badge badge-success">Ativo</span>' if d['ad_enabled'] else '<span class="badge badge-danger">Inativo</span>'
+        status_badge = _ad_status_badge(d.get('ad_enabled'))
         
         if not d['ad_enabled']:
             acao = '<span class="badge badge-danger">Remover</span>'
@@ -206,7 +232,7 @@ def _render_saneamento_rows(analises, ad_by_email):
     
     # 3b. Sem Match no Maximo - data-tipo="no_match" (corresponde ao card "Sem Match")
     for d in analises['no_match'][:200]:
-        status_badge = '<span class="badge badge-success">Ativo</span>' if d['ad_enabled'] else '<span class="badge badge-danger">Inativo</span>'
+        status_badge = _ad_status_badge(d.get('ad_enabled'))
         
         if not d['ad_enabled']:
             acao = '<span class="badge badge-danger">Remover</span>'
@@ -233,7 +259,7 @@ def _render_saneamento_rows(analises, ad_by_email):
         enabled = ad_user.get('enabled', True) if ad_user else True
         groups_count = ad_user.get('groups_count', 0) if ad_user else 0
         
-        status_badge = '<span class="badge badge-success">Ativo</span>' if enabled else '<span class="badge badge-danger">Inativo</span>'
+        status_badge = _ad_status_badge(enabled)
         acao = '<span class="badge badge-success">OK</span>'
         
         rows.append(f"""
@@ -262,7 +288,7 @@ def _render_saneamento_rows(analises, ad_by_email):
     
     # 6. Match por Prefixo (USERID) - data-tipo="prefix_match"
     for d in analises['prefix_match'][:100]:
-        status_badge = '<span class="badge badge-success">Ativo</span>' if d['ad_enabled'] else '<span class="badge badge-danger">Inativo</span>'
+        status_badge = _ad_status_badge(d.get('ad_enabled'))
         acao = '<span class="badge badge-success">Match OK</span>'
         
         rows.append(f"""
@@ -277,6 +303,87 @@ def _render_saneamento_rows(analises, ad_by_email):
         """)
     
     return '\n'.join(rows)
+
+
+def _render_auditoria_desabilitados(ad_disabled_ativos_maximo):
+    """Renderiza seção especial de auditoria: usuários desativados no AD mas ativos no Maximo."""
+    if not ad_disabled_ativos_maximo:
+        return ""
+    
+    rows = []
+    for d in ad_disabled_ativos_maximo:
+        # Destacar status do Maximo
+        status_maximo = d['maximo_statuses'] if d.get('maximo_statuses') else 'INACTIVE'
+        status_badge = '<span class="badge badge-success">Ativo</span>' if 'ACTIVE' in status_maximo.upper() else '<span class="badge badge-warning">Inativo</span>'
+        
+        # Badge do tipo de match
+        match_type = d.get('match_type', 'EMAIL')
+        if match_type == 'EMAIL':
+            match_badge = '<span class="badge badge-success">E-mail</span>'
+        elif match_type == 'USERID':
+            match_badge = '<span class="badge badge-warning">USERID</span>'
+        else:
+            match_badge = f'<span class="badge badge-neutral">Nome (Score)</span>'
+        
+        # Status AD (sempre Inativo, mas usar o valor real do dicionário)
+        ad_status_badge = _ad_status_badge(d.get('ad_enabled', False))
+        
+        rows.append(f"""
+            <tr data-tipo="ad_disabled_ativo" data-email="{d['email'].lower()}">
+                <td><strong>{d['ad_displayname']}</strong><br><small>{d['ad_givenname']} {d['ad_surname']}</small></td>
+                <td>{d['email']}</td>
+                <td>{ad_status_badge}</td>
+                <td>{status_badge}</td>
+                <td>{d['ad_groups_count']} grupos</td>
+                <td>
+                    {match_badge}<br>
+                    <span class="badge badge-critical">🚨 Ação Requerida</span><br>
+                    <small><strong>USERIDs:</strong> {d['maximo_userids'][:60]}</small><br>
+                    <small><strong>Ambientes:</strong> {d['maximo_envs'][:50]}</small><br>
+                    <small><strong>Status:</strong> {d['maximo_statuses'][:40]}</small>
+                </td>
+            </tr>
+        """)
+    
+    return f"""
+    <div class="card" style="border-top: 4px solid #dc2626; margin-top: 2rem; background: linear-gradient(to bottom, #ffffff, #fff5f5);">
+        <h2 class="card-header" style="border:none; margin-bottom:0.5rem; color: #dc2626; font-size: 1.5rem;">
+            🚨 Auditoria: Usuários Desativados no AD mas com Acesso no Maximo
+        </h2>
+        <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 1.2rem; margin-bottom: 1.2rem; border-radius: 6px; border-right: 4px solid #dc2626;">
+            <p style="margin: 0; color: #991b1b; font-weight: 600; font-size: 1rem;">
+                ⚠️ <strong>ATENÇÃO CRÍTICA:</strong> Foram identificados <strong style="color: #dc2626;">{len(ad_disabled_ativos_maximo)} usuários</strong> com contas desativadas no Active Directory 
+                mas que ainda possuem acesso ativo no Maximo. Estes usuários representam <strong>risco de auditoria</strong> e devem ser removidos do Maximo imediatamente.
+            </p>
+        </div>
+        
+        <div class="table-responsive" style="border: 2px solid #dc2626; border-radius: 8px;">
+            <table id="table-auditoria" style="width: 100%;">
+                <thead>
+                    <tr style="background-color: #fee2e2;">
+                        <th style="color: #7f1d1d; border-bottom: 2px solid #dc2626;">Nome Completo</th>
+                        <th style="color: #7f1d1d; border-bottom: 2px solid #dc2626;">E-mail</th>
+                        <th style="color: #7f1d1d; border-bottom: 2px solid #dc2626;">Status AD</th>
+                        <th style="color: #7f1d1d; border-bottom: 2px solid #dc2626;">Status Maximo</th>
+                        <th style="color: #7f1d1d; border-bottom: 2px solid #dc2626;">Grupos AD</th>
+                        <th style="color: #7f1d1d; border-bottom: 2px solid #dc2626;">Tipo Match</th>
+                        <th style="color: #7f1d1d; border-bottom: 2px solid #dc2626;">Detalhes Maximo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {''.join(rows)}
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="margin-top: 1rem; padding: 1rem; background: #fef2f2; border-radius: 6px; border: 1px dashed #dc2626;">
+            <p style="margin: 0; color: #7f1d1d; font-size: 0.9rem;">
+                <strong>📋 Recomendação de Auditoria:</strong> Verificar imediatamente os {len(ad_disabled_ativos_maximo)} usuários listados acima. 
+                Ações necessárias: 1) Desativar contas no Maximo; 2) Remover grupos de acesso; 3) Documentar a remoção para compliance.
+            </p>
+        </div>
+    </div>
+    """
 
 
 def render_tab_saneamento_scripts():
