@@ -305,6 +305,28 @@ def _render_saneamento_rows(analises, ad_by_email):
     return '\n'.join(rows)
 
 
+def _render_ambientes_com_status(envs_text, status_text):
+    """Renderiza ambientes com badges de status individual."""
+    if not envs_text:
+        return '<small>N/A</small>'
+    
+    env_list = [e.strip() for e in str(envs_text).split('|') if e.strip()]
+    status_list = [s.strip().upper() for s in str(status_text).split('|')] if status_text else []
+    
+    detalhes = []
+    for idx, env in enumerate(env_list):
+        st = status_list[idx] if idx < len(status_list) else ''
+        if st in ('ATIVO', 'ACTIVE', 'ENABLED'):
+            badge = '<span class="badge badge-success" style="margin: 2px;">✅ Ativo</span>'
+        elif st in ('INATIVO', 'INACTIVE', 'DISABLED'):
+            badge = '<span class="badge badge-danger" style="margin: 2px;">❌ Inativo</span>'
+        else:
+            badge = '<span class="badge badge-neutral" style="margin: 2px;">N/A</span>'
+        detalhes.append(f"{env} {badge}")
+    
+    return '<div style="line-height: 1.8;">' + '<br>'.join(detalhes) + '</div>'
+
+
 def _render_auditoria_desabilitados(ad_disabled_ativos_maximo):
     """Renderiza seção especial de auditoria: usuários desativados no AD mas ativos no Maximo."""
     if not ad_disabled_ativos_maximo:
@@ -339,14 +361,15 @@ def _render_auditoria_desabilitados(ad_disabled_ativos_maximo):
                     {match_badge}<br>
                     <span class="badge badge-critical">🚨 Ação Requerida</span><br>
                     <small><strong>USERIDs:</strong> {d['maximo_userids'][:60]}</small><br>
-                    <small><strong>Ambientes:</strong> {d['maximo_envs'][:50]}</small><br>
-                    <small><strong>Status:</strong> {d['maximo_statuses'][:40]}</small>
+                    <small><strong>Ambientes:</strong></small>
+                    {_render_ambientes_com_status(d['maximo_envs'], d['maximo_statuses'])}<br>
+                    <small><strong>Status Geral:</strong> {d['maximo_statuses'][:40]}</small>
                 </td>
             </tr>
         """)
     
     return f"""
-    <div class="card" style="border-top: 4px solid #dc2626; margin-top: 2rem; background: linear-gradient(to bottom, #ffffff, #fff5f5);">
+    <div id="card-auditoria" class="card" style="border-top: 4px solid #dc2626; margin-top: 2rem; background: linear-gradient(to bottom, #ffffff, #fff5f5);">
         <h2 class="card-header" style="border:none; margin-bottom:0.5rem; color: #dc2626; font-size: 1.5rem;">
             🚨 Auditoria: Usuários Desativados no AD mas com Acesso no Maximo
         </h2>
@@ -416,21 +439,44 @@ def render_tab_saneamento_scripts():
         function filterSaneamentoTable() {
             const input = document.getElementById("searchSaneamento").value.toUpperCase();
             const tipoFilter = document.getElementById("filterTipo").value.toUpperCase();
-            const table = document.getElementById("table-saneamento");
-            if (!table) return;
             
             // Se há filtro de card ativo, usar ele; senão usar o select
             const effectiveFilter = currentFilter !== 'all' ? currentFilter : tipoFilter;
             
-            for (let i = 1; i < table.rows.length; i++) {
-                const row = table.rows[i];
-                const email = row.getAttribute('data-email') || '';
-                const tipo = row.getAttribute('data-tipo') || '';
-                
-                const matchSearch = email.includes(input) || row.cells[0].textContent.toUpperCase().includes(input);
-                const matchTipo = effectiveFilter === "" || tipo === effectiveFilter.toLowerCase();
-                
-                row.style.display = (matchSearch && matchTipo) ? "" : "none";
+            // Mostrar/esconder card de auditoria baseado no filtro
+            const cardAuditoria = document.getElementById("card-auditoria");
+            if (cardAuditoria) {
+                cardAuditoria.style.display = (effectiveFilter === "" || effectiveFilter === "ad_disabled_ativo") ? "block" : "none";
+            }
+            
+            // Filtrar tabela principal
+            const tableMain = document.getElementById("table-saneamento");
+            if (tableMain) {
+                for (let i = 1; i < tableMain.rows.length; i++) {
+                    const row = tableMain.rows[i];
+                    const email = row.getAttribute('data-email') || '';
+                    const tipo = row.getAttribute('data-tipo') || '';
+                    
+                    const matchSearch = email.includes(input) || row.cells[0].textContent.toUpperCase().includes(input);
+                    const matchTipo = effectiveFilter === "" || tipo === effectiveFilter.toLowerCase();
+                    
+                    row.style.display = (matchSearch && matchTipo) ? "" : "none";
+                }
+            }
+            
+            // Filtrar tabela de auditoria
+            const tableAudit = document.getElementById("table-auditoria");
+            if (tableAudit) {
+                for (let i = 1; i < tableAudit.rows.length; i++) {
+                    const row = tableAudit.rows[i];
+                    const email = row.getAttribute('data-email') || '';
+                    const tipo = row.getAttribute('data-tipo') || '';
+                    
+                    const matchSearch = email.includes(input) || row.cells[0].textContent.toUpperCase().includes(input);
+                    const matchTipo = effectiveFilter === "" || tipo === effectiveFilter.toLowerCase();
+                    
+                    row.style.display = (matchSearch && matchTipo) ? "" : "none";
+                }
             }
         }
         

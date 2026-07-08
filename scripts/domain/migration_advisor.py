@@ -106,10 +106,11 @@ def analyze_migration():
             for userid in maximo_users:
                 mx = maximo_by_userid[userid]
                 statuses = mx['statuses']
-                
-                # Verificar status no Maximo
-                is_active_maximo = 'ACTIVE' in statuses
-                is_inactive_maximo = 'INACTIVE' in statuses and not is_active_maximo
+
+                # Verificar status no Maximo (NORMALIZADO)
+                norm_statuses = {s.strip().upper() for s in statuses}
+                is_active_maximo = any(s in ('ACTIVE', 'ATIVO', 'ENABLED') for s in norm_statuses)
+                is_inactive_maximo = any(s in ('INACTIVE', 'INATIVO', 'DISABLED') for s in norm_statuses) and not is_active_maximo
                 
                 if is_inactive_maximo and not ad_user['enabled']:
                     # Inativo em ambos - REMOVER
@@ -123,6 +124,7 @@ def analyze_migration():
                         'status_ad': 'INATIVO',
                         'status_maximo': 'INATIVO',
                         'envs': ' | '.join(sorted(mx['envs'])),
+                        'status_maximo_detalhe': ' | '.join(sorted(mx['statuses'])),
                         'grupos_ad': ad_user['groups_count'],
                         'motivo': 'Inativo no AD e no Maximo. Remover de ambos.',
                         'acao': 'Remover do AD e Maximo',
@@ -139,6 +141,7 @@ def analyze_migration():
                         'status_ad': 'ATIVO',
                         'status_maximo': 'INATIVO',
                         'envs': ' | '.join(sorted(mx['envs'])),
+                        'status_maximo_detalhe': ' | '.join(sorted(mx['statuses'])),
                         'grupos_ad': ad_user['groups_count'],
                         'motivo': 'Ativo no AD mas inativo no Maximo. Verificar necessidade de acesso.',
                         'acao': 'Reativar no Maximo ou remover acesso',
@@ -155,6 +158,7 @@ def analyze_migration():
                         'status_ad': 'ATIVO',
                         'status_maximo': 'ATIVO',
                         'envs': ' | '.join(sorted(mx['envs'])),
+                        'status_maximo_detalhe': ' | '.join(sorted(mx['statuses'])),
                         'grupos_ad': ad_user['groups_count'],
                         'motivo': 'Ativo em ambos os sistemas. Nenhuma ação necessária.',
                         'acao': 'Nenhuma ação',
@@ -216,6 +220,7 @@ def analyze_migration():
                 'status_ad': 'NÃO EXISTE',
                 'status_maximo': statuses,
                 'envs': ' | '.join(sorted(mx['envs'])),
+                'status_maximo_detalhe': ' | '.join(sorted(mx['statuses'])),
                 'grupos_ad': 0,
                 'motivo': 'Usuário existe no Maximo mas não no AD. Verificar se deve ser criado no AD.',
                 'acao': 'Verificar necessidade de criação no AD',

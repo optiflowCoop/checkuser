@@ -180,8 +180,40 @@ def _render_migracao_rows(migration_data):
             'BAIXA': '<span class="badge badge-success">Baixa</span>',
         }.get(r['prioridade'], '<span class="badge badge-neutral">N/A</span>')
 
-        status_ad = '<span class="badge badge-success">Ativo</span>' if r['status_ad'] == 'ATIVO' else '<span class="badge badge-danger">Inativo</span>' if r['status_ad'] == 'INATIVO' else '<span class="badge badge-neutral">N/A</span>'
-        status_maximo = '<span class="badge badge-success">Ativo</span>' if r['status_maximo'] == 'ATIVO' else '<span class="badge badge-danger">Inativo</span>' if r['status_maximo'] == 'INATIVO' else '<span class="badge badge-neutral">N/A</span>'
+        status_ad_raw = (r.get('status_ad') or '').strip().upper()
+        if status_ad_raw in ('ATIVO', 'ACTIVE', 'ENABLED'):
+            status_ad = '<span class="badge badge-success">Ativo</span>'
+        elif status_ad_raw in ('INATIVO', 'INACTIVE', 'DISABLED'):
+            status_ad = '<span class="badge badge-danger">Inativo</span>'
+        else:
+            status_ad = '<span class="badge badge-neutral">N/A</span>'
+
+        status_maximo_raw = (r.get('status_maximo') or '').strip().upper()
+        if status_maximo_raw in ('ATIVO', 'ACTIVE', 'ENABLED'):
+            status_maximo = '<span class="badge badge-success">Ativo</span>'
+        elif status_maximo_raw in ('INATIVO', 'INACTIVE', 'DISABLED'):
+            status_maximo = '<span class="badge badge-danger">Inativo</span>'
+        else:
+            status_maximo = '<span class="badge badge-neutral">N/A</span>'
+
+        # Construir detalhe de ambientes com status
+        envs_text = r.get('envs') or ''
+        status_text = r.get('status_maximo_detalhe') or ''  # ex: "ACTIVE | INACTIVE"
+        ambientes_detalhe = 'N/A'
+        if envs_text:
+            env_list = [e.strip() for e in str(envs_text).split('|') if e.strip()]
+            status_list = [s.strip().upper() for s in str(status_text).split('|')] if status_text else []
+            detalhes = []
+            for idx, env in enumerate(env_list):
+                st = status_list[idx] if idx < len(status_list) else ''
+                if st in ('ATIVO', 'ACTIVE', 'ENABLED'):
+                    badge = '<span class="badge badge-success">Ativo</span>'
+                elif st in ('INATIVO', 'INACTIVE', 'DISABLED'):
+                    badge = '<span class="badge badge-danger">Inativo</span>'
+                else:
+                    badge = '<span class="badge badge-neutral">N/A</span>'
+                detalhes.append(f"{env} {badge}")
+            ambientes_detalhe = '<br>'.join(detalhes)
 
         rows.append(f"""
             <tr data-tipo="{r['tipo'].lower()}" data-prioridade="{r['prioridade']}" data-email="{r['email'].lower()}">
@@ -193,12 +225,13 @@ def _render_migracao_rows(migration_data):
                 <td>{r['nome_maximo'][:50]}</td>
                 <td>{status_ad}</td>
                 <td>{status_maximo}</td>
-                <td>{r['envs'] if r['envs'] else 'N/A'}</td>
+                <td>{ambientes_detalhe}</td>
                 <td>{r['grupos_ad']}</td>
                 <td>{r['motivo'][:80]}</td>
                 <td>{r['acao']}</td>
             </tr>
         """)
+
 
     return '\n'.join(rows)
 
