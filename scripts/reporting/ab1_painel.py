@@ -24,7 +24,7 @@ def render_tab_painel(analytics, identity_analytics):
 <div class="stat-card border-primary">
 <div class="stat-value">{fmt_br(painel.get('usuarios_plano', 0))}</div>
 <div class="stat-title">Usuários no Plano de Licença</div>
-<div class="stat-subtitle">FORESEA + PARCEIRO + TERCEIRO (com domínio válido)</div>
+<div class="stat-subtitle">FORESEA + PARCEIRO + TERCEIRO + SEM DOMÍNIO (revisão)</div>
 </div>
 
 <div class="stat-card border-warning">

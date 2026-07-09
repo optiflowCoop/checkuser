@@ -7,6 +7,23 @@ def _br_number(n):
     return f"{n:,}".replace(',', '.')
 
 
+def _truncation_note(shown, total, csv_hint=''):
+    """
+    Aviso visível quando a tabela do dashboard mostra só uma amostra do total real
+    (ex.: 200 de 1.582 linhas). Sem isto, o corte fica silencioso e parece que a
+    tabela contém todos os registros. O CSV completo está disponível no Excel.
+    """
+    if total <= shown:
+        return ''
+    hint = f' {csv_hint}' if csv_hint else ''
+    return (
+        f'<p style="font-size: 0.85rem; color: #b45309; background: #fffbeb; '
+        f'border: 1px solid #fde68a; border-radius: 6px; padding: 0.5rem 0.75rem; margin: 0.5rem 0 0 0;">'
+        f'⚠️ Mostrando {_br_number(shown)} de {_br_number(total)} registros nesta tabela.{hint} '
+        f'A lista completa está no relatório Excel.</p>'
+    )
+
+
 def render_allocation_summary(allocation_data):
     """Renderiza o resumo do saneamento de alocação (Maximo 9) na Aba 2."""
     if not allocation_data:
@@ -58,7 +75,7 @@ def render_allocation_summary(allocation_data):
             <p style="font-size: 0.85rem; color: #64748b;">
                 <strong>Regra:</strong> ambiente de alocação = <em>locationsite</em> (persongroupview) > DEFSITE > ENV_DB.
                 Ambientes secundários exigem ao menos <strong>{stats['min_secundario']}</strong> acessos nos últimos 90 dias para sugerir criação de conta.
-                Veja o detalhamento completo na <strong>Aba 8 (Recomendações de Migração → Saneamento de Alocação)</strong> e no Excel (aba 21/22).
+                Veja o detalhamento completo na <strong>Aba 5 (Detalhamento de Alocação)</strong> e no Excel (aba 21/22).
             </p>
         </div>
     """
@@ -89,17 +106,20 @@ def render_tab_gov(gov_tables, allocation_data=None):
         <div class="card">
             <h2 class="card-header">Conflitos de Multi-Ambiente (Cross-Env)</h2>
             {render_table(['USERID', 'Bases Encontradas', 'Nomes de Exibição', 'Conclusão'], gov_tables['cross_env_rows'], 'table-cross-env', 'gov-table')}
+            {_truncation_note(len(gov_tables['cross_env_rows']), gov_tables.get('cross_env_total', len(gov_tables['cross_env_rows'])), 'Ver aba Excel <strong>4_ReusoUSERID_CrossEnv</strong>.')}
         </div>
         <div class="card">
             <h2 class="card-header">Colisões de Active Directory (LOGINID)</h2>
             {render_table(['LOGINID AD', 'Bases', 'USERIDs', 'Nomes Cadastrados'], gov_tables['login_conflicts_rows'], 'table-login-conflicts', 'gov-table')}
+            {_truncation_note(len(gov_tables['login_conflicts_rows']), gov_tables.get('login_conflicts_total', len(gov_tables['login_conflicts_rows'])), 'Ver aba Excel <strong>5_ConflitosLoginID</strong>.')}
         </div>
         <div class="card">
             <div style="display:flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem; padding-bottom: 0.75rem;">
                 <h2 style="margin:0; color: var(--secondary); font-size: 1.4rem; font-weight: 600;">Fila de Resolução Consolidada</h2>
-                <button class="btn-export" style="background-color: var(--secondary);" onclick="exportTableToCSV('table-worklist', 'Backlog_Governanca.csv')">Exportar Backlog</button>
+                <button class="btn-export" style="background-color: var(--secondary);" onclick="exportTableToCSV('table-worklist', 'Backlog_Governanca.csv')">Exportar Backlog (linhas visíveis)</button>
             </div>
             {render_table(['ID Bruto', 'Nome', 'Hipótese Sistêmica', 'Decisão / Ação'], gov_tables['worklist_rows'], 'table-worklist', 'gov-table')}
+            {_truncation_note(len(gov_tables['worklist_rows']), gov_tables.get('worklist_total', len(gov_tables['worklist_rows'])), 'Ver aba Excel <strong>6_FilaSaneamento</strong>.')}
         </div>
     </div>
     """

@@ -45,7 +45,7 @@ def render_tab_migracao(migration_data, allocation_data=None):
             </div>
 
             <div class="stats-grid" style="margin-bottom: 1rem;">
-                <div class="stat-card" style="border-bottom: 4px solid var(--accent); cursor: pointer;" onclick="filterByTypeMigracao('all')" id="card-all">
+                <div class="stat-card" style="border-bottom: 4px solid var(--accent); cursor: pointer;" onclick="filterByTypeMigracao('all')" id="card-migracao-all">
                     <div class="stat-value">{_br_number(sum(tipo_counts.values()))}</div>
                     <div class="stat-title">Total</div>
                     <div class="stat-subtitle">Todas as recomendações</div>
@@ -276,7 +276,7 @@ def render_allocation_detail(allocation_data):
     env_headers = ''.join(f'<th style="text-align:center;">{e}</th>' for e in ENV_COLS)
 
     return f"""
-    <div id="tab-alloc-detail" class="container tab-content" style="display:none;">
+    <div id="tab-alloc-detail" class="container tab-content">
         <div class="card" style="border-top: 4px solid #7c3aed;">
             <div class="card-header" style="border:none; margin-bottom:0.5rem;">
                 <div>
@@ -391,7 +391,11 @@ def render_tab_migracao_scripts():
                 const row = table.rows[i];
                 const email = row.getAttribute('data-email') || '';
                 const tipo = row.getAttribute('data-tipo') || '';
-                const matchSearch = email.includes(input) || (row.cells[3] && row.cells[3].textContent.toUpperCase().includes(input)) || (row.cells[2] && row.cells[2].textContent.toUpperCase().includes(input));
+                const matchSearch = email.includes(input)
+                    || (row.cells[2] && row.cells[2].textContent.toUpperCase().includes(input))
+                    || (row.cells[3] && row.cells[3].textContent.toUpperCase().includes(input))
+                    || (row.cells[4] && row.cells[4].textContent.toUpperCase().includes(input))
+                    || (row.cells[5] && row.cells[5].textContent.toUpperCase().includes(input));
                 const matchTipo = effectiveFilter === "" || tipo.toUpperCase() === effectiveFilter.toUpperCase();
                 row.style.display = (matchSearch && matchTipo) ? "" : "none";
             }

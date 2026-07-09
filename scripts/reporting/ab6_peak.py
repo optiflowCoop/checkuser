@@ -101,7 +101,8 @@ def render_tab_peak(analytics):
             userid = contributor.get('userid', 'N/A')
             app_points = contributor.get('app_points', 0)
             license_type = contributor.get('license_type', 'N/A')
-            
+            scope = contributor.get('scope', 'foresea')
+
             # Cores por tipo de licença
             license_badge = ""
             if 'PREMIUM' in license_type and 'AUTHORIZED' in license_type:
@@ -112,9 +113,9 @@ def render_tab_peak(analytics):
                 license_badge = '<span style="background: #047857; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">BASE AUTH</span>'
             else:
                 license_badge = '<span style="background: #10b981; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">BASE CONC</span>'
-            
+
             contributors_rows += f"""
-            <tr>
+            <tr data-scope="{scope}">
                 <td>{i}</td>
                 <td><strong>{userid}</strong></td>
                 <td>{license_badge}</td>
@@ -171,10 +172,27 @@ def render_tab_peak(analytics):
         <!-- Tabela de Peak Contributors -->
         <div class="card">
             <h2 class="card-header">👥 Top Contribuidores do Pico ({peak_time})</h2>
-            <p style="color:#475569; margin-bottom: 1rem;">Usuários que mais consumiram AppPoints no horário de pico histórico.</p>
-            
+            <p style="color:#475569; margin-bottom: 1rem;">Usuários que mais consumiram AppPoints no horário de pico histórico (dados acima — gráfico e P100/P95 — são sempre do consolidado TODOS; o filtro abaixo afeta somente esta tabela).</p>
+            {f'<p style="font-size: 0.85rem; color: #b45309; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 0.5rem 0.75rem; margin-bottom: 1rem;">⚠️ Mostrando os top {min(20, peak_contributors_count)} de {fmt_br(peak_contributors_count)} contribuidores no pico. Lista completa na aba Excel <strong>8_PeakContributors</strong>.</p>' if peak_contributors_count > 20 else ''}
+
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem; padding: 0.75rem 1rem; background: #f8fafc; border-radius: 8px; align-items: center;">
+                <span style="font-weight: 600; color: var(--secondary); font-size: 0.9rem;">🔍 Escopo:</span>
+                <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.9rem;">
+                    <input type="radio" name="scopeFilterPeak" value="todos" checked onchange="updateScopeFilterPeak()"> Todos
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.9rem;">
+                    <input type="radio" name="scopeFilterPeak" value="foresea" onchange="updateScopeFilterPeak()"> FORESEA + PARCEIRO
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.9rem;">
+                    <input type="radio" name="scopeFilterPeak" value="terceiros" onchange="updateScopeFilterPeak()"> TERCEIROS
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.9rem;">
+                    <input type="radio" name="scopeFilterPeak" value="integracao" onchange="updateScopeFilterPeak()"> INTEGRAÇÃO
+                </label>
+            </div>
+
             <div class="table-responsive">
-                <table class="gov-table">
+                <table class="gov-table" id="table-peak-contributors">
                     <thead>
                         <tr>
                             <th style="width: 60px;">#</th>

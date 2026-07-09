@@ -70,15 +70,17 @@ Analisa para cada USERID único:
 
 ## Resultados (dados atuais)
 
-| Métrica | Valor |
-|---------|-------|
-| Usuários analisados | 9.839 |
-| Com login nos últimos 90d | 1.901 |
-| Inativos (no Maximo) | 5.660 |
-| Multi-ambiente (conta em >1 unidade) | 108 |
-| Total de contas sugeridas | 10.002 |
-| Limite mín. p/ ambiente secundário | 5 acessos |
-| Janela de análise | 2026-03-27 a 2026-06-25 |
+> Tabela original (2026-07-07) mantida como registro histórico. Valores atualizados após a correção de bugs do motor de AppPoints em 2026-07-09 (ver `docs/REFATORACAO_2026-07-09.md`) — a regeneração do pipeline nesta data também renovou a janela de 90 dias e os dados de login usados por esta análise de alocação:
+
+| Métrica | Valor (2026-07-07) | Valor (2026-07-09) |
+|---------|---------------------|----------------------|
+| Usuários analisados | 9.839 | 8.559 |
+| Com login nos últimos 90d | 1.901 | 1.683 |
+| Inativos (no Maximo) | 5.660 | 4.401 |
+| Multi-ambiente (conta em >1 unidade) | 108 | 150 |
+| Janela de análise | 2026-03-27 a 2026-06-25 | 2026-04-09 a 2026-07-08 |
+
+O total de usuários analisados e a janela de datas mudam naturalmente a cada execução do pipeline (janela móvel de 90 dias); não é um efeito da correção de bugs em si. A correção de 2026-07-09 não alterou a lógica desta análise de alocação — confirma-se aqui a nota já registrada abaixo: "Impacto no cálculo de AppPoints: NENHUM".
 
 ## Exemplo de sugestão
 

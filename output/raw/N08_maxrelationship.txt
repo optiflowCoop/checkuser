@@ -307,6 +307,7 @@ FetchAll:  Columns: 8
   PLUSGOPERACTION, PLUSGACTSTDACT, PLUSGOPERACTION, recordid=:workorderid and plusgstdactid=:plusgstdactid and origtable='PLUSGACTSTDACT' and sourceid=:PLUSGACTSTDACTID, -, -, Relationship to show all actions in one table., 100361
   PLUSGOPERACTION, PLUSGBYPSTDACT, PLUSGOPERACTION, recordid=:workorderid and plusgstdactid=:plusgstdactid and origtable='PLUSGBYPSTDACT' and sourceid=:plusgbypstdactid, -, -, Relationship to show all actions in one table., 100362
   PLUSGOPERACTION, PLUSGBYPREVACT, PLUSGOPERACTION, recordid=:workorderid and plusgstdactid=:plusgstdactid and origtable='PLUSGBYPREVACT' and sourceid=:plusgbyprevactid, -, -, Relationship to show all actions in one table., 100363
+  OOG_PJPADDITIONALINFO_TOOLS, PLUSGPERMITWORK, OOG_PJPADDITIONALINFO, PERMITWORKNUM = :PERMITWORKNUM AND SITEID = :SITEID AND OOG_INFOTYPE = 'TOOLS', -, 0, -, 7000000019
   PLUSGOPERACTION, PLUSGWOSTDACT, PLUSGOPERACTION, recordid=:workorderid and plusgstdactid=:plusgstdactid and origtable='PLUSGWOSTDACT' and sourceid=:plusgwostdactid, -, -, Relationship to show all actions in one table., 100364
   PLUSGOPERACTION, PLUSGWOREVACT, PLUSGOPERACTION, recordid=:workorderid and plusgstdactid=:plusgstdactid and origtable='PLUSGWOREVACT' and sourceid=:plusgworevactid, -, -, Relationship to show all actions in one table., 100365
   PLUSGACTSTDACT, PLUSGOPERACTION, PLUSGACTSTDACT, workorderid=:recordid and plusgstdactid=:plusgstdactid and :origtable='PLUSGACTSTDACT' and plusgactstdactid=:sourceid, -, -, Relationship to show all actions in one table., 100366
@@ -368,6 +369,7 @@ FetchAll:  Columns: 8
   OOG_WO_RIGMAN, WORKORDER, PERSONGROUPTEAM, PERSONGROUP='OOG_RIGM' AND USEFORSITE= :SITEID, -, 0, Relationship to the Persongroup Team table, used to find all Rig Managers for a Work Order site, 99663
   OOG_WO_ASSENG, WORKORDER, PERSONGROUPTEAM, PERSONGROUP='OOG_AENG' AND USEFORSITE= :SITEID, -, 0, Relationship to the Persongroup Team table, used to find all Asset Engineer for a Work Order site, 99664
   OOG_PROJECT_TYPE, PR, FINCNTRL, PROJECTID =:FCPROJECTID and FCTYPE =  'PROJECT', -, 0, Relacionamento para recuperar o projeto para PR, 99852
+  OOG_PJPADDITIONALINFO_RISKS, PLUSGPERMITWORK, OOG_PJPADDITIONALINFO, PERMITWORKNUM = :PERMITWORKNUM AND SITEID = :SITEID AND OOG_INFOTYPE = 'ADDRISK', -, 0, -, 7000000020
   HISTRESULTS, INSPECTIONRESULT, INSPECTIONRESULT, inspformnum=:inspformnum and revision=:revision and orgid=:orgid and        siteid=:siteid and status in (select value from synonymdomain where domainid = 'INSPRESULTSTATUS' and maxvalue = 'COMPLETED')        and (asset=:asset or location=:location), -, -, Similar completed records of the same inspection and same reference, 100794
   LOCATIONS, MRLINE, LOCATIONS, location=:storeloc and siteid=:siteid, -, -, Relationship from mrline to location table to get location description, 100795
   SRWORKLOG, SR, WORKLOG, createby=:reportedby and clientviewable=1 AND (exists(SELECT 1 FROM relatedrecord WHERE relatedrecord.relatedreckey = worklog.recordkey AND relatedrecord.recordkey = :ticketid AND relatedrecord.class = :class) OR worklog.recordkey = :ticketid AND worklog.class = :class), -, -, Relationship to return worklogs for a Service Request and related records, 100796
@@ -9057,5 +9059,5 @@ COMPLETED = 0 AND EXISTS (SELECT 1 FROM PLUSGSTDACT PA WHERE PA.PLUSGSTDACTID = 
   PLUSGPERWORKSTDACT, PERSON, PLUSGPERWORKSTDACT, actionbyid = :personuid, -, -, Relationship to permit to work's person that will take an action into an action., 97964
   OOG_SOMA, SR, OOG_CUSTOS, OOG_OS = :ticketid fetch first 1 rows only, -, -, Relationship between SR and OOG_CUSTOS and return only one row, 99774
   OOG_ASSOCLOC, MASTERPM, LOCOPER, :applympmtoloc=:yes and location not in(select location from pm where masterpm=:masterpmnum and location is not null) and location in (select location from locations where status not in (select value from synonymdomain where maxvalue in ('DECOMMISSIONED') and domainid='LOCSTAT')) and :sitefiltering, -, 0, -, 97453
-FetchAll: 8906 rows fetched.
+FetchAll: 8908 rows fetched.
 > 

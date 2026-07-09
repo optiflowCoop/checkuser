@@ -429,12 +429,13 @@ def _render_header_and_tabs():
     <div class="tabs">
         <button class="tab-button active" onclick="openTab(event, 'tab-painel')">1. Painel Operacional</button>
         <button class="tab-button" onclick="openTab(event, 'tab-gov')">2. Governança & Saneamento</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-apppoints')" style="color:#60a5fa;">3. Cenários de AppPoints</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-eventos')" style="color:var(--warning);">4. Eventos Críticos</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-tabela')">5. Plano de Ação</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-peak')" style="color:#7c3aed;">6. Peak Contributors</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-saneamento')" style="color:#ef4444;">7. Saneamento AD</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-migracao')" style="color:#10b981;">8. Recomendações de Migração</button>
+        <button class="tab-button" onclick="openTab(event, 'tab-saneamento')" style="color:#ef4444;">3. Saneamento AD</button>
+        <button class="tab-button" onclick="openTab(event, 'tab-migracao')" style="color:#10b981;">4. Recomendações de Migração</button>
+        <button class="tab-button" onclick="openTab(event, 'tab-alloc-detail')" style="color:#7c3aed;">5. Detalhamento de Alocação</button>
+        <button class="tab-button" onclick="openTab(event, 'tab-apppoints')" style="color:#60a5fa;">6. Cenários de AppPoints</button>
+        <button class="tab-button" onclick="openTab(event, 'tab-eventos')" style="color:var(--warning);">7. Eventos Críticos</button>
+        <button class="tab-button" onclick="openTab(event, 'tab-peak')" style="color:#7c3aed;">8. Peak Contributors</button>
+        <button class="tab-button" onclick="openTab(event, 'tab-tabela')">9. Plano de Ação</button>
     </div>
     """
 
@@ -443,15 +444,19 @@ def _render_scripts(analytics, identity_analytics):
     """Renders the JavaScript for charts and interactivity."""
     scenarios_by_scope_json = json.dumps(analytics.get('scenarios_by_scope', {}))
     points_json = json.dumps(analytics['scenario_points'])
+    points_by_scope_json = json.dumps(analytics.get('scenario_points_by_scope', {}))
     ceiling_limit = analytics.get('ceiling_limit', 1200)
+
     domain_keys = json.dumps(list(identity_analytics['domain_counts'].keys()))
     domain_values = json.dumps(list(identity_analytics['domain_counts'].values()))
 
     return f"""
     <script>
         const scenariosByScope = {scenarios_by_scope_json};
-        const scenarioPoints = {points_json};
+                const scenarioPoints = {points_json};
+        const scenarioPointsByScope = {points_by_scope_json};
         const ceilingLimit = {ceiling_limit};
+
         let currentScope = 'foresea';  // Estado global do filtro de escopo
 
         function openTab(evt, tabName) {{
@@ -475,38 +480,48 @@ def _render_scripts(analytics, identity_analytics):
             options: {{ responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: {{ legend: {{ position: 'right' }} }} }}
         }});
 
-        function loadScenario(scenarioKey, btnElement) {{
+                function loadScenario(scenarioKey, btnElement) {{
             document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-            if(btnElement) btnElement.classList.add('active');
-            
+            if (btnElement) btnElement.classList.add('active');
+
             const isFactoredScenario = scenarioKey === 'otimizado_p95' || scenarioKey === 'otimizado_p50';
             const physicalCountsKey = isFactoredScenario ? 'otimizado' : scenarioKey;
-            
-            // Usa o escopo corrente filtrado
-            const data = scenariosByScope[currentScope][physicalCountsKey];
 
-            document.getElementById('inpPremAuth').value = data.pA;
-            document.getElementById('inpPremConc').value = data.pC;
-            document.getElementById('inpBaseAuth').value = data.bA;
-            document.getElementById('inpBaseConc').value = data.bC;
+            // Usa o escopo corrente filtrado.
+            // Fallback defensivo para evitar tela vazia quando faltar alguma chave.
+            const scopeObj = scenariosByScope[currentScope] || scenariosByScope['foresea'] || scenariosByScope['todos'] || {{}};
+            const data = scopeObj[physicalCountsKey] || {{ pA: 0, pC: 0, bA: 0, bC: 0 }};
 
-            // CÁLCULO CORRETO:
-            // - AS-IS/SANEADO: Soma de licenças físicas (inventário)
-            // - OTIMIZADO P95/P50: NEM real baseado em sessões concorrentes
+            const safePA = parseInt(data.pA, 10) || 0;
+            const safePC = parseInt(data.pC, 10) || 0;
+            const safeBA = parseInt(data.bA, 10) || 0;
+            const safeBC = parseInt(data.bC, 10) || 0;
+
+            document.getElementById('inpPremAuth').value = safePA;
+            document.getElementById('inpPremConc').value = safePC;
+            document.getElementById('inpBaseAuth').value = safeBA;
+            document.getElementById('inpBaseConc').value = safeBC;
+
+                        // Regra de exibição:
+            // - As-Is / Saneado: total calculado pela composição física do escopo selecionado.
+            // - Otimizado P95 / P50: total NEM do escopo selecionado.
+            const scopedPoints = scenarioPointsByScope[currentScope] || scenarioPointsByScope['todos'] || scenarioPoints;
             let totalPoints = 0;
             if (scenarioKey === 'otimizado_p95') {{
-                totalPoints = Math.round(scenarioPoints.p95);  // NEM real (~705)
+                totalPoints = Math.round(scopedPoints.p95 || 0);
             }} else if (scenarioKey === 'otimizado_p50') {{
-                totalPoints = Math.round(scenarioPoints.p50);  // NEM mediana (~480)
+                totalPoints = Math.round(scopedPoints.p50 || 0);
             }} else {{
-                // AS-IS ou SANEADO: soma do inventário de licenças
-                totalPoints = (data.pA * 5) + (data.pC * 15) + (data.bA * 3) + (data.bC * 10);
+                totalPoints = (safePA * 5) + (safePC * 15) + (safeBA * 3) + (safeBC * 10);
             }}
+
 
             document.getElementById('calcTotalDisplay').innerText = totalPoints.toLocaleString('pt-BR');
             updateCalculatorDisplay(totalPoints);
             updateChartFromInputs();
         }}
+
+
 
         let simChartInstance = null;
         function updateCalculator() {{
@@ -614,7 +629,7 @@ def _render_scripts(analytics, identity_analytics):
             if(!table) return;
             for (let i = 1; i < table.rows.length; i++) {{
                 const row = table.rows[i];
-                const matchSearch = row.cells[0].textContent.toUpperCase().includes(input) || row.cells[1].textContent.toUpperCase().includes(input) || row.cells[8].textContent.toUpperCase().includes(input);
+                const matchSearch = row.cells[0].textContent.toUpperCase().includes(input) || row.cells[1].textContent.toUpperCase().includes(input) || row.cells[9].textContent.toUpperCase().includes(input);
                 const matchRec = recFilter === "" || row.cells[2].textContent.toUpperCase().includes(recFilter);
                 const matchEnt = entFilter === "" || row.cells[3].textContent.toUpperCase().includes(entFilter);
                 row.style.display = (matchSearch && matchRec && matchEnt) ? "" : "none";
@@ -775,14 +790,21 @@ def _render_scripts(analytics, identity_analytics):
             }}
         }}
 
-        // ---- Escopo Filter Toggle (Aba 6) ----
+        // ---- Escopo Filter Toggle (Aba Peak Contributors) ----
         function updateScopeFilterPeak() {{
             var els2 = document.getElementsByName('scopeFilterPeak');
-            var sc2 = 'foresea';
+            var sc2 = 'todos';
             for (var j = 0; j < els2.length; j++) {{
                 if (els2[j].checked) {{ sc2 = els2[j].value; break; }}
             }}
-            console.log("Filtro de escopo Peak alterado para:", sc2);
+            var table = document.getElementById('table-peak-contributors');
+            if (!table) return;
+            var rows = table.querySelectorAll('tbody tr');
+            for (var k = 0; k < rows.length; k++) {{
+                var rowScope = rows[k].getAttribute('data-scope');
+                if (!rowScope) continue;  // linha de "nenhum contribuidor" sem data-scope
+                rows[k].style.display = (sc2 === 'todos' || rowScope === sc2) ? '' : 'none';
+            }}
         }}
     </script>
     """
@@ -803,22 +825,23 @@ def render_html(data):
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Maximo Unificado - Foresea</title>
-    <!-- Chart.js removido - funciona apenas com tabelas para uso offline -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     {_render_styles()}
 </head>
 <body>
     {_render_header_and_tabs()}
     {render_tab_painel(analytics, identity_analytics)}
     {render_tab_gov(gov_tables, data.get('allocation_data'))}
+    {render_tab_saneamento(data.get('sanity_data'))}
+    {render_tab_migracao(data.get('migration_data'), data.get('allocation_data'))}
+    {render_allocation_detail(data.get('allocation_data'))}
     {render_tab_apppoints(analytics)}
     {render_tab_eventos(analytics)}
     {render_tab_peak(analytics)}
     {render_tab_tabela(app_points_rows)}
-    {render_tab_saneamento(data.get('sanity_data'))}
-    {render_tab_migracao(data.get('migration_data'), data.get('allocation_data'))}
-    {render_allocation_detail(data.get('allocation_data'))}
     {_render_scripts(analytics, identity_analytics)}
     {render_tab_saneamento_scripts()}
     {render_tab_migracao_scripts()}
 </body>
 </html>"""
+

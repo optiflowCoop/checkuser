@@ -16,6 +16,10 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 import time
 
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
@@ -332,23 +336,26 @@ def main():
 
         classification = engine.classify_user(user_data)
         required_license = classification.get('license_type', 'BASE_CONCURRENT')
-        app_points = classification.get('app_points', 5)
+        app_points = classification.get('app_points', 10)
 
-        # Aplicação do Score
+        # Aplicação do Score com tabela canônica de AppPoints:
+        # PREMIUM_AUTHORIZED=5, PREMIUM_CONCURRENT=15,
+        # BASE_AUTHORIZED=3, BASE_CONCURRENT=10.
         if auth_score >= AUTH_THRESHOLD:
             if 'PREMIUM' in required_license:
                 required_license = 'PREMIUM_AUTHORIZED'
-                app_points = 15
+                app_points = 5
             else:
                 required_license = 'BASE_AUTHORIZED'
-                app_points = 5
+                app_points = 3
         else:
             if 'PREMIUM' in required_license:
                 required_license = 'PREMIUM_CONCURRENT'
                 app_points = 15
             else:
                 required_license = 'BASE_CONCURRENT'
-                app_points = 5
+                app_points = 10
+
 
         output_rows.append({
             'USERID': userid,

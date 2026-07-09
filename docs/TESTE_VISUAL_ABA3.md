@@ -1,5 +1,7 @@
 # Checklist de Teste Visual - Filtros de Escopo (Aba 3)
 
+> ⚠️ **Atualização 2026-07-09**: os valores de referência abaixo são de uma versão anterior (apenas 3 escopos: FORESEA/TERCEIROS/TODOS, sem INTEGRAÇÃO) e de um motor de cálculo que continha bugs — ver `docs/REFATORACAO_2026-07-09.md`. Os números batem com a *estrutura* do teste (como usar os filtros), mas **não** com os valores que o dashboard mostra hoje. Valores reais atuais (4 escopos) estão em `docs/SUMARIO_EXECUTIVO_ABA3.md`, seção "Dados Validados (Atualizado 2026-07-09)".
+
 ## 🎯 Como Testar os Filtros Implementados
 
 ### Pré-requisitos

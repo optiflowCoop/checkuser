@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.pyo
+tmp*.sql
+*.tmp
+
+# Backups automáticos gerados quando o xlsx principal está aberto/travado
+# (ver scripts/generate_risk_report.py, fallback de PermissionError)
+output/reports/maximo_risk_and_optimization_workbook_*.xlsx

@@ -11,7 +11,7 @@ def read_csv(path):
     if not os.path.exists(path):
         return []
     with open(path, newline='', encoding='utf-8-sig') as f:
-        return list(csv.DictReader(f))
+        return list(csv.DictReader(f, delimiter=','))
 
 def main():
     identities = read_csv(os.path.join(OUTDIR, 'consolidated_user_identity.csv'))
@@ -160,7 +160,7 @@ def main():
     if worklist_out:
         out_file = os.path.join(OUTDIR, 'identity_collisions_enriched.csv')
         with open(out_file, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=list(worklist_out[0].keys()))
+            writer = csv.DictWriter(f, fieldnames=list(worklist_out[0].keys()), delimiter=',')
             writer.writeheader()
             writer.writerows(sorted(worklist_out, key=lambda x: (x['REVIEW_PRIORITY']!='CRITICAL', x['REVIEW_PRIORITY']!='HIGH', x['REVIEW_PRIORITY']!='MEDIUM', x['USERID'])))
         print(f"WROTE {out_file} ({len(worklist_out)} records)")

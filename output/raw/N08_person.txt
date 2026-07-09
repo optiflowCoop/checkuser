@@ -2519,7 +2519,7 @@ FetchAll:  Columns: 1
   MOBILE_ODN3,,,
   MOBILE_ODN4,,,
   MOBILE_OP-BASE,,,
-  RAFAELDEALMEIDA,Rafael,De Almeida,Rafael De Almeida
+  RAFAELDEALMEIDA,Rafael,De Almeida,LUIS OLIVEIRA PIRES
   RICARDOVASCONCELOS,Ricardo,Da Silva Vasconcelos,Ricardo Da Silva Vasconcelos
   CAROLINAROCHA,Carolina,Diniz Da Rocha,paulo
   WELLINGHTONGERALDO,WELLINGHTON,GERALDO DE FREITAS ARAUJO,WELLINGHTON GERALDO DE FREITAS ARAUJO
@@ -4372,7 +4372,7 @@ FetchAll:  Columns: 1
   FELIPEPINA,Felipe,Pina,Felipe Pina
   PAULOJUNIORMATTOS,Paulo Roberto,junior,Paulo Roberto junior
   ROBSONMATOS,Robson,Matos,Robson Matos
-  YURIBARBOSA,Yuri,do Nascimento Barbosa,Yuri do Nascimento Barbosa
+  YURIBARBOSA,yuri,barbosa,yuri barbosa
   BBARBOSA,bruno,barbosa,bruno barbosa
   DIEGODSILVA,Diego,Santos da Silva,Diego Santos da Silva
   MARCONESILVA,Marcone,da Silva Junior,Marcone da Silva Junior

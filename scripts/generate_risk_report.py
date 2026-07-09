@@ -8,6 +8,10 @@ from datetime import datetime
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
 # --- CRITICAL FIX: Add the project root to sys.path ---
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
@@ -20,6 +24,8 @@ from scripts.services.analysis import analyze_governance, analyze_title_divergen
 from scripts.services.app_points import simulate_app_points
 from scripts.reporting.html_builder import build_html_structure
 from scripts.reporting.html_helpers import fmt_br, render_table
+from scripts.analysis.entitlement import calculate_app_points
+
 # --- NOVA IMPORTAÇÃO CORRIGIDA ---
 from scripts.domain.identity_analyzer import get_unique_users_data
 # --- NOVA IMPORTAÇÃO: SANITY ANALYZER ---
@@ -305,6 +311,32 @@ def add_sanity_sheets(wb, sanity_data, add_sheet):
         ['Sem match no AD', stats['maximo_sem_email_nomatch']],
     ]
     add_sheet('9_Saneamento_Resumo', ['Métrica', 'Valor'], summary_rows)
+
+    # Aba 9b: AUDITORIA CRÍTICA — Desativado no AD mas ativo em algum ambiente do Maximo.
+    # Esta é a mesma lista renderizada na Aba 7 do dashboard HTML (tabela vermelha
+    # "Auditoria: Usuários Desativados no AD mas com Acesso no Maximo") — antes não
+    # existia sheet equivalente no Excel para o achado mais crítico deste relatório.
+    if sanity_data['analises'].get('ad_disabled_ativos_maximo'):
+        headers = ['Email AD', 'Nome AD', 'GivenName AD', 'Surname AD', 'Qtd Grupos AD',
+                   'Tipo de Match', 'USERIDs Maximo', 'Ambientes Ativos', 'Ambientes Total',
+                   'Ativos/Total', 'Status Maximo', 'Domínio']
+        rows = []
+        for d in sanity_data['analises']['ad_disabled_ativos_maximo']:
+            rows.append({
+                'Email AD': d['email'],
+                'Nome AD': d['ad_displayname'],
+                'GivenName AD': d['ad_givenname'],
+                'Surname AD': d['ad_surname'],
+                'Qtd Grupos AD': d['ad_groups_count'],
+                'Tipo de Match': d.get('match_type', 'EMAIL'),
+                'USERIDs Maximo': d['maximo_userids'],
+                'Ambientes Ativos': d['maximo_envs'],
+                'Ambientes Total': d.get('maximo_envs_total', d['maximo_envs']),
+                'Ativos/Total': d.get('qtd_envs_ativos_de_total', ''),
+                'Status Maximo': d['maximo_statuses'],
+                'Domínio': d['domain'],
+            })
+        add_sheet('9b_AD_Desativado_Mas_Ativo', headers, rows)
 
     # Aba 10: Divergências de Nome
     if sanity_data['analises']['name_divergences']:
@@ -786,7 +818,7 @@ def main():
         'other': other_app_points,
     }
 
-    # Gera o license decision plan com TODOS os usuários (incluindo SEM DOMINIO)
+        # Gera o license decision plan com TODOS os usuários (incluindo SEM DOMINIO)
     # Usuários SEM DOMINIO são incluídos mas marcados para revisão
     sem_dominio_rows = [
         {
@@ -795,12 +827,14 @@ def main():
             'MIGRATION_SCOPE': 'REVIEW_MISSING_EMAIL',
             'LICENSE_MODEL': 'CONCURRENT',
             'ENTITLEMENT': 'BASE',
-            'APP_POINTS': 10,
+            'APP_POINTS': calculate_app_points('BASE', 'CONCURRENT'),
             'OPTIMIZATION_REC': 'REQUER_REVISAO',
             'OPTIMIZATION_REASON': 'Sem email cadastrado. Revisar antes de definir licença.'
         }
         for p in missing_email_profiles
     ]
+
+
     all_app_points_for_plan = foresea_app_points + other_app_points + sem_dominio_rows
     write_license_decision_plan(all_app_points_for_plan)
 
@@ -822,6 +856,7 @@ def main():
             'hourly_app_points': metrics.get('hourly_app_points', {}),
             'hourly_concurrent_app_points': metrics.get('hourly_concurrent_app_points', {}),
             'hourly_app_points_nem': metrics.get('hourly_app_points_nem', {}),
+            'hourly_app_points_nem_by_scope': metrics.get('hourly_app_points_nem_by_scope', {}),
             'true_total_app_points': metrics.get('true_total_app_points', 0),
             'authorized_reserved_points': metrics.get('authorized_reserved_points', 0),
             'peak_hours': metrics.get('peak_hours', []),
@@ -833,10 +868,11 @@ def main():
         print(f"[Aviso] Falha ao calcular concorrência avançada: {e}")
 
 
-    # 6. Prepare Data for HTML Builder
+        # 6. Prepare Data for HTML Builder
     summary_data = {
         'active_profiles_count': len(active_profiles),
         'title_divergence_count': len(title_divergences_list),
+        'ceiling_limit': 1200,
         'app_points_summary': {
             'auth_users': [s for s in app_points_data_optimized if s['LICENSE_MODEL'] == 'AUTHORIZED'],
             'conc_users': [s for s in app_points_data_optimized if s['LICENSE_MODEL'] == 'CONCURRENT'],
@@ -844,6 +880,8 @@ def main():
         },
         'concurrency': concurrency_summary
     }
+
+
     governance_data = {
         'cross_env': all_data['cross_env'],
         'login_conflicts': all_data['login_conflicts'],

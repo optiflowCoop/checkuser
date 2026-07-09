@@ -40,8 +40,8 @@ def analyze_migration():
     identities = load_csv(IN_DIR / 'consolidated_user_identity.csv')
     access_rows = load_csv(IN_DIR / 'consolidated_user_access_normalized.csv') or load_csv(IN_DIR / 'consolidated_user_access.csv')
     
-    print(f"📥 Analisando migrações:")
-    print(f"   AD: {len(ad_rows)} usuários")
+    print(f"[MIGRACAO] Analisando migracoes:")
+    print(f"   AD: {len(ad_rows)} usuarios")
     print(f"   Identities: {len(identities)} registros")
     print(f"   Access: {len(access_rows)} registros")
     
@@ -230,7 +230,7 @@ def analyze_migration():
     prioridade_order = {'ALTA': 0, 'MEDIA': 1, 'BAIXA': 2}
     recommendations.sort(key=lambda x: (prioridade_order.get(x['prioridade'], 3), x['tipo']))
     
-    print(f"\n📊 Recomendações geradas: {len(recommendations)}")
+    print(f"\n[MIGRACAO] Recomendacoes geradas: {len(recommendations)}")
     for tipo in ['REMOVER', 'MIGRAR', 'MANTER', 'CRIAR_NO_MAXIMO', 'VERIFICAR_AD']:
         count = sum(1 for r in recommendations if r['tipo'] == tipo)
         if count > 0:
@@ -242,7 +242,7 @@ def analyze_migration():
 def print_summary(recommendations):
     """Imprime resumo das recomendações."""
     print("\n" + "=" * 80)
-    print("RESUMO DE RECOMENDAÇÕES DE MIGRAÇÃO")
+    print("RESUMO DE RECOMENDACOES DE MIGRACAO")
     print("=" * 80)
     
     for tipo in ['REMOVER', 'MIGRAR', 'MANTER', 'CRIAR_NO_MAXIMO', 'VERIFICAR_AD']:

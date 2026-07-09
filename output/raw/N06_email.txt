@@ -2673,5 +2673,10 @@ FetchAll:  Columns: 1
   RALPHSANTOS,ralphsantos@prospecta.com
   GDAMASCENO,gdamasceno3@gmail.com
   ANDREMARIANO,tecnicos4.dti@deepsea-tech.com.br
-FetchAll: 2666 rows fetched.
+  ROCHAREBECA,rocharebeca123@gmail.com
+  RAIRLOPES,rairaplopes@gmail.com
+  DJALMAFILHO,djalma.filho@technipfmc.com
+  YURIBARBOSA,ybarbosa3@slb.com
+  PVRMACHADO,pvitorrmachado@gmail.com
+FetchAll: 2671 rows fetched.
 > 

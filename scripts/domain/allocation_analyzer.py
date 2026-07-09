@@ -140,7 +140,7 @@ def analyze_allocation():
     logintrack = load_csv(IN_DIR / 'consolidated_logintracking_from_sources.csv')
     pgv = load_csv(IN_DIR / 'consolidated_persongroupview.csv')
 
-    print(f"📥 Alocação: identities={len(identities)} logintrack={len(logintrack)} pgv={len(pgv)}")
+    print(f"[ALOCACAO] identities={len(identities)} logintrack={len(logintrack)} pgv={len(pgv)}")
 
     # ---- 1. Mapa de alocação real (persongroupview) ----
     pgv_locations = defaultdict(set)
@@ -165,7 +165,7 @@ def analyze_allocation():
     if max_dt is None:
         max_dt = datetime.now()
     cutoff = max_dt - timedelta(days=LOOKBACK_DAYS)
-    print(f"   Janela 90d: de {cutoff.date()} até {max_dt.date()}")
+    print(f"   Janela 90d: de {cutoff.date()} ate {max_dt.date()}")
 
     # ---- 3. Logins por usuário/ambiente (últimos 90d) ----
     user_env_counts = defaultdict(lambda: defaultdict(int))   # userid -> env -> count
@@ -303,7 +303,7 @@ def analyze_allocation():
         'window_end': max_dt.strftime('%Y-%m-%d'),
     }
 
-    print(f"📊 Alocacao: users={total_users} com_logins={with_logins} inativos={inactive} multi_env={multi}")
+    print(f"[ALOCACAO] users={total_users} com_logins={with_logins} inativos={inactive} multi_env={multi}")
     return {'stats': stats, 'analises': analises}
 
 

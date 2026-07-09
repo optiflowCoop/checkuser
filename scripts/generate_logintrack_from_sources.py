@@ -8,7 +8,12 @@ qual ambiente cada registro pertence, permitindo análises
 detalhadas por ambiente no dashboard.
 """
 import csv
+import sys
 from pathlib import Path
+
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 ROOT = Path(__file__).resolve().parent.parent
 IN_DIR = ROOT / 'output' / 'consolidated'

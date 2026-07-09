@@ -6,6 +6,14 @@ import tempfile
 import os
 import time
 
+# Console padrão do Windows usa cp1252 e não sabe representar emojis (🎯, ✓, ⚠, ❌)
+# usados nos prints abaixo — sem isto, o processo aborta com UnicodeEncodeError e
+# a extração de uma query/ambiente inteiro pode parecer "concluída" quando na
+# verdade travou no meio, deixando dados parciais sem aviso claro.
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))

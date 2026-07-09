@@ -3537,8 +3537,8 @@ FetchAll:  Columns: 5
   SILVIOANTONIO, -, 0, 1, 1
   DGTEIXEIRA, -, 0, 1, 0
   JSCOFANO, -, 0, 1, 0
-  ALANNAPOLEAO, -, 0, 1, 1
-  JULIOSCOFANO, -, 0, 1, 1
+  ALANNAPOLEAO, -, 0, 1, 0
+  JULIOSCOFANO, -, 0, 1, 0
   ITEAM, -, 0, 1, 0
   MAXREG, -, 0, 1, 0
   JULIABOTELHO, -, 0, 1, 1
@@ -3717,5 +3717,6 @@ FetchAll:  Columns: 5
   ITEAM, -, 0, 1, 1
   MANOELBATISTA, -, 0, 1, 1
   GDAMASCENO, -, 0, 1, 1
-FetchAll: 3710 rows fetched.
+  RANIERIABREU, -, 0, 1, 1
+FetchAll: 3711 rows fetched.
 > 

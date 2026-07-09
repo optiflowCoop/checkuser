@@ -24,12 +24,57 @@ ONSHORE_ENVS = {'BASE'}
 ADMIN_GROUPS = {'MAXADMIN'}
 
 
+def _detect_delimiter(path: Path) -> str:
+    """
+    Detecta delimiter mais provável entre ',', ';' e '\t' lendo algumas linhas do arquivo.
+    Objetivo: evitar CSVs 'colados' onde o cabeçalho vem como "A;B;C" (delimiter=','),
+    mas o código tentava ler como delimiter=','.
+    """
+    candidates = [',', ';', '\t']
+    if not path.exists():
+        return ','
+
+    # Lê poucas linhas para não pesar (arquivos podem ser grandes).
+    sample_lines = []
+    with path.open('r', encoding='utf-8-sig', newline='') as handle:
+        for _ in range(25):
+            line = handle.readline()
+            if not line:
+                break
+            line = line.strip('\n\r')
+            if line.strip():
+                sample_lines.append(line)
+
+    if not sample_lines:
+        return ','
+
+    best = ','
+    best_score = -1
+
+    for delim in candidates:
+        score = 0
+        for i, line in enumerate(sample_lines[:10]):
+            # Conta "campos" aproximado; o cabeçalho normalmente guia melhor.
+            parts = line.split(delim)
+            if len(parts) <= 1:
+                continue
+            # Pontua mais a linha 0/1 (cabeçalho).
+            weight = 3 if i == 0 else 2 if i == 1 else 1
+            score += weight * len(parts)
+        if score > best_score:
+            best_score = score
+            best = delim
+
+    return best
+
+
 def _load_csv(name):
     path = CONSOLIDATED_DIR / name
     if not path.exists():
         return []
+    delimiter = _detect_delimiter(path)
     with path.open('r', encoding='utf-8-sig', newline='') as handle:
-        return list(csv.DictReader(handle))
+        return list(csv.DictReader(handle, delimiter=delimiter))
 
 
 def _parse_datetime(value):
@@ -44,8 +89,70 @@ def _parse_datetime(value):
     return None
 
 
+def _normalize_titles(raw_titles):
+    """
+    Normaliza TITLES vindos do consolidado/engenharia (pode vir como:
+    - lista de strings
+    - set (stringified)
+    - string tipo "SET()" / "N/A"
+    - string com separadores ; , 
+    """
+    if raw_titles is None:
+        return []
+
+    # Caso set/list
+    if isinstance(raw_titles, (list, set, tuple)):
+        out = []
+        for t in raw_titles:
+            if t is None:
+                continue
+            s = str(t).strip()
+            if not s:
+                continue
+            if s.upper() in ('N/A', 'NA', 'NONE', 'NULL', 'SET()'):
+                continue
+            out.append(s)
+        return sorted(set(out))
+
+    # Caso string
+    s = str(raw_titles).strip()
+    if not s:
+        return []
+    if s.upper() in ('N/A', 'NA', 'NONE', 'NULL', 'SET()', '{}'):
+        return []
+
+    # Remove wrapper de "set()" / "{...}" se vier stringified
+    s_up = s.upper()
+    if s_up.startswith('SET(') and s_up.endswith(')'):
+        s = s[4:-1].strip()
+    if s.startswith('{') and s.endswith('}'):
+        s = s[1:-1].strip()
+
+    # Divide por separadores comuns
+    parts = []
+    for sep in [';', ',', '|']:
+        if sep in s:
+            parts = [p.strip() for p in s.split(sep)]
+            break
+    if not parts:
+        parts = [s.strip()]
+
+    cleaned = []
+    for p in parts:
+        if not p:
+            continue
+        p = p.strip().strip("'").strip('"').strip()
+        if not p:
+            continue
+        if p.upper() in ('N/A', 'NA', 'NONE', 'NULL', 'SET()'):
+            continue
+        cleaned.append(p)
+
+    return sorted(set(cleaned))
+
+
 def _canonical_title(profile):
-    titles = sorted(str(t).strip() for t in profile.get('TITLES', []) if str(t).strip())
+    titles = _normalize_titles(profile.get('TITLES', []))
     return titles[0] if titles else 'SEM CARGO'
 
 
@@ -69,7 +176,8 @@ def _classify_operational_presence(profile):
 
 
 def _is_critical_title(titles):
-    title_text = ' '.join(str(t) for t in titles).upper()
+    normalized = _normalize_titles(titles)
+    title_text = ' '.join(normalized).upper()
     return any(keyword in title_text for keyword in get_critical_titles())
 
 
@@ -88,30 +196,70 @@ def _migration_scope(profile):
 
 
 def _load_login_usage():
-    usage = defaultdict(lambda: {
-        'login_count': 0,
-        'last_login': None,
-        'apps': set(),
-        'active_days': set(),
-        'active_hours': set(),
-    })
-    for row in _load_csv('consolidated_logintracking_from_sources.csv'):
-        if row.get('ATTEMPTRESULT', '').upper() not in ('', 'LOGIN'):
-            continue
-        userid = row.get('USERID', '').strip().upper()
+    usage = defaultdict(
+        lambda: {
+            'login_count': 0,
+            'last_login': None,
+            'apps': set(),
+            'active_days': set(),
+            'active_hours': set(),
+        }
+    )
+
+    logintracking_rows = _load_csv('consolidated_logintracking_from_sources.csv')
+    if not logintracking_rows:
+        return usage
+
+    # ATTEMPTDATE pode vir com nomes diferentes dependendo da origem.
+    possible_date_cols = [
+        'ATTEMPTDATE',
+        'ATTEMPTDATETIME',
+        'ATTEMPT_DT',
+        'ATTEMPTDT',
+        'EVENTDATE',
+        'LOGIN_DATE',
+    ]
+    first_row_keys = set((logintracking_rows[0] or {}).keys())
+    date_col = next((c for c in possible_date_cols if c in first_row_keys), None)
+
+    # ATTEMPTRESULT: historicamente pode vir vazio/constante.
+    # Se existir evidência de que "LOGIN" aparece, aplicamos filtro.
+    # Caso contrário, contamos qualquer linha com USERID (fallback quando ATTEMPTDATE/ATTEMPTRESULT não são confiáveis).
+    attempt_values = set()
+    for r in logintracking_rows[:5000]:
+        v = str((r or {}).get('ATTEMPTRESULT', '')).strip().upper()
+        if v:
+            attempt_values.add(v)
+        if len(attempt_values) >= 10:
+            break
+    attempt_has_login = 'LOGIN' in attempt_values
+
+    for row in logintracking_rows:
+        userid = str(row.get('USERID', '')).strip().upper()
         if not userid:
             continue
-        dt = _parse_datetime(row.get('ATTEMPTDATE', ''))
+
+        if attempt_has_login:
+            v = str(row.get('ATTEMPTRESULT', '')).strip().upper()
+            if v not in ('', 'LOGIN'):
+                continue
+
+        dt_raw = row.get(date_col, '') if date_col else ''
+        dt = _parse_datetime(dt_raw)
+
         data = usage[userid]
         data['login_count'] += 1
-        app = row.get('APP', '').strip()
+
+        app = str(row.get('APP', '')).strip()
         if app and app != '-':
             data['apps'].add(app.upper())
+
         if dt:
             data['active_days'].add(dt.date().isoformat())
             data['active_hours'].add(dt.strftime('%Y-%m-%d %H:00'))
             if data['last_login'] is None or dt > data['last_login']:
                 data['last_login'] = dt
+
     return usage
 
 
@@ -124,8 +272,13 @@ def _days_since(dt):
 
 
 def _assign_license_model(profile, entitlement, login_count, operational_presence, titles):
+    # Preservar AUTHORIZED para títulos críticos mesmo quando o login_count veio 0
+    # (evita zerar Aba 1/3 e cards de Authorized-as-is).
     if login_count == 0:
+        if _is_critical_access(profile) or _is_critical_title(titles):
+            return 'AUTHORIZED'
         return 'CONCURRENT'
+
     if entitlement == 'LIMITED':
         return 'CONCURRENT'
     if _is_critical_access(profile):
@@ -171,17 +324,38 @@ def calculate_statistical_concurrency():
     Retorna os percentis P50 (Mediana/Cotidiano), P95 (Pico de Turno) e P100 (Worst Case/Emergência).
     """
     try:
-        track_df = pd.read_csv(CONSOLIDATED_DIR / 'consolidated_logintracking_from_sources.csv')
-        access_df = pd.read_csv(CONSOLIDATED_DIR / 'consolidated_user_access_normalized.csv')
+        logintrack_path = CONSOLIDATED_DIR / 'consolidated_logintracking_from_sources.csv'
+        access_path = CONSOLIDATED_DIR / 'consolidated_user_access_normalized.csv'
+
+        logintrack_delim = _detect_delimiter(logintrack_path)
+        access_delim = _detect_delimiter(access_path)
+
+        track_df = pd.read_csv(
+            logintrack_path,
+            delimiter=logintrack_delim
+        )
+        access_df = pd.read_csv(
+            access_path,
+            delimiter=access_delim
+        )
 
         if 'ATTEMPTRESULT' in track_df.columns:
             track_df = track_df[track_df['ATTEMPTRESULT'].str.upper() == 'LOGIN']
 
-        # --- FIX: Use a função de parse robusta e remova falhas ---
-        track_df['ATTEMPTDATE'] = track_df['ATTEMPTDATE'].apply(_parse_datetime)
-        track_df.dropna(subset=['ATTEMPTDATE'], inplace=True)
+        # ATTEMPTDATE pode não existir; detectar alternativa.
+        possible_date_cols = ['ATTEMPTDATE', 'ATTEMPTDATETIME', 'ATTEMPT_DT', 'ATTEMPTDT', 'EVENTDATE', 'LOGIN_DATE']
+        date_col = next((c for c in possible_date_cols if c in track_df.columns), None)
 
-        track_df['LOGIN_DAY'] = track_df['ATTEMPTDATE'].dt.date
+        # Se não existir coluna de data, não dá para calcular P50/P95/P100 por dia.
+        # Retorna vazio para disparar fallback controlado em simulate_app_points().
+        if not date_col:
+            return {}
+
+        # --- FIX: Use a função de parse robusta e remova falhas ---
+        track_df['_PARSED_ATTEMPTDATE'] = track_df[date_col].apply(_parse_datetime)
+        track_df.dropna(subset=['_PARSED_ATTEMPTDATE'], inplace=True)
+
+        track_df['LOGIN_DAY'] = track_df['_PARSED_ATTEMPTDATE'].dt.date
 
         access_df['USERID'] = access_df['USERID'].astype(str).str.upper().str.strip()
         access_df['TITLE'] = access_df['TITLE'].fillna('').astype(str).str.strip()
@@ -242,7 +416,7 @@ def simulate_app_points(profiles_to_simulate, user_real_env=None):
         entitlement = determine_user_entitlement(profile['GROUPS'])
 
         display_names = [str(n).strip() for n in profile.get('DISPLAYNAME', []) if n and str(n).strip()]
-        titles = [str(t).strip() for t in profile.get('TITLES', []) if t and str(t).strip()]
+        titles = _normalize_titles(profile.get('TITLES', []))
         cargo_principal = _canonical_title(profile)
         operational_presence = _classify_operational_presence(profile)
         user_usage = login_usage.get(str(profile['USERID']).upper(), {})

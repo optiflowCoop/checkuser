@@ -2600,7 +2600,7 @@ FetchAll:  Columns: 5
   ITEAM, -, 0, 1, 0
   TIAGOMELILA, -, 0, 1, 1
   GESPINDOLA, -, 0, 1, 1
-  YAGORABELO, -, 0, 1, 1
+  YAGORABELO, -, 0, 1, 0
   SAMUELPESSANHA, -, 0, 1, 0
   GREGORYMATOS, -, 0, 1, 0
   KARENMOTA, -, 0, 1, 1
@@ -2698,11 +2698,12 @@ FetchAll:  Columns: 5
   FABRICIOALVES, -, 0, 1, 1
   ISRAELCANUTO, -, 0, 1, 1
   CHARLESJESUS, -, 0, 1, 1
-  MAXREG, -, 0, 1, 1
+  MAXREG, -, 0, 1, 0
   ITEAM, -, 0, 1, 1
-  GREGORYMATOS, -, 0, 1, 1
+  GREGORYMATOS, -, 0, 1, 0
   BRUNOSILVA, -, 0, 1, 1
   MATHEUSDENTALLI, -, 0, 1, 1
   ANDREMARIANO, -, 0, 1, 1
-FetchAll: 2697 rows fetched.
+  DJALMAFILHO, -, 0, 1, 1
+FetchAll: 2698 rows fetched.
 > 

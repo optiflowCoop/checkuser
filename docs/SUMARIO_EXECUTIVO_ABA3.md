@@ -25,6 +25,27 @@ O valor **9.000 AppPoints** era a **soma bruta de todos os AppPoints individuais
 
 ## ✅ Correções Implementadas
 
+### Atualização 2026-07-09
+- Corrigido bug do JavaScript da Aba 3 que deixava os campos em branco.
+- Unificada a regra de AppPoints em torno da fonte canônica (`scripts/config.py` + `scripts/analysis/entitlement.py`).
+- Corrigido `src/analyze_usage.py`, que ainda usava custos incorretos para licenças BASE.
+- Ajustada a Aba 3 para que o total otimizado P50/P95 respeite o escopo selecionado.
+- Mantida a premissa de confiabilidade: sem mock, sem aleatoriedade, sem números decorativos.
+
+### Atualização 2026-07-09 (Parte 2) — Auditoria completa da lógica de cálculo
+
+Investigação mais profunda (a pedido do usuário: "os campos continuam em branco em todos os cenários") revelou que o problema não era só de interface — havia **4 bugs em cadeia** no motor de cálculo, escondidos atrás do bug de JS. Corrigidos nesta sessão:
+
+1. **`continue` mal posicionado** em `scripts/reporting/html_data_processor.py` (linha ~75): todo usuário BASE (ativo ou inativo) era excluído dos cenários Saneado/Otimizado, e usuários PREMIUM inativos nunca eram excluídos (deveriam ser). Campos "Base Auth"/"Base Conc" ficavam sempre zerados nesses cenários.
+2. **`IndentationError` fatal em `src/true_capacity_calculator.py`** (linhas 106 e 180): o motor de cálculo real (NEM) **nunca conseguia executar** — travava com erro de sintaxe antes de gerar `true_capacity_metrics.json`. Havia ainda uma linha morta (`golden = {}` dentro de um bloco após `return`, inalcançável) que causaria `NameError` mesmo se a indentação fosse corrigida sem tratar esse segundo ponto.
+3. **Chave `hourly_app_points_nem_by_scope` descartada** em `scripts/generate_risk_report.py` (linha ~828): mesmo com o motor NEM funcionando, o resumo de concorrência (`concurrency_summary`) não copiava essa chave do JSON, então os cenários Otimizado P50/P95/P100 por escopo caíam num fallback de soma física simples — **mostrando o mesmo número para P50, P95 e P100**, perdendo toda a diferenciação estatística.
+4. **Pipeline quebrando silenciosamente por encoding**: vários scripts imprimem emojis que quebram no console Windows (cp1252), abortando etapas do `run_pipeline.py` sem aviso claro e deixando `consolidated_logintracking_from_sources.csv` com dados de login zerados para 100% dos usuários (todo mundo aparecia como INATIVO). Corrigido manualmente para validar; pipeline deve ser executado com `PYTHONIOENCODING=utf-8` até tratamento definitivo.
+
+**Resultado**: o pico real (NEM) que antes aparecia como ~970–990 AppPoints (na prática, só a metade da conta — o pool concorrente, sem a reserva de licenças Authorized) agora aparece corretamente como **1.861 AppPoints no P100** (871 de reserva Authorized + 990 do pool concorrente no pico). Ver `docs/CALCULO_APPPOINTS_EXPLICACAO.md` para o detalhamento e `docs/REFATORACAO_2026-07-09.md` para o registro técnico completo com trechos de código antes/depois.
+
+**Auditoria de correção da matemática**: revisão adicional confirmou que não há duplicidade de pessoa (1 linha por USERID único em `license_decision_plan.csv`), que contas de serviço (WSORACLE, ITEAM, MAXADMIN) estão isoladas corretamente e contribuem menos de 1% do total, e que a metodologia de pico horário (login real, sem calendário de escala) captura implicitamente a rotação de turmas offshore. Limitação conhecida e não resolvida: a duração de sessão é assumida em 60 minutos fixos (`SESSION_MINUTES` em `true_capacity_calculator.py`) por falta de evento de logout nos dados — ver seção "Limitações Conhecidas" em `docs/SISTEMA_DOCUMENTACAO.md`.
+
+
 ### 1. **Segregação de Dados por Escopo** 
 **Arquivo**: `scripts/reporting/html_data_processor.py`
 
@@ -52,7 +73,8 @@ Removido `scenario_points_total` que causava confusão. O campo correto sempre f
 'scenario_points': {'p50': 480, 'p95': 1150, 'p100': 1780}  # ✅ CORRETO
 ```
 
-### 3. **Filtros de Escopo Funcionais**
+### 3. **Filtros de Escopo Funcionais e Coerentes com o Total Exibido**
+
 **Arquivo**: `scripts/reporting/html_template.py`
 
 Implementada função `updateScopeFilter()` completa:
@@ -61,8 +83,9 @@ Implementada função `updateScopeFilter()` completa:
 - Recarrega cenário com dados do novo escopo
 - Atualiza label na tela
 
-**Antes**: Função stub que apenas logava (sem efeito visual)  
-**Depois**: Filtro totalmente funcional com feedback visual
+**Antes**: Função stub que apenas logava (sem efeito visual) e havia cenário em que o JS quebrava, deixando campos vazios.  
+**Depois**: Filtro funcional, campos preenchidos e total otimizado coerente com o escopo selecionado.
+
 
 ### 4. **Interface Aprimorada**
 **Arquivo**: `scripts/reporting/ab3_cenarios.py`
@@ -86,9 +109,22 @@ Removidas referências hardcoded a valores "9.000" e "Soma bruta".
 
 ---
 
-## 📊 Dados Validados
+## 📊 Dados Validados (Atualizado 2026-07-09 — pós-correção dos 4 bugs)
 
-### Cenários por Escopo (Valores Reais)
+> As tabelas desta seção usavam apenas os escopos FORESEA/TERCEIROS/TODOS (versão anterior à criação do escopo INTEGRAÇÃO) e refletiam o motor de cálculo *antes* da correção do `IndentationError` em `true_capacity_calculator.py`. Estão mantidas abaixo como registro histórico. Os valores atuais e corretos, com os 4 escopos, são:
+
+| Escopo        | AS-IS (pA/pC/bA/bC → pts) | Saneado (pts) | Otimizado — composição física (pts, informativo) | NEM real P50 | NEM real P95 | NEM real P100 |
+|---------------|---------------------------|---------------|----------------------------------------------------|--------------|--------------|---------------|
+| **FORESEA+PARCEIRO** | 199/360/1/8 → 6.478  | 196/344/1/7 → 6.213 | 172/368/1/7 → 6.453 | 1.195 | 1.478 | 1.673 |
+| **TERCEIROS**        | 0/10/1/303 → 3.183   | 0/7/1/248 → 2.588   | 0/7/1/248 → 2.588   | 23    | 113   | 213   |
+| **INTEGRAÇÃO**       | 1/0/0/1 → 15         | 1/0/0/1 → 15        | 1/0/0/1 → 15        | 5     | 5     | 15    |
+| **TODOS**            | 200/370/2/312 → 9.676| 197/351/2/256 → 8.816| 173/375/2/256 → 9.056| 1.231 | 1.586 | 1.861 |
+
+**Importante**: a coluna "Otimizado — composição física" é a soma ingênua (pA×5+pC×15+bA×3+bC×10) e serve só como referência visual dos campos do simulador. O valor que a Aba 3 exibe como total dos cenários "Otimizado (Pico P95)" e "Otimizado (Mediana P50)" é a coluna **NEM real** (concorrência estatística medida, não a soma física) — são conceitualmente diferentes, ver `docs/CALCULO_APPPOINTS_EXPLICACAO.md`.
+
+**Teto contratual**: 1.200 AppPoints. Com os dados corrigidos, o escopo TODOS **excede o teto** tanto no P95 (1.586, +32%) quanto no P100 (1.861, +55%). Isso é um alerta real de capacidade, não um artefato do bug — ver auditoria de correção no arquivo `docs/CALCULO_APPPOINTS_EXPLICACAO.md`.
+
+### Cenários por Escopo (Valores Históricos — anteriores à correção, mantidos como registro)
 
 | Escopo       | AS-IS AppPoints | SANEADO AppPoints | OTIMIZADO AppPoints |
 |--------------|-----------------|-------------------|---------------------|

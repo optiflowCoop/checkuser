@@ -1,5 +1,7 @@
 # Documentação Completa do Sistema CHECKUSER
 
+> 📌 Regras de negócio detalhadas de AppPoints e definição de licenças (entitlement, Authorized/Concurrent, recomendações de otimização, motor NEM) foram desmembradas para um documento dedicado: **[REGRAS_APPPOINTS_E_LICENCAS.md](REGRAS_APPPOINTS_E_LICENCAS.md)**. A seção 4 abaixo continua com o resumo; use o documento dedicado como referência definitiva e citável.
+
 ## 📋 Índice
 1. [Visão Geral](#visão-geral)
 2. [Arquitetura do Sistema](#arquitetura-do-sistema)
@@ -42,8 +44,16 @@ O sistema CHECKUSER é uma ferramenta de **Capacity Planning e Governança de Li
 ┌─────────────────────────────────────────────────────────┐
 │                    APRESENTAÇÃO (HTML)                   │
 │  - Dashboard Interativo                                 │
-│  - 6 Abas: Painel, Governança, Cenários, Eventos,      │
-│    Plano de Ação, Peak                                  │
+│  - 9 Abas (ordem atual, 2026-07-09):                    │
+│    1. Painel Operacional                                │
+│    2. Governança & Saneamento                           │
+│    3. Saneamento AD                                     │
+│    4. Recomendações de Migração                         │
+│    5. Detalhamento de Alocação                          │
+│    6. Cenários de AppPoints                              │
+│    7. Eventos Críticos                                   │
+│    8. Peak Contributors                                  │
+│    9. Plano de Ação                                       │
 └─────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────┐
@@ -86,7 +96,7 @@ O sistema CHECKUSER é uma ferramenta de **Capacity Planning e Governança de Li
 **Função**: Renderizar interface do usuário
 
 **Responsabilidades**:
-- Estrutura HTML das 6 abas
+- Estrutura HTML das 9 abas (ver ordem em 2.1) — cada aba é renderizada por um módulo dedicado em `scripts/reporting/ab1_painel.py` … `ab8_migracao.py`
 - Estilos CSS responsivos
 - JavaScript interativo (Chart.js)
 - Filtros e exportação
@@ -171,11 +181,20 @@ def get_user_domain_category(email, domains_config):
 
 ### 4.2 Cálculo de AppPoints
 
+**Fonte canônica**:
+- `scripts/config.py` → `get_app_points_config()`
+- `scripts/analysis/entitlement.py` → `calculate_app_points()`
+
 **Fatores por Tipo de Licença**:
 - **Premium Authorized**: 5 pontos
 - **Premium Concurrent**: 15 pontos
 - **Base Authorized**: 3 pontos
 - **Base Concurrent**: 10 pontos
+
+**Regra de governança**:
+- nenhum módulo pode recalcular AppPoints com tabela local/hardcoded divergente
+- qualquer custo exibido em HTML, Excel, CSV e NEM deve derivar dessa tabela única
+
 
 **Fórmula**:
 ```
@@ -241,7 +260,8 @@ def calculate_app_points(entitlement, license_model):
 ### 4.4 Cenários de Capacidade
 
 #### 4.4.1 NEM (Non-Exclusive Maximum)
-**Definição**: Número máximo de usuários simultâneos em um período
+**Definição**: consumo simultâneo real baseado em logintracking e plano de licenças vigente, sem mock e sem aleatoriedade.
+
 
 **Cálculo**:
 ```python
@@ -265,7 +285,22 @@ scenario_p100 = p100 * fator_escala
 - **P100 (Emergência)**: 1.0x (máximo histórico)
 - **Blackout**: 1.0x (todos ativos)
 
-**Nota**: Fatores são aplicados apenas quando há dados horários disponíveis.
+**Nota**:
+- o consolidado (`todos`) vem do histórico horário real (`true_capacity_metrics.json`)
+- na Aba 3, o total otimizado por escopo deve respeitar o escopo selecionado
+- quando o motor horário não traz segregação nativa por escopo, a distribuição por escopo é derivada do footprint real de AppPoints do próprio escopo, mantendo o total consolidado real como referência oficial
+- o total NEM soma dois componentes por hora: a reserva fixa de AppPoints dos usuários AUTHORIZED (conta em toda hora, estejam logados ou não) + o custo variável dos usuários CONCURRENT efetivamente logados naquela hora
+- **Limitações conhecidas** deste cálculo (ver seção 4.6 e `docs/REFATORACAO_2026-07-09.md`): a duração de sessão é assumida em `SESSION_MINUTES = 60` fixos por falta de evento de logout nos dados; não há calendário explícito de escala/rotação offshore (14x14 etc.) — a rotação é capturada implicitamente pelo uso real de login, não por um modelo de turnos.
+
+### 4.6 Limitações Conhecidas do Cálculo NEM
+
+Investigação de 2026-07-09 (ver `docs/REFATORACAO_2026-07-09.md`) validou a matemática do motor NEM e identificou os seguintes pontos que **não são bugs**, mas simplificações necessárias dado os dados disponíveis:
+
+1. **Sem dado de logout**: `consolidated_logintracking_from_sources.csv` só registra eventos de "LOGIN". Não há como medir a duração real de uma sessão. O código assume uma janela fixa de 60 minutos (`SESSION_MINUTES` em `src/true_capacity_calculator.py`) após cada login. Teste com dados reais (2026-07-09): 75% dos intervalos entre logins consecutivos do mesmo usuário ficam dentro dessa janela; ~20% excedem 2h, o que pode subestimar a presença de alguém que ficou trabalhando sem gerar novo evento de login.
+2. **Sem calendário de escala/rotação offshore**: o sistema não sabe, a priori, quem está de folga ou embarcado num dado dia. Isso é compensado porque o cálculo de pico usa login **real** hora a hora (não um headcount teórico) — quem está de folga simplesmente não aparece nos dados. Funciona bem para medir o passado; teria menos precisão para *prever* picos futuros sem essa informação.
+3. **Reserva Authorized é sempre 100% do tempo**: por definição de negócio ("licença dedicada, disponibilidade garantida 100%"), o custo dos usuários AUTHORIZED entra em toda hora do cálculo, mesmo em horas em que a pessoa não está logada. Isso é intencional, não um bug — mas significa que reclassificar alguém como AUTHORIZED tem impacto fixo e permanente no NEM, independentemente do padrão real de uso dessa pessoa.
+4. **Blackout = P100**: no código atual, o cenário "Blackout" é idêntico ao pico histórico (P100), não um multiplicador dele. Documentação histórica de versões anteriores descrevia "Blackout = P100 × 2"; isso nunca foi implementado no código.
+
 
 ### 4.5 Regras de Título Crítico
 
@@ -442,83 +477,78 @@ login_conflicts_count = len(loginids_com_multi_usuario)
 
 ### 7.1 Diretórios Principais
 
+> Atualizado em 2026-07-09 após auditoria completa e remoção de arquivos obsoletos (scripts de debug/validação pontual, fluxos duplicados/legados, testes ad hoc sem framework). Ver `docs/REFATORACAO_2026-07-09.md` para a lista completa do que foi removido e por quê.
+
 ```
 CHECKUSER/
-├── bat/                          # Scripts batch para Windows
-│   ├── extrair_baseline.bat      # Extrai dados do Maximo
-│   ├── extrair_logintrack.bat    # Extrai histórico de logins
-│   ├── processar_pipeline.bat    # Executa pipeline completo
-│   └── gerar_relatorio.bat       # Gera relatórios
+├── adUsers/                       # Extratos brutos do AD (fornecidos pela equipe de TI)
+│   ├── adUsers.csv                 # Usuários habilitados
+│   └── adUsersdesabilitadas.csv    # Usuários desabilitados (fonte da Aba 3 — Saneamento AD)
 │
-├── config/                       # Configurações do sistema
-│   ├── config.json               # Configurações gerais
-│   ├── licensing_rules.json      # Regras de licenciamento
-│   └── query_catalog.json        # Consultas SQL
+├── config/                        # Configurações do sistema
+│   ├── config.json                 # Configurações gerais (ambientes, queries)
+│   └── licensing_rules.json        # Regras de licenciamento (lidas por license_optimizer.py)
 │
-├── docs/                         # Documentação
-│   ├── SISTEMA_DOCUMENTACAO.md   # Este arquivo
-│   ├── ARQUITETURA.md            # Arquitetura detalhada
-│   ├── PIPELINE.md               # Guia do pipeline
-│   └── GUIA_USO.md               # Manual do usuário
+├── docs/                          # Documentação
+│   ├── SISTEMA_DOCUMENTACAO.md     # Este arquivo — documentação funcional canônica
+│   ├── REGRAS_APPPOINTS_E_LICENCAS.md  # Regras de negócio: AppPoints e definição de licenças
+│   ├── CALCULO_APPPOINTS_EXPLICACAO.md # Por que os cenários (As-Is/Saneado/Otimizado) divergem
+│   ├── SUMARIO_EXECUTIVO_ABA3.md   # Histórico da correção do simulador de cenários
+│   ├── REFATORACAO_2026-07-01.md   # Histórico: unificação de motores de cálculo
+│   ├── REFATORACAO_2026-07-09.md   # Histórico: correção do motor NEM + auditoria AD×Maximo
+│   ├── EVOLUCAO_ABA2_ALOCACAO.md   # Histórico: feature de saneamento de alocação
+│   ├── EVOLUCAO_ABA3_ESCOPO.md     # Histórico: filtros de escopo (FORESEA/TERCEIROS/TODOS)
+│   ├── TESTE_VISUAL_ABA3.md        # Checklist manual de teste dos filtros
+│   ├── INDICADORES_DOCUMENTACAO.md # Documentação da aba de indicadores (Excel)
+│   ├── campos_minimos_ad.md        # Especificação de campos mínimos exigidos do extrato AD
+│   └── solicitacao_relacao_ad.md   # Modelo de solicitação do extrato AD à equipe de TI
 │
-├── output/                       # Dados de saída
-│   ├── consolidated/             # Dados consolidados (CSV)
+├── output/                        # Dados de saída (gerados pelo pipeline, não versionar manualmente)
+│   ├── consolidated/                # Dados consolidados (CSV/JSON)
 │   │   ├── consolidated_user_identity.csv
-│   │   ├── consolidated_user_access.csv
-│   │   ├── consolidated_email.csv
-│   │   ├── consolidated_persongroupview.csv
-│   │   ├── consolidated_groupuser.csv
+│   │   ├── consolidated_user_access.csv / _normalized.csv
+│   │   ├── consolidated_ad_users.csv
 │   │   ├── license_decision_plan.csv
 │   │   └── true_capacity_metrics.json
-│   │
-│   ├── reports/                  # Relatórios gerados
+│   ├── reports/                     # Relatórios gerados
 │   │   ├── maximo_unified_dashboard.html
 │   │   └── maximo_risk_and_optimization_workbook.xlsx
-│   │
-│   ├── raw/                      # Dados brutos extraídos
-│   └── logs/                     # Logs de execução
+│   └── raw/                         # Extratos brutos do DB2 por ambiente (7 ambientes)
 │
-├── queries/                      # Consultas SQL
-│   └── queries.py
+├── queries/queries.py             # Catálogo de queries SQL usadas por run_db2cli_queries.py
 │
-├── scripts/                      # Código fonte
-│   ├── generate_risk_report.py   # Orquestrador principal
-│   ├── consolidate_*.py          # Scripts de consolidação
-│   ├── extract_*.py              # Scripts de extração
-│   │
-│   ├── config.py                 # Carregador de configurações
-│   ├── domain/                   # Análise de domínios
-│   │   ├── user.py               # Perfis de usuário
-│   │   └── identity_analyzer.py  # Análise de identidades
-│   │
-│   ├── services/                 # Serviços de negócio
-│   │   ├── analysis.py           # Análise de governança
-│   │   └── app_points.py         # Simulação de AppPoints
-│   │
-│   └── reporting/                # Geração de relatórios
-│       ├── html_builder.py       # Construtor HTML
-│       ├── html_template.py      # Template HTML
-│       ├── html_data_processor.py # Processador de dados
-│       └── html_helpers.py       # Funções auxiliares
+├── scripts/                       # Código fonte (orquestração e relatório)
+│   ├── generate_risk_report.py     # Orquestrador principal (gera HTML + Excel)
+│   ├── run_pipeline.py-adjacent extraction scripts (run_db2cli_queries.py, extract_ad_users.py,
+│   │   extract_maximo_users.py, generate_logintrack_from_sources.py, consolidate_outputs.py)
+│   ├── config.py                   # Tabela canônica de AppPoints e regras de classificação
+│   ├── domain/                      # Análise de domínio
+│   │   ├── user.py, identity_analyzer.py, env_normalizer.py
+│   │   ├── sanity_analyzer.py        # Cruzamento AD × Maximo (Aba 3 — Saneamento AD)
+│   │   ├── migration_advisor.py      # Recomendações de migração (Aba 4)
+│   │   └── allocation_analyzer.py    # Saneamento de alocação (Aba 5)
+│   ├── services/                    # Serviços de negócio
+│   │   ├── analysis.py               # Análise de governança
+│   │   └── app_points.py             # Simulação de AppPoints e classificação de licença (motor vigente)
+│   ├── analysis/                    # Regras canônicas
+│   │   ├── entitlement.py            # calculate_app_points() — fonte única de custo por licença
+│   │   └── classification.py         # Perfil de uso (POWER/LIGHT)
+│   └── reporting/                   # Geração de relatório (1 módulo por aba do dashboard)
+│       ├── html_builder.py, html_template.py, html_data_processor.py, html_helpers.py
+│       └── ab1_painel.py … ab8_migracao.py
 │
-├── src/                          # Módulos core
-│   ├── analyze_usage.py          # Análise de uso
-│   ├── consolidate_license_footprint.py
-│   ├── consolidate_user_access.py
-│   ├── cross_env_userid_reuse.py
-│   ├── identity_classification.py
-│   ├── identity_resolution.py
-│   ├── license_optimizer.py
-│   ├── login_conflicts.py
-│   ├── normalize.py
-│   ├── rules_manager.py
-│   └── true_capacity_calculator.py
+├── src/                            # Pipeline de identidade e capacidade (chamado por run_pipeline.py)
+│   ├── consolidate_user_access.py, normalize.py
+│   ├── cross_env_userid_reuse.py, login_conflicts.py, identity_classification.py
+│   ├── consolidate_license_footprint.py, analyze_usage.py, license_optimizer.py
+│   └── true_capacity_calculator.py   # Motor de cálculo NEM (P50/P95/P100)
 │
-├── tests/                        # Testes automatizados
-├── run_pipeline.py               # Entry point principal
-├── requirements.txt              # Dependências Python
-└── README.md                     # Este arquivo
+├── run_pipeline.py                 # Entry point principal (roda os 15 passos do pipeline)
+├── requirements.txt
+└── README.md
 ```
+
+**Removido em 2026-07-09** (código morto, fluxo duplicado/legado, ou script de debug sem uso no pipeline — ver `docs/REFATORACAO_2026-07-09.md`): `tests/` (10 scripts ad hoc), `scripts/validate_*.py` (5 scripts), `_check_gov.py`, `_check_norbe.py`, `check_persongroupview.py`, `check_identity.py`, `check_usage.py`, `check_user_access.py`, `scripts/consolidate_logintracking.py`, `src/identity_resolution.py`, `scripts/domain/app_points.py`, `scripts/analysis/licensing.py`, `scripts/intelligent_local_site.py`, `config/query_catalog.json`.
 
 ### 7.2 Arquivos de Dados
 
@@ -693,12 +723,33 @@ python -c "import csv; from pathlib import Path; p = Path('output/consolidated/l
 ## 11. Contato e Suporte
 
 **Desenvolvedor**: Equipe de TI - Foresea  
-**Última Atualização**: Junho 2026  
-**Versão**: 2.0.0
+**Última Atualização**: 2026-07-09  
+**Versão**: 2.2.0
 
 ---
 
 ## 12. Changelog
+
+### v2.2.0 (2026-07-09, continuação — auditoria completa + UX/UI + limpeza)
+- ✅ **Correção crítica no fluxo AD × Maximo**: `scripts/extract_ad_users.py` tinha toda a lógica dentro do `else` de um `if __name__ == '__main__':` — quando executado pelo pipeline (como sempre é), não fazia absolutamente nada. `consolidated_ad_users.csv` estava desatualizado sem que ninguém percebesse.
+- ✅ **Ambiente ODN2 inteiro desaparecia silenciosamente** do pipeline: a extração de `groupuser`/`persongroupview` para ODN2 falhou (erro de conexão DB2), e `src/consolidate_user_access.py` descartava o ambiente inteiro nesse cenário em vez de aproveitar os dados de `maxuser`/`person` que tinham extraído com sucesso. Corrigido com fallback por ambiente — os 7 ambientes agora aparecem sempre na auditoria AD × Maximo.
+- ✅ **Alerta "AD desativado + Maximo ativo" sempre mostrava 0**: o print de diagnóstico rodava *antes* da extensão da lista pelos matches por USERID/nome. Corrigido, e o algoritmo de match por nome foi enrijecido (exige 1º nome em comum, ignora conectores como "de/da/dos") para eliminar falsos positivos — caiu de ~500 matches (majoritariamente ruído) para 20 candidatos revisáveis.
+- ✅ Novo campo nas análises: **"ambientes ativos / ambientes totais"** por usuário — deixa explícito o caso "desativado em 6 de 7 unidades, mas ainda ativo em 1", que era o objetivo principal da auditoria solicitada.
+- ✅ Nova sheet no Excel (`9b_AD_Desativado_Mas_Ativo`) — esse achado crítico não tinha equivalente no workbook antes, só no HTML.
+- ✅ **Auditoria de arquivos obsoletos**: removidos 26 arquivos mortos ou duplicados (testes ad hoc sem framework, scripts de validação pontual de bugs já corrigidos, 2 fluxos legados substituídos por versões modulares, 1 módulo "canônico" que na verdade nunca era importado). Ver `docs/REFATORACAO_2026-07-09.md` para a lista completa.
+- ✅ **Filtros corrigidos**: dropdown de Decisão da Aba Governança (vocabulário incompatível com os dados reais), busca da Aba Plano de Ação (procurava na coluna errada), busca da Aba Migração (não considerava nome), filtro de escopo da Aba Peak Contributors (função existia mas não tinha elemento HTML correspondente — implementado de verdade), `id` duplicado entre duas abas, aba de Detalhamento de Alocação sem botão de navegação (existia mas era inacessível).
+- ✅ **Inconsistências HTML × Excel**: adicionados avisos visíveis de truncamento em tabelas que mostram só uma amostra (ex.: 200 de 4.413 registros), corrigido texto de card do Painel que dizia excluir "SEM DOMÍNIO" mas na verdade incluía.
+- ✅ **Abas reordenadas** por fluxo lógico: Painel → Governança → Saneamento AD → Migração → Detalhamento de Alocação → Cenários de AppPoints → Eventos Críticos → Peak Contributors → Plano de Ação (era: Painel, Governança, AppPoints, Eventos, Plano de Ação, Peak, Saneamento AD, Migração).
+- 📄 Novo documento dedicado: `docs/REGRAS_APPPOINTS_E_LICENCAS.md` — regras de negócio completas de AppPoints e definição de licenças, com referência de arquivo:função para cada regra.
+
+### v2.1.0 (2026-07-09)
+- ✅ Corrigido bug crítico: `continue` mal posicionado em `html_data_processor.py` excluía todos os usuários BASE dos cenários Saneado/Otimizado (campos "Base Auth"/"Base Conc" sempre zerados) e nunca excluía PREMIUM inativos (deveria excluir)
+- ✅ Corrigido `IndentationError` fatal em `src/true_capacity_calculator.py` que impedia o motor de cálculo NEM de executar por completo (e um `NameError` latente que ocorreria mesmo após corrigir a indentação)
+- ✅ Corrigida chave `hourly_app_points_nem_by_scope` que era descartada ao montar `concurrency_summary` em `generate_risk_report.py`, fazendo os cenários por escopo caírem num fallback sem diferenciação estatística (P50=P95=P100)
+- ✅ Identificado e contornado (não corrigido de forma definitiva) crash de `UnicodeEncodeError` no pipeline Windows que corrompia silenciosamente `consolidated_logintracking_from_sources.csv`
+- ✅ Auditoria completa da matemática do cálculo NEM a pedido do usuário: sem duplicidade de pessoa, contas de serviço isoladas corretamente, sem contagem dupla Authorized/Concurrent
+- ⚠️ Novo resultado real (escopo TODOS): P95 = 1.586 e P100 = 1.861 AppPoints — **excede o teto contratual de 1.200** (antes o motor não executava e o número exibido era parcial/incompleto)
+- 📄 Detalhamento completo em `docs/REFATORACAO_2026-07-09.md`
 
 ### v2.0.0 (2026-06-29)
 - ✅ Correção completa da Aba 5 (Plano de Ação)

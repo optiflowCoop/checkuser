@@ -1,7 +1,19 @@
 # domain/user.py
+import re
 from collections import defaultdict
 from scripts.config import get_foresea_domains, get_app_points_config, get_entitlement_keywords, get_critical_titles
 from scripts.domain.env_normalizer import normalize_env
+
+
+def _sanitize_domain(domain):
+    """Sanitiza dominio removendo pontos extras e normalizando variacoes."""
+    if not domain:
+        return domain
+    domain = domain.strip().lower()
+    domain = re.sub(r'^\.+', '', domain)
+    domain = re.sub(r'\.+', '.', domain)
+    domain = re.sub(r'^forsea\.', 'foresea.', domain)
+    return domain
 
 
 def get_user_domain_category(email):
@@ -22,7 +34,7 @@ def get_user_domain_category(email):
     if email.upper().startswith('WSORACLE') or 'ORACLE' in email.upper():
         return 'INTEGRACAO'
 
-    domain = email.split('@')[1].lower()
+    domain = _sanitize_domain(email.split('@')[1])
     foresea_domains = get_foresea_domains()
     if domain == foresea_domains[0]:
         return 'FORESEA'

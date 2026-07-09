@@ -17,7 +17,7 @@ def read_csv(path):
         return []
     try:
         with open(path, newline='', encoding='utf-8-sig') as f:
-            reader = csv.DictReader(f)
+            reader = csv.DictReader(f, delimiter=',')
             rows = []
             for i, row in enumerate(reader, 1):
                 rows.append(row)
@@ -133,13 +133,22 @@ def main():
 
     out_rows = []
 
+    # Ambientes com dados reais de usuário (maxuser/person), mesmo que a extração
+    # de groupuser tenha falhado para algum deles (ex.: erro de conexão DB2 pontual).
+    envs_in_user_index = {key.split('|', 1)[0] for key in user_index if '|' in key}
+    envs_with_groupuser = {canon_env(g.get('ENVIRONMENT', '')) for g in groupusers if g.get('ENVIRONMENT', '').strip()}
+    envs_missing_groupuser = envs_in_user_index - envs_with_groupuser
+    if envs_missing_groupuser:
+        print(f"AVISO: ambiente(s) {sorted(envs_missing_groupuser)} sem dados de groupuser "
+              f"(provável falha de extração) — usando fallback maxuser/person para não perder esses usuários.")
+
     if groupusers:
         for g in groupusers:
             env = canon_env(g.get('ENVIRONMENT', ''))
             userid = g.get('USERID', '').strip()
             groupname = g.get('GROUPNAME', '').strip()
             source = g.get('_source', 'consolidated_groupuser')
-            
+
             row = dict.fromkeys(header, '')
             row['ENV_DB'] = env
             row['USERID'] = userid
@@ -171,16 +180,37 @@ def main():
             out_rows.append(row)
     else:
         for key, user in user_index.items():
+            env, userid = key.split('|', 1)
             row = {k: '' for k in header}
             for k in header:
                 if k in user:
                     row[k] = user[k]
+            row['ENV_DB'] = env
+            row['USERID'] = userid
+            row['SOURCE_FILE'] = maxuser_f
+            out_rows.append(row)
+
+    # Fallback por ambiente: se groupuser existe globalmente mas falhou para um
+    # ambiente específico (ex.: ODN2 com erro de conexão DB2), o loop acima nunca
+    # emite linhas para esse ambiente. Sem isso, o ambiente inteiro desaparece
+    # silenciosamente do pipeline mesmo tendo dados reais de maxuser/person.
+    if groupusers and envs_missing_groupuser:
+        for key, user in user_index.items():
+            env, userid = key.split('|', 1)
+            if env not in envs_missing_groupuser:
+                continue
+            row = {k: '' for k in header}
+            for k in header:
+                if k in user:
+                    row[k] = user[k]
+            row['ENV_DB'] = env
+            row['USERID'] = userid
             row['SOURCE_FILE'] = maxuser_f
             out_rows.append(row)
 
     out_path = os.path.join(OUTDIR, 'consolidated_user_access.csv')
     with open(out_path, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=header)
+        writer = csv.DictWriter(f, fieldnames=header, delimiter=',')
         writer.writeheader()
         writer.writerows(out_rows)
 

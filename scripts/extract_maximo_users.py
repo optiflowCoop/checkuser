@@ -7,6 +7,10 @@ import csv
 import sys
 from pathlib import Path
 
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -22,7 +26,7 @@ def load_csv(path: Path):
     if not path.exists():
         return []
     with path.open('r', encoding='utf-8-sig', newline='') as f:
-        return list(csv.DictReader(f))
+        return list(csv.DictReader(f, delimiter=','))
 
 
 def main():
@@ -124,7 +128,7 @@ def main():
     fieldnames = ['USERID', 'NOME', 'EMAIL', 'DOMAIN', 'COMPARABLE']
     
     with OUT_FILE.open('w', encoding='utf-8-sig', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=';', extrasaction='ignore')
+        writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=',', extrasaction='ignore')
         writer.writeheader()
         writer.writerows(maximo_rows)
     

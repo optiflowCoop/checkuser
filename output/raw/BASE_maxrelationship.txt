@@ -478,6 +478,7 @@ and addresscode in (select addresscode from address where description='OPEX'), -
   LOCWITHMODEL, LOCATIONS, LOCATIONS, location in ( select location from BuildingModel where siteid=:siteid ), -, -, Return all locations for the current site that have a building model associated with them, 98782
   BUILDINGSYSTEM, LOCATIONS, LOCSYSTEM, exists (select * from lochierarchy where locsystem.systemid=lochierarchy.systemid and locsystem.siteid=lochierarchy.siteid and lochierarchy.location=:location ) and siteid=:siteid and primarysystem = 0, -, -, Relationship to the LocSystem table, used to find all systems this operating location belongs to excluding the primary. (where exists (select * from lochierarchy where locsystem.systemid=lochierarchy.systemid and lochierarchy.location=locations.location) and siteid=:siteid and primarysystem = 0. The resulting set will contain zero or more objects., 98783
   BOOKMARK, BUILDINGMODEL, BOOKMARK, app='BIMMODELS' and keyvalue=:BUILDINGMODELID, -, -, Relationship to the bookmark records, used to find the bookmark records for a given asset., 98784
+  OOG_PJPADDITIONALINFO_RISKS, PLUSGPERMITWORK, OOG_PJPADDITIONALINFO, PERMITWORKNUM = :PERMITWORKNUM AND SITEID = :SITEID AND OOG_INFOTYPE = 'ADDRISK', -, 0, -, 100864
   DOCLINKS, BUILDINGMODEL, DOCLINKS, ownertable = 'BUILDINGMODEL' and ownerid = :BUILDINGMODELID, -, -, Relationship to the DocLinks table, used to find all documents for a given product. (ownertable = 'BUILDINGMODELID' and ownerid = :bimproductid). The resulting set will contain zero or more objects., 98785
   ORGANIZATION, BUDGETANALYSISAXIS, ORGANIZATION, orgid=:orgid, -, -, Relationship to get the organization, 98786
   OBJECT, BUDGETANALYSISAXIS, MAXOBJECT, objectname=:objectname, -, -, Relationship to get the analysis axis object, 98787
@@ -557,6 +558,7 @@ and exists(select 1 from OOG_CARGOMAN cm where cm.CARGOMANNUM = oog_cargomanline
   INVITEM, JOBITEM, INVENTORY, itemnum = :itemnum and itemsetid = :itemsetid and siteid=:siteid, UNDEFINED, 0, Relationship to the Job Material's Inventory records, used to find all the inventory records for a given Job Material. (inventory.itemnum=jobmaterial.itemnum and inventory.itemsetid = jobmaterial.itemsetid). The resulting set will contain zero or more records., 347
   EXCHANGE, ORGANIZATION, EXCHANGE, orgid=:orgid, UNDEFINED, 0, -, 173
   ACTIONS, WFNODE, WFACTION, processname = :processname and processrev = :processrev and ownernodeid = :nodeid, UNDEFINED, 0, Relationship to the WFAction table, used to find all actions extending from a node, of any node type. (wfnode.processid = wfaction.processid and wfnode.processrev = wfaction.processrev and wfnode.nodeid = wfaction.ownernodeid). This resulting set will contain zero or more objects., 174
+  OOG_PJPADDITIONALINFO_TOOLS, PLUSGPERMITWORK, OOG_PJPADDITIONALINFO, PERMITWORKNUM = :PERMITWORKNUM AND SITEID = :SITEID AND OOG_INFOTYPE = 'TOOLS', -, 0, -, 100865
   INVENTORY, MATUSETRANS, INVENTORY, itemnum = :itemnum and location = :storeloc and itemsetid = :itemsetid and siteid=:siteid, UNDEFINED, 0, Relationship to the Inventory table, used to find the inventory information for the material being issued out of the storeroom. (inventory.itemnum = matusetrans.itemnum and inventory.location = matusetrans.storeloc and inventory.itemsetid = matusetrans.itemsetid). The resulting set will contain zero or one object., 446
   MAXVARS, MAXVARTYPE, MAXVARS, varname = :varname, UNDEFINED, 0, Relationship to MaxVars table. (maxvars.varname = maxvars.varname). The result set will contain zero or more objects., 449
   HIERARCHYINSYSYTEM, LOCHIERARCHY, LOCHIERARCHY, systemid = :systemid and parent is null and siteid=:siteid, UNDEFINED, 0, Relationship to the LocHierarchy table, used to find whether or not there are multiple hierarchies in the system. (locchierarchy.systemid =locchierarchy.systemid). The resulting set will contain one or more objects., 450
@@ -9063,5 +9065,5 @@ AND CREATEDATE = (
   ASSETMOBILE, PLUSGIMPROVE, ASSET, :assetnum = assetnum and :siteid = siteid, -, 0, Relationship for RES Mobile, 100835
   MOBILELOCATION, PLUSGIMPROVE, LOCATIONS, location = :location and siteid = :siteid, -, 0, Relationship for RES Mobile, 100836
   MOBILEWORKLOG, PLUSGIMPROVE, WORKLOG, recordkey=:wonum and class=:woclass and siteid=:siteid, -, 0, Relationship for WorkLog Mobile, 100837
-FetchAll: 8910 rows fetched.
+FetchAll: 8912 rows fetched.
 > 

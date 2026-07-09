@@ -17,7 +17,7 @@ def read_csv(path):
         print(f"ERR: missing {path}")
         return []
     with open(path, newline='', encoding='utf-8-sig') as f:
-        return list(csv.DictReader(f))
+        return list(csv.DictReader(f, delimiter=','))
 
 def get_account_class(userid, loginid, groups, rules):
     uid = (userid or '').upper()
@@ -56,7 +56,7 @@ def main():
 
     fieldnames = list(rows[0].keys()) + ['ACCOUNT_CLASS']
     with open(NORMALIZED, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=',')
         writer.writeheader()
         for r in rows:
             r2 = {k: norm_str(v) for k,v in r.items()}
@@ -101,7 +101,7 @@ def main():
 
     id_fields = ['RAW_ID', 'ENV_DB','USERID','PERSONID','LOGINID','FIRSTNAME','LASTNAME','DISPLAYNAME','PRIMARYEMAIL','STATUS','DEFSITE','TYPE','TITLE','PERSONGROUP','TOTAL_GROUPS','ACCOUNT_CLASS']
     with open(IDENTITY, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=id_fields)
+        writer = csv.DictWriter(f, fieldnames=id_fields, delimiter=',')
         writer.writeheader()
         for v in agg.values():
             writer.writerow(v)

@@ -35,18 +35,19 @@ def load_csv(path: Path):
 
 
 def normalize_name(name):
-    """Normaliza nome para comparação: remove acentos, espaços duplos, maiúsculas/minúsculas, pontuação."""
+    """Normaliza nome para comparação: remove acentos, espaços duplos, maiúsculas/minúsculas, pontuação. Sempre recebe str, trata None/set/list."""
     if not name:
         return ''
+    if isinstance(name, (set, list)):
+        # Pega primeiro valor não vazio
+        name = next(iter(x for x in name if x), '')
     name = str(name).strip().upper()
-    # Remove acentos
     import unicodedata
     name = unicodedata.normalize('NFKD', name).encode('ASCII', 'ignore').decode('ASCII')
-    # Remove espaços duplos
     name = re.sub(r'\s+', ' ', name)
-    # Remove pontuação (. , -) que pode diferir entre sistemas
     name = name.replace('.', '').replace(',', '').replace('-', ' ').replace('  ', ' ')
     return name.strip()
+
 
 
 def extract_email_prefix(email):
@@ -73,8 +74,8 @@ def analyze_sanity():
     
     # 1.1 Carregar usuários desativados do AD (lista específica para auditoria)
     ad_disabled_rows = load_csv(ROOT / 'adUsers' / 'adUsersdesabilitadas.csv')
-    print(f"📥 AD: {len(ad_rows)} usuários carregados")
-    print(f"📥 AD Desabilitados: {len(ad_disabled_rows)} usuários desativados")
+    print(f"[AD] {len(ad_rows)} usuarios carregados")
+    print(f"[AD] {len(ad_disabled_rows)} usuarios desativados")
     if ad_rows:
         print(f"   Colunas AD: {list(ad_rows[0].keys())}")
         print(f"   Exemplo AD: {list(ad_rows[0].items())[:3]}")
@@ -83,10 +84,10 @@ def analyze_sanity():
     identities = load_csv(IN_DIR / 'consolidated_user_identity.csv')
     access_rows = load_csv(IN_DIR / 'consolidated_user_access_normalized.csv') or load_csv(IN_DIR / 'consolidated_user_access.csv')
     
-    print(f"📥 Maximo Identities: {len(identities)} registros")
+    print(f"[MAXIMO] {len(identities)} registros")
     if identities:
         print(f"   Colunas Identities: {list(identities[0].keys())}")
-    print(f"📥 Maximo Access: {len(access_rows)} registros")
+    print(f"[MAXIMO] {len(access_rows)} registros")
     
     # ============================================================
     # CONSTRUIR MAPAS DO AD
@@ -120,8 +121,8 @@ def analyze_sanity():
             if prefix and prefix not in ad_by_prefix:
                 ad_by_prefix[prefix] = ad_by_email[email]
     
-    print(f"   AD emails únicos: {len(ad_by_email)}")
-    print(f"   AD prefixos únicos: {len(ad_by_prefix)}")
+    print(f"   AD emails unicos: {len(ad_by_email)}")
+    print(f"   AD prefixos unicos: {len(ad_by_prefix)}")
     
     # ============================================================
     # 1.2 IDENTIFICAR USUÁRIOS DESATIVADOS NO AD
@@ -142,7 +143,7 @@ def analyze_sanity():
                 'prefix': extract_email_prefix(email),
             }
     
-    print(f"   AD Desabilitados com email válido: {len(ad_disabled_by_email)}")
+    print(f"   AD Desabilitados com email valido: {len(ad_disabled_by_email)}")
     
     # ============================================================
     # 1.3 REMOVER USUARIOS DUPLICADOS (desabilitados que tambem estao habilitados)
@@ -153,7 +154,7 @@ def analyze_sanity():
         if email in ad_by_email:
             del ad_by_email[email]
     
-    print(f"   AD emails após remover duplicados: {len(ad_by_email)}")
+    print(f"   AD emails apos remover duplicados: {len(ad_by_email)}")
     
     # ============================================================
     # CONSTRUIR MAPAS DO MAXIMO
@@ -199,6 +200,7 @@ def analyze_sanity():
                     'emails': set(),
                     'envs': set(),
                     'statuses': set(),
+                    'env_status': {},  # ambiente -> status, para saber ONDE especificamente está ativo
                     'titles': set(),
                     'persongroups': set(),
                     'comparable': is_comparable,
@@ -212,6 +214,12 @@ def analyze_sanity():
                 mx['envs'].add(env)
             if status:
                 mx['statuses'].add(status)
+            if env and status:
+                # Mesmo ambiente pode repetir por linha duplicada; mantém o status
+                # mais "grave" (ACTIVE) se houver divergência entre linhas.
+                prev = mx['env_status'].get(env)
+                if not prev or status.upper() in ('ACTIVE', 'ATIVO', 'ENABLED'):
+                    mx['env_status'][env] = status
             if title:
                 mx['titles'].add(title)
             if persongroup:
@@ -220,9 +228,15 @@ def analyze_sanity():
             if is_comparable:
                 mx['comparable'] = True
     
-    print(f"   Maximo emails únicos (comparáveis): {len(maximo_by_email)}")
-    print(f"   Maximo USERIDs únicos: {len(maximo_by_userid)}")
-    print(f"   Maximo USERIDs comparáveis: {sum(1 for mx in maximo_by_userid.values() if mx['comparable'])}")
+    print(f"   Maximo emails unicos (comparaveis): {len(maximo_by_email)}")
+    print(f"   Maximo USERIDs unicos: {len(maximo_by_userid)}")
+    print(f"   Maximo USERIDs comparaveis: {sum(1 for mx in maximo_by_userid.values() if mx['comparable'])}")
+
+    # Checagem de cobertura: o Maximo tem 7 ambientes. Se algum estiver faltando
+    # aqui, esta auditoria de AD x Maximo está incompleta silenciosamente — ex.:
+    # usuários desativados no AD ainda ativos em um ambiente ausente nunca aparecerão.
+    envs_presentes = sorted({e for mx in maximo_by_userid.values() for e in mx['envs'] if e})
+    print(f"   Ambientes Maximo cobertos por esta auditoria ({len(envs_presentes)}): {envs_presentes}")
     
     # ============================================================
     # ANÁLISE 1: MATCH POR EMAIL (apenas usuários comparáveis)
@@ -234,7 +248,7 @@ def analyze_sanity():
     only_ad_emails = ad_emails_set - maximo_emails_set
     only_maximo_emails = maximo_emails_set - ad_emails_set
     
-    print(f"\n📊 MATCH POR EMAIL (apenas comparáveis):")
+    print(f"\n[METRICAS] Match por email (apenas comparaveis):")
     print(f"   Match: {len(match_emails)}")
     print(f"   Apenas no AD: {len(only_ad_emails)}")
     print(f"   Apenas no Maximo: {len(only_maximo_emails)}")
@@ -270,7 +284,7 @@ def analyze_sanity():
                 'tipo': 'DIVERGENCIA_NOME',
             })
     
-    print(f"\n📊 DIVERGÊNCIAS DE NOME (mesmo email): {len(name_divergences)}")
+    print(f"\n[DIVERG] Divergencias de nome (mesmo email): {len(name_divergences)}")
     
     # ============================================================
     # ANÁLISE 3: MÚLTIPLOS USERIDs para o mesmo email no Maximo
@@ -292,7 +306,7 @@ def analyze_sanity():
                 'tipo': 'MULTIPLOS_USERIDS',
             })
     
-    print(f"📊 MÚLTIPLOS USERIDs por email: {len(multi_userid)}")
+    print(f"[MULTI] Multiplos USERIDs por email: {len(multi_userid)}")
     
     # ============================================================
     # ANÁLISE 4: MATCH POR PREFIXO (USERID do AD vs Maximo)
@@ -349,8 +363,8 @@ def analyze_sanity():
                 'tipo': 'SEM_MATCH_MAXIMO',
             })
     
-    print(f"📊 MATCH POR PREFIXO (USERID): {len(prefix_match)}")
-    print(f"📊 SEM MATCH NO MAXIMO: {len(no_match)}")
+    print(f"[PREFIX] Match por prefixo (USERID): {len(prefix_match)}")
+    print(f"[NOMATCH] Sem match no Maximo: {len(no_match)}")
     
     # ============================================================
     # ANÁLISE 5: USUÁRIOS NO MAXIMO SEM EMAIL (comparar por USERID)
@@ -386,8 +400,8 @@ def analyze_sanity():
                     'tipo': 'MAXIMO_SEM_EMAIL_SEM_MATCH_AD',
                 })
     
-    print(f"📊 MAXIMO SEM EMAIL (com match AD): {len(maximo_sem_email_match)}")
-    print(f"📊 MAXIMO SEM EMAIL (sem match AD): {len(maximo_sem_email_nomatch)}")
+    print(f"[MAXIMO SEM EMAIL] Com match no AD: {len(maximo_sem_email_match)}")
+    print(f"[MAXIMO SEM EMAIL] Sem match no AD: {len(maximo_sem_email_nomatch)}")
     
     # ============================================================
     # ANÁLISE 6: USUÁRIOS DESATIVADOS NO AD MAS ATIVOS NO MAXIMO
@@ -401,6 +415,8 @@ def analyze_sanity():
             # Filtrar apenas usuários ATIVOS no Maximo
             usuarios_ativos = [mu for mu in maximo_users if mu['status'].upper() in ['ACTIVE', 'ATIVO', 'ENABLED']]
             if usuarios_ativos:
+                todos_envs = sorted(set(mu['env'] for mu in maximo_users if mu['env']))
+                envs_ativos = sorted(set(mu['env'] for mu in usuarios_ativos if mu['env']))
                 ad_disabled_ativos_maximo.append({
                     'email': email,
                     'ad_displayname': ad_user['displayname'],
@@ -409,31 +425,50 @@ def analyze_sanity():
                     'ad_groups_count': ad_user['groups_count'],
                     'ad_groups': ad_user['groups'],
                     'maximo_userids': ' | '.join(sorted(set(mu['userid'] for mu in usuarios_ativos if mu['userid']))),
-                    'maximo_envs': ' | '.join(sorted(set(mu['env'] for mu in usuarios_ativos if mu['env']))),
+                    'maximo_envs': ' | '.join(envs_ativos),
+                    'maximo_envs_total': ' | '.join(todos_envs),
+                    'qtd_envs_ativos_de_total': f"{len(envs_ativos)}/{len(todos_envs)}",
                     'maximo_statuses': ' | '.join(sorted(set(mu['status'] for mu in usuarios_ativos if mu['status']))),
                     'maximo_names': ' | '.join(sorted(set(mu['displayname'] for mu in usuarios_ativos if mu['displayname']))),
                     'domain': ad_user['domain'],
                     'qtd_ativos_maximo': len(usuarios_ativos),
                 })
     
-    print(f"\n🚨 USUÁRIOS DESATIVADOS NO AD MAS ATIVOS NO MAXIMO: {len(ad_disabled_ativos_maximo)}")
-    
     # ============================================================
     # ANÁLISE 6b: USUÁRIOS DESATIVADOS NO AD MAS ATIVOS NO MAXIMO (por USERID ou NOME)
     # Quando não tem email no Maximo, usar score de similaridade
     # ============================================================
+    # Palavras conectoras comuns em nomes PT-BR: contá-las como "palavra em comum"
+    # gera falsos positivos entre pessoas totalmente diferentes (ex.: "...DE MOURA..."
+    # bate com "...DE OLIVEIRA..." só pela palavra "DE"). Excluídas do score de nome.
+    NAME_STOPWORDS = {'DE', 'DA', 'DO', 'DAS', 'DOS', 'E'}
     ad_disabled_sem_email = []
     for email, ad_user in ad_disabled_by_email.items():
         # Se já foi encontrado por email, pular
         if email in maximo_by_email:
             continue
-        
+
+        ad_given_norm = normalize_name(ad_user['givenname'])
+        ad_given_words = set(ad_given_norm.split()) - NAME_STOPWORDS
+
         # Procurar por USERID igual
         prefix = ad_user['prefix']
         if prefix.upper() in maximo_by_userid:
             mx = maximo_by_userid[prefix.upper()]
-            if mx['comparable']:
-                # Encontrou match por USERID
+            # Só é um alerta real se este USERID estiver ATIVO em algum ambiente do
+            # Maximo — sem este filtro, usuários já inativos no Maximo também
+            # apareciam na lista de "desativado no AD mas ativo no Maximo" (falso positivo).
+            mx_statuses_upper = {s.upper() for s in mx['statuses']}
+            # Prefixo de email igual a um USERID pode ser coincidência entre pessoas
+            # diferentes (USERIDs do Maximo costumam ser gerados por padrão de nome).
+            # Exige que o primeiro nome do AD apareça em algum nome do Maximo para
+            # esse USERID antes de tratar como o mesmo indivíduo.
+            mx_all_words = {w for name in mx['displaynames'] for w in normalize_name(name).split()} - NAME_STOPWORDS
+            given_name_matches = bool(ad_given_words) and ad_given_words.issubset(mx_all_words)
+            if mx['comparable'] and given_name_matches and (mx_statuses_upper & {'ACTIVE', 'ATIVO', 'ENABLED'}):
+                # Encontrou match por USERID, com nome consistente, ativo em pelo menos um ambiente
+                envs_ativos = sorted(e for e, s in mx['env_status'].items() if s.upper() in ('ACTIVE', 'ATIVO', 'ENABLED'))
+                todos_envs = sorted(mx['envs'])
                 ad_disabled_sem_email.append({
                     'email': email,
                     'ad_displayname': ad_user['displayname'],
@@ -442,7 +477,9 @@ def analyze_sanity():
                     'ad_groups_count': ad_user['groups_count'],
                     'ad_groups': ad_user['groups'],
                     'maximo_userids': ' | '.join(sorted(mx['displaynames'])),
-                    'maximo_envs': ' | '.join(sorted(mx['envs'])),
+                    'maximo_envs': ' | '.join(envs_ativos),
+                    'maximo_envs_total': ' | '.join(todos_envs),
+                    'qtd_envs_ativos_de_total': f"{len(envs_ativos)}/{len(todos_envs)}",
                     'maximo_statuses': ' | '.join(sorted(mx['statuses'])),
                     'maximo_names': ' | '.join(sorted(mx['displaynames'])),
                     'domain': ad_user['domain'],
@@ -453,23 +490,34 @@ def analyze_sanity():
         
         # Procurar por nome similar (score)
         ad_name_norm = normalize_name(ad_user['displayname'])
+        ad_given_norm = normalize_name(ad_user['givenname'])
+        ad_given_words = set(ad_given_norm.split()) - NAME_STOPWORDS
         best_match = None
         best_score = 0
-        
+
         for userid, mx in maximo_by_userid.items():
             for mx_name in mx['displaynames']:
                 mx_name_norm = normalize_name(mx_name)
-                # Calcular score de similaridade (número de palavras em comum)
-                ad_words = set(ad_name_norm.split())
-                mx_words = set(mx_name_norm.split())
+                # Calcula similaridade por palavras em comum, ignorando conectores
+                # (DE/DA/DOS/...) que geram falso positivo entre sobrenomes distintos.
+                ad_words = set(ad_name_norm.split()) - NAME_STOPWORDS
+                mx_words = set(mx_name_norm.split()) - NAME_STOPWORDS
                 common_words = ad_words & mx_words
                 score = len(common_words)
-                
-                if score >= 2 and score > best_score:  # Pelo menos 2 palavras em comum
+
+                # Exige que o primeiro nome do AD também apareça no nome do Maximo —
+                # sem isso, dois sobrenomes parecidos (ex.: "...CRUZ DOURADO" vs
+                # "...MOURA CRUZ") já bastavam para virar "match" mesmo sendo pessoas
+                # diferentes.
+                given_name_matches = bool(ad_given_words) and ad_given_words.issubset(mx_words)
+
+                if score >= 3 and given_name_matches and score > best_score:
                     best_match = mx
                     best_score = score
         
-        if best_match and 'ACTIVE' in best_match['statuses']:
+        if best_match and ({s.upper() for s in best_match['statuses']} & {'ACTIVE', 'ATIVO', 'ENABLED'}):
+            envs_ativos = sorted(e for e, s in best_match['env_status'].items() if s.upper() in ('ACTIVE', 'ATIVO', 'ENABLED'))
+            todos_envs = sorted(best_match['envs'])
             ad_disabled_sem_email.append({
                 'email': email,
                 'ad_displayname': ad_user['displayname'],
@@ -478,7 +526,9 @@ def analyze_sanity():
                 'ad_groups_count': ad_user['groups_count'],
                 'ad_groups': ad_user['groups'],
                 'maximo_userids': ' | '.join(sorted(best_match['displaynames'])),
-                'maximo_envs': ' | '.join(sorted(best_match['envs'])),
+                'maximo_envs': ' | '.join(envs_ativos),
+                'maximo_envs_total': ' | '.join(todos_envs),
+                'qtd_envs_ativos_de_total': f"{len(envs_ativos)}/{len(todos_envs)}",
                 'maximo_statuses': ' | '.join(sorted(best_match['statuses'])),
                 'maximo_names': ' | '.join(sorted(best_match['displaynames'])),
                 'domain': ad_user['domain'],
@@ -488,7 +538,17 @@ def analyze_sanity():
     
     # Adicionar os encontrados por USERID/nome à lista principal
     ad_disabled_ativos_maximo.extend(ad_disabled_sem_email)
-    
+
+    # Nota: este print tinha sido movido para ANTES da extensão por USERID/nome
+    # (Análise 6b) em uma versão anterior — sempre reportava só o match por email
+    # exato (tipicamente 0, já que a maioria dos usuários do Maximo não tem email
+    # cadastrado), escondendo os matches por USERID/nome que a Análise 6b encontra.
+    print(f"\n[ALERTA] Usuarios desativados no AD mas ativos no Maximo: {len(ad_disabled_ativos_maximo)}")
+    match_por_email = sum(1 for x in ad_disabled_ativos_maximo if 'match_type' not in x)
+    match_por_userid = sum(1 for x in ad_disabled_ativos_maximo if x.get('match_type') == 'USERID')
+    match_por_nome = sum(1 for x in ad_disabled_ativos_maximo if str(x.get('match_type', '')).startswith('NOME'))
+    print(f"   Por email exato: {match_por_email} | Por USERID: {match_por_userid} | Por nome (requer revisão manual): {match_por_nome}")
+
     # ============================================================
     # ANÁLISE 7: DIVERGÊNCIAS DE DOMÍNIO
     # ============================================================
@@ -511,7 +571,7 @@ def analyze_sanity():
                     'tipo': 'DOMINIO_DIVERGENTE',
                 })
     
-    print(f"📊 DIVERGÊNCIAS DE DOMÍNIO: {len(domain_divergences)}")
+    print(f"[DOMINIO] Divergencias de dominio: {len(domain_divergences)}")
     
     # ============================================================
     # MONTAR RESULTADO FINAL
@@ -559,34 +619,34 @@ def print_summary(result):
     """Imprime resumo da análise."""
     s = result['stats']
     print("\n" + "=" * 80)
-    print("RESUMO DA ANÁLISE DE SANEAMENTO DE IDENTIDADES")
+    print("RESUMO DA ANALISE DE SANEAMENTO DE IDENTIDADES")
     print("=" * 80)
-    print(f"\n📊 VISÃO GERAL:")
+    print(f"\n[METRICAS] VISAO GERAL:")
     print(f"   Total AD: {s['total_ad']}")
     print(f"   Total AD Desabilitados: {s['total_ad_disabled']}")
     print(f"   Total Maximo (identities): {s['total_maximo_identities']}")
-    print(f"   Total Maximo (USERIDs únicos): {s['total_maximo_userids']}")
+    print(f"   Total Maximo (USERIDs unicos): {s['total_maximo_userids']}")
     
-    print(f"\n✅ MATCH POR EMAIL:")
+    print(f"\n[OK] MATCH POR EMAIL:")
     print(f"   Match perfeito: {s['match_email']}")
     print(f"   Apenas no AD: {s['only_ad']}")
     print(f"   Apenas no Maximo: {s['only_maximo']}")
     
-    print(f"\n⚠️  DIVERGÊNCIAS:")
+    print(f"\n[ALERTA] DIVERGENCIAS:")
     print(f"   Nomes diferentes (mesmo email): {s['name_divergences']}")
-    print(f"   Múltiplos USERIDs (mesmo email): {s['multi_userid']}")
-    print(f"   Domínios divergentes: {s['domain_divergences']}")
+    print(f"   Multiplos USERIDs (mesmo email): {s['multi_userid']}")
+    print(f"   Dominios divergentes: {s['domain_divergences']}")
     
-    print(f"\n🔗 MATCH POR PREFIXO (USERID):")
+    print(f"\n[LINK] MATCH POR PREFIXO (USERID):")
     print(f"   Match encontrado: {s['prefix_match']}")
     print(f"   Sem match no Maximo: {s['no_match']}")
     
-    print(f"\n📋 MAXIMO SEM EMAIL:")
+    print(f"\n[INFO] MAXIMO SEM EMAIL:")
     print(f"   Com match no AD: {s['maximo_sem_email_match']}")
     print(f"   Sem match no AD: {s['maximo_sem_email_nomatch']}")
     
-    print(f"\n🚨 AUDITORIA - AD DESABILITADO + MAXIMO ATIVO:")
-    print(f"   Usuários desativados no AD mas ativos no Maximo: {s['ad_disabled_ativos_maximo']}")
+    print(f"\n[CRITICO] AUDITORIA - AD DESABILITADO + MAXIMO ATIVO:")
+    print(f"   Usuarios desativados no AD mas ativos no Maximo: {s['ad_disabled_ativos_maximo']}")
 
 
 if __name__ == '__main__':

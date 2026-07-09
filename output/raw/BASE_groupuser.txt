@@ -5060,5 +5060,7 @@ FetchAll:  Columns: 1
   10827               ,PAOLAOLIVEIRA,OOG_MOCDOC_EMISSOR
   10833               ,REBECAALBERNI,OOG_REQUISITANTET
   10832               ,REBECAALBERNI,OOG_MOCDOC_EMISSOR
-FetchAll: 5053 rows fetched.
+  10835               ,MATHEUSPONTE,OOG_REQUISITANTET
+  10834               ,MATHEUSPONTE,OOG_MOCDOC_EMISSOR
+FetchAll: 5055 rows fetched.
 > 

@@ -6,10 +6,15 @@ Runs all scripts in the correct order to extract, consolidate,
 classify identities, and generate the final risk reports.
 
 """
+import os
 import subprocess
 import sys
 from pathlib import Path
 import time
+
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 ROOT = Path(__file__).resolve().parent
 
@@ -127,9 +132,16 @@ def main():
         print(f"{'=' * 100}")
         
         step_start = time.time()
-        
+
+        # Força UTF-8 nos subprocessos: vários scripts imprimem emojis (🔄, ✅, ✓) que
+        # quebram com UnicodeEncodeError no console padrão do Windows (cp1252), abortando
+        # a etapa silenciosamente e deixando dados consolidados parciais/desatualizados.
+        step_env = os.environ.copy()
+        step_env['PYTHONUTF8'] = '1'
+        step_env['PYTHONIOENCODING'] = 'utf-8'
+
         try:
-            result = subprocess.run(step['cmd'], check=True, text=True, capture_output=False)
+            result = subprocess.run(step['cmd'], check=True, text=True, capture_output=False, env=step_env)
         except subprocess.CalledProcessError as e:
             print(f"\n{'✗' * 50}")
             print(f" ERRO CRÍTICO no passo: {step_name}")
@@ -166,11 +178,11 @@ def main():
     print(f"     • consolidated_user_identity.csv")
     print(f"     • consolidated_user_access_normalized.csv")
     print(f"     • consolidated_logintracking.csv (dados REAIS)")
-    print(f"     • usage_analysis_phase3.csv (com UserClassificationEngine)")
+    print(f"     • usage_analysis.csv (com UserClassificationEngine)")
     print(f"     • license_optimization_recommendations.csv (com LicenseOptimizer)")
     print(f"  📊 output/reports/")
-    print(f"     • maximo_identity_sanity_report.html (dashboard)")
-    print(f"     • maximo_identity_sanity_workbook.xlsx (excel)")
+    print(f"     • maximo_unified_dashboard.html (dashboard)")
+    print(f"     • maximo_risk_and_optimization_workbook.xlsx (excel)")
     
     print(f"\n[FEATURES SOLID APLICADAS]")
     print(f"  ✓ Strategy Pattern (ClassificationRule, OptimizationStrategy)")
@@ -182,10 +194,10 @@ def main():
     print(f"  ✓ Dependency Inversion Principle")
     
     print(f"\n[PROXIMOS PASSOS]")
-    print(f"  1. Revisar arquivo: output/consolidated/usage_analysis_phase3.csv")
+    print(f"  1. Revisar arquivo: output/consolidated/usage_analysis.csv")
     print(f"  2. Revisar arquivo: output/consolidated/license_optimization_recommendations.csv")
-    print(f"  3. Abrir dashboard em: output/reports/maximo_identity_sanity_report.html")
-    print(f"  4. Abrir workbook em: output/reports/maximo_identity_sanity_workbook.xlsx")
+    print(f"  3. Abrir dashboard em: output/reports/maximo_unified_dashboard.html")
+    print(f"  4. Abrir workbook em: output/reports/maximo_risk_and_optimization_workbook.xlsx")
     
     print(f"\n[PROXIMA EXECUCAO RAPIDA]")
     print(f"  $ python run_pipeline.py --skip-extract")

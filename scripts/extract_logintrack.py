@@ -9,6 +9,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = ROOT / "scripts"
 
@@ -34,8 +38,8 @@ def main():
         print("\n✅ LOGINTRACKING extraído com sucesso!")
         print("\n📋 Próximos passos:")
         print("   1. Execute: python run_pipeline.py --skip-extract")
-        print("   2. Revise: output/consolidated/usage_analysis_phase3.csv")
-        print("   3. Abra: output/reports/maximo_identity_sanity_report.html")
+        print("   2. Revise: output/consolidated/usage_analysis.csv")
+        print("   3. Abra: output/reports/maximo_unified_dashboard.html")
         
     except subprocess.CalledProcessError as e:
         print(f"\n❌ ERRO na extração: código {e.returncode}")

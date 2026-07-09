@@ -1,17 +1,26 @@
 import numpy as np
-from .html_helpers import get_recommendation_badge
 from datetime import datetime
+
+from .html_helpers import get_recommendation_badge, get_identity_hypothesis_badge, get_login_conflict_badge
+
 
 def _parse_dt(s):
     if not s:
         return None
     text = str(s).strip()
-    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d-%H.%M.%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+    for fmt in (
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d %H:%M:%S.%f",
+        "%Y-%m-%d-%H.%M.%S",
+        "%Y-%m-%d %H:%M",
+        "%Y-%m-%d",
+    ):
         try:
             return datetime.strptime(text, fmt)
         except ValueError:
             continue
     return None
+
 
 class DataProcessor:
     def __init__(self, summary, governance, app_points, domains, identity_analytics):
@@ -21,49 +30,51 @@ class DataProcessor:
         self.domains = domains
         self.identity_analytics = identity_analytics
 
-    # ==========================================================
-    # CORE ANALYTICS
-    # ==========================================================
     def process_app_points_analytics(self):
         inativos_count = 0
         downgrade_count = 0
         concurrent_count = 0
 
-        scenarios_data = {
-            'asis': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0},
-            'saneado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0},
-            'otimizado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}
+        concurrency_summary = self.summary.get('concurrency', {}) or {}
+        scenario_points = {'p50': 0, 'p95': 0, 'p100': 0, 'blackout': 0}
+        scenario_points_by_scope = {
+            'foresea': {'p50': 0, 'p95': 0, 'p100': 0, 'blackout': 0},
+            'terceiros': {'p50': 0, 'p95': 0, 'p100': 0, 'blackout': 0},
+            'integracao': {'p50': 0, 'p95': 0, 'p100': 0, 'blackout': 0},
+            'todos': {'p50': 0, 'p95': 0, 'p100': 0, 'blackout': 0},
+        }
+        scenarios_by_scope = {
+            'foresea': {'asis': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}, 'saneado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}, 'otimizado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}},
+            'terceiros': {'asis': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}, 'saneado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}, 'otimizado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}},
+            'integracao': {'asis': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}, 'saneado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}, 'otimizado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}},
+            'todos': {'asis': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}, 'saneado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}, 'otimizado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}},
         }
 
-        opt_total_points = 0
+        for u in self.app_points:
+            domain_cat = str(u.get('DOMAIN_CATEGORY', '')).strip().upper()
+            if domain_cat in ('FORESEA', 'PARCEIRO'):
+                scope_key = 'foresea'
+            elif domain_cat == 'INTEGRACAO':
+                scope_key = 'integracao'
+            elif domain_cat and domain_cat != 'SEM DOMINIO':
+                scope_key = 'terceiros'
+            else:
+                continue
 
-        # Cenários físicos (As-Is e Saneado) + otimizado físico (apenas contagem para UI)
-        # Filtra apenas usuários FORESEA + PARCEIRO (escopo de licenciamento)
-        foresea_parceiro_users = [
-            u for u in self.app_points 
-            if u.get('DOMAIN_CATEGORY', '') in ('FORESEA', 'PARCEIRO')
-        ]
-        
-        for u in foresea_parceiro_users:
-            lic = u.get('LICENSE_MODEL', 'CONCURRENT')
-            ent = u.get('ENTITLEMENT', 'BASE')
-            rec = u.get('OPTIMIZATION_REC', 'OK')
-            app_pts = float(u.get('APP_POINTS', 0) or 0)
-
+            lic = str(u.get('LICENSE_MODEL', 'CONCURRENT') or '').strip().upper()
+            ent = str(u.get('ENTITLEMENT', 'BASE') or '').strip().upper()
+            rec = str(u.get('OPTIMIZATION_REC', 'OK') or '').strip().upper()
             is_prem = (ent == 'PREMIUM')
             is_auth = (lic == 'AUTHORIZED')
 
-            # AS-IS (inclui todos do escopo)
             if is_prem:
-                scenarios_data['asis']['pA' if is_auth else 'pC'] += 1
+                scenarios_by_scope[scope_key]['asis']['pA' if is_auth else 'pC'] += 1
             else:
-                scenarios_data['asis']['bA' if is_auth else 'bC'] += 1
+                scenarios_by_scope[scope_key]['asis']['bA' if is_auth else 'bC'] += 1
 
-            opt_total_points += app_pts
-
-            # Inativos não entram nas próximas camadas
-            if rec == 'INATIVO (>90d)':
+            if rec.startswith('INATIVO'):
                 inativos_count += 1
+                # Inativo sai do saneado/otimizado, mas continua no As-Is.
                 continue
 
             if rec == 'DOWNGRADE_CANDIDATE':
@@ -71,148 +82,119 @@ class DataProcessor:
             if rec == 'MOVE_TO_CONCURRENT':
                 concurrent_count += 1
 
-            # Saneado (sem inativos)
-            if is_prem:
-                scenarios_data['saneado']['pA' if is_auth else 'pC'] += 1
-            else:
-                scenarios_data['saneado']['bA' if is_auth else 'bC'] += 1
-
-            # Otimizado físico (após recomendações)
-            final_ent = 'BASE' if (rec == 'DOWNGRADE_CANDIDATE' and ent == 'PREMIUM') else ent
-            final_lic = 'CONCURRENT' if rec == 'MOVE_TO_CONCURRENT' else lic
-
-            f_is_prem = (final_ent == 'PREMIUM')
-            f_is_auth = (final_lic == 'AUTHORIZED')
-
-            if f_is_prem:
-                scenarios_data['otimizado']['pA' if f_is_auth else 'pC'] += 1
-            else:
-                scenarios_data['otimizado']['bA' if f_is_auth else 'bC'] += 1
-
-        # ------------------------------------------------------
-        # NEM REAL (única fonte oficial para cenários fatorados)
-        # ------------------------------------------------------
-        concurrency_summary = self.summary.get('concurrency', {}) or {}
-        scenario_points = {'p50': 0, 'p95': 0, 'p100': 0, 'blackout': 0}
-
-        hourly_nem_raw = concurrency_summary.get('hourly_app_points_nem', {}) or {}
-        hourly_nem = {}
-        if hourly_nem_raw:
-            for date_str, value in hourly_nem_raw.items():
-                dt = _parse_dt(date_str)
-                if dt:
-                    hourly_nem[dt.strftime("%Y-%m-%d %H:00")] = value
-
-        if hourly_nem:
-            values = list(hourly_nem.values())
-            if values:
-                scenario_points['p50'] = int(np.percentile(values, 50))
-                scenario_points['p95'] = int(np.percentile(values, 95))
-                scenario_points['p100'] = int(max(values))
-                scenario_points['blackout'] = int(max(values))
-
-        # REFACTORED: Segregar dados por escopo para filtros funcionarem
-        # Calcula cenários para cada escopo: FORESEA+PARCEIRO, TERCEIROS, INTEGRACAO, TODOS
-        scenarios_by_scope = {
-            'foresea': {'asis': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}, 
-                       'saneado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0},
-                       'otimizado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}},
-            'terceiros': {'asis': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0},
-                         'saneado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0},
-                         'otimizado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}},
-            'integracao': {'asis': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0},
-                          'saneado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0},
-                          'otimizado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}},
-            'todos': {'asis': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0},
-                     'saneado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0},
-                     'otimizado': {'pA': 0, 'pC': 0, 'bA': 0, 'bC': 0}}
-        }
-        
-        # Reprocessar todos os usuários com segregação por escopo
-        for u in self.app_points:
-            domain_cat = u.get('DOMAIN_CATEGORY', '')
-            is_foresea = domain_cat in ('FORESEA', 'PARCEIRO')
-            is_integracao = domain_cat == 'INTEGRACAO'
-            is_terceiro = domain_cat not in ('FORESEA', 'PARCEIRO', 'INTEGRACAO', 'SEM DOMINIO')
-            
-            if is_foresea:
-                scope_key = 'foresea'
-            elif is_integracao:
-                scope_key = 'integracao'
-            elif is_terceiro:
-                scope_key = 'terceiros'
-            else:
-                continue  # Ignora SEM DOMINIO para cálculos de cenários
-            
-            lic = u.get('LICENSE_MODEL', 'CONCURRENT')
-            ent = u.get('ENTITLEMENT', 'BASE')
-            rec = u.get('OPTIMIZATION_REC', 'OK')
-            
-            is_prem = (ent == 'PREMIUM')
-            is_auth = (lic == 'AUTHORIZED')
-            
-            # AS-IS para este escopo
-            if is_prem:
-                scenarios_by_scope[scope_key]['asis']['pA' if is_auth else 'pC'] += 1
-            else:
-                scenarios_by_scope[scope_key]['asis']['bA' if is_auth else 'bC'] += 1
-            
-            # Inativo não entra nas próximas camadas
-            if rec == 'INATIVO (>90d)':
-                continue
-            
-            # SANEADO para este escopo
             if is_prem:
                 scenarios_by_scope[scope_key]['saneado']['pA' if is_auth else 'pC'] += 1
             else:
                 scenarios_by_scope[scope_key]['saneado']['bA' if is_auth else 'bC'] += 1
-            
-            # OTIMIZADO para este escopo
+
             final_ent = 'BASE' if (rec == 'DOWNGRADE_CANDIDATE' and ent == 'PREMIUM') else ent
             final_lic = 'CONCURRENT' if rec == 'MOVE_TO_CONCURRENT' else lic
             f_is_prem = (final_ent == 'PREMIUM')
             f_is_auth = (final_lic == 'AUTHORIZED')
-            
+
             if f_is_prem:
                 scenarios_by_scope[scope_key]['otimizado']['pA' if f_is_auth else 'pC'] += 1
             else:
                 scenarios_by_scope[scope_key]['otimizado']['bA' if f_is_auth else 'bC'] += 1
-        
-        # Calcular cenário TODOS (soma de foresea + terceiros + integracao)
-        for scenario in ['asis', 'saneado', 'otimizado']:
-            for key in ['pA', 'pC', 'bA', 'bC']:
-                scenarios_by_scope['todos'][scenario][key] = (
-                    scenarios_by_scope['foresea'][scenario][key] + 
-                    scenarios_by_scope['terceiros'][scenario][key] +
-                    scenarios_by_scope['integracao'][scenario][key]
-                )
-        
-        # Manter scenarios_data original para compatibilidade (escopo FORESEA+PARCEIRO)
-        scenarios_data = scenarios_by_scope['foresea']
 
-        # ------------------------------------------------------
-        # Aba 1 alinhada ao Excel (summary_data)
-        # ------------------------------------------------------
+        for scenario in ('asis', 'saneado', 'otimizado'):
+            for key in ('pA', 'pC', 'bA', 'bC'):
+                scenarios_by_scope['todos'][scenario][key] = (
+                    scenarios_by_scope['foresea'][scenario][key]
+                    + scenarios_by_scope['terceiros'][scenario][key]
+                    + scenarios_by_scope['integracao'][scenario][key]
+                )
+
+        hourly_nem_raw = concurrency_summary.get('hourly_app_points_nem', {}) or {}
+        hourly_nem = {}
+        for date_str, value in hourly_nem_raw.items():
+            dt = _parse_dt(date_str)
+            if dt:
+                hourly_nem[dt.strftime('%Y-%m-%d %H:00')] = value
+
+        if hourly_nem:
+            values = list(hourly_nem.values())
+            scenario_points = {
+                'p50': int(np.percentile(values, 50)),
+                'p95': int(np.percentile(values, 95)),
+                'p100': int(max(values)),
+                'blackout': int(max(values)),
+            }
+
+        hourly_nem_by_scope_raw = concurrency_summary.get('hourly_app_points_nem_by_scope', {}) or {}
+        for scope_key, scope_series in hourly_nem_by_scope_raw.items():
+            normalized_series = {}
+            for date_str, value in (scope_series or {}).items():
+                dt = _parse_dt(date_str)
+                if dt:
+                    normalized_series[dt.strftime('%Y-%m-%d %H:00')] = value
+            values = list(normalized_series.values())
+            if values:
+                scenario_points_by_scope[scope_key] = {
+                    'p50': int(np.percentile(values, 50)),
+                    'p95': int(np.percentile(values, 95)),
+                    'p100': int(max(values)),
+                    'blackout': int(max(values)),
+                }
+
+                scenario_points_by_scope['todos'] = dict(scenario_points)
+
+        # Fallback defensivo: se um escopo não tiver série NEM própria, mantém ao menos
+        # a composição física corretamente preenchida para a Aba 3.
+        for scope_key in ('foresea', 'terceiros', 'integracao', 'todos'):
+            if scenario_points_by_scope[scope_key] == {'p50': 0, 'p95': 0, 'p100': 0, 'blackout': 0}:
+                otimizado = scenarios_by_scope[scope_key]['otimizado']
+                total_fisico_otimizado = (
+                    (otimizado['pA'] * 5)
+                    + (otimizado['pC'] * 15)
+                    + (otimizado['bA'] * 3)
+                    + (otimizado['bC'] * 10)
+                )
+                scenario_points_by_scope[scope_key] = {
+                    'p50': total_fisico_otimizado,
+                    'p95': total_fisico_otimizado,
+                    'p100': total_fisico_otimizado,
+                    'blackout': total_fisico_otimizado,
+                }
+
+        scenarios_data = scenarios_by_scope['todos']
+
+
         app_points_summary = self.summary.get('app_points_summary', {}) or {}
         contracted = self.summary.get('ceiling_limit', 1200)
         true_peak = concurrency_summary.get('true_total_app_points', 0)
         p95 = scenario_points['p95']
 
-        # Domain counts from identity_analytics
-        domain_counts = self.identity_analytics.get('domain_counts', {})
-        
+        authorized = len(app_points_summary.get('auth_users', []))
+        concurrent_lic = len(app_points_summary.get('conc_users', []))
+        premium = len(app_points_summary.get('premium_users', []))
+
+        domain_counts = self.identity_analytics.get('domain_counts', {}) or {}
+        if not domain_counts or not any(k in domain_counts for k in ('foresea', 'foresea_partner', 'other', 'no_domain')):
+            domain_counts = {'foresea': 0, 'foresea_partner': 0, 'other': 0, 'no_domain': 0}
+            identities = self.summary.get('identities', []) or []
+            for ident in identities:
+                email = str(ident.get('PRIMARYEMAIL', '')).lower()
+                if '@foresea.com' in email:
+                    domain_counts['foresea'] += 1
+                elif '@foresea-partner.com' in email:
+                    domain_counts['foresea_partner'] += 1
+                elif '@' in email:
+                    domain_counts['other'] += 1
+                else:
+                    domain_counts['no_domain'] += 1
+
         painel_data = {
             'usuarios_ativos': self.summary.get('active_profiles_count', 0),
             'usuarios_plano': len(self.app_points),
-            'authorized': len(app_points_summary.get('auth_users', [])),
-            'concurrent': len(app_points_summary.get('conc_users', [])),
-            'premium': len(app_points_summary.get('premium_users', [])),
+            'authorized': authorized,
+            'concurrent': concurrent_lic,
+            'premium': premium,
             'true_peak': true_peak,
             'p95': p95,
             'contratado': contracted,
             'folga': contracted - p95,
             'percentual_uso': round((p95 / contracted) * 100, 1) if contracted else 0,
-            # Domain breakdown
             'dominio_foresea': domain_counts.get('foresea', 0),
             'dominio_parceiro': domain_counts.get('foresea_partner', 0),
             'dominio_terceiro': domain_counts.get('other', 0),
@@ -224,10 +206,9 @@ class DataProcessor:
             'downgrade_count': downgrade_count,
             'concurrent_count': concurrent_count,
             'scenarios_data': scenarios_data,
-            'scenarios_by_scope': scenarios_by_scope,  # NOVO: dados segregados por escopo
+            'scenarios_by_scope': scenarios_by_scope,
             'scenario_points': scenario_points,
-
-            # NEM real / picos
+            'scenario_points_by_scope': scenario_points_by_scope,
             'concurrency_peak_count': true_peak,
             'concurrency_peak_hours': concurrency_summary.get('peak_hours', []),
             'concurrency_peak_users_hours': concurrency_summary.get('peak_hours_users', []),
@@ -237,27 +218,29 @@ class DataProcessor:
             'concurrency_hourly_app_points': concurrency_summary.get('hourly_app_points', {}),
             'concurrency_hourly_concurrent_app_points': concurrency_summary.get('hourly_concurrent_app_points', {}),
             'concurrency_hourly_app_points_nem': hourly_nem,
-
-            # Aba 1 executiva
             'painel_data': painel_data,
-
-            # Governança (mantém apenas agregados para gráficos/listas)
             'identity_status': self.identity_analytics.get('status_counts', {}),
             'identity_domains': self.identity_analytics.get('domain_counts', {}),
-
             'ceiling_limit': contracted,
         }
 
-    # ==========================================================
-    # GOVERNANÇA (Top Divergências, Cross-Env, LoginID, Worklist)
-    # ==========================================================
     def prepare_governance_tables(self):
+        # cross_env_userid_reuse.csv não tem sua própria conclusão de risco (só um
+        # REUSE_FLAG constante) — a classificação real (HYPOTHESIS) é calculada por
+        # USERID em identity_classification.py e vive em identity_collisions_enriched.csv.
+        # Usamos essa mesma classificação aqui para a coluna "Conclusão".
+        worklist_hypothesis_by_userid = {
+            w.get('USERID'): w.get('HYPOTHESIS')
+            for w in self.governance.get('worklist', [])
+            if w.get('USERID')
+        }
+
         cross_env_rows = [
             [
                 f" <strong>{c.get('USERID')} </strong>",
                 c.get('ENV_LIST'),
                 c.get('DISPLAYNAME_LIST'),
-                get_recommendation_badge(c.get('HYPOTHESIS', ''))
+                get_identity_hypothesis_badge(worklist_hypothesis_by_userid.get(c.get('USERID')))
             ]
             for c in self.governance.get('cross_env', [])[:200]
         ]
@@ -267,7 +250,7 @@ class DataProcessor:
                 f"<strong>{l.get('LOGINID')}</strong>",
                 l.get('USERID_LIST'),
                 l.get('DISPLAYNAME_LIST'),
-                get_recommendation_badge(l.get('MERGE_DECISION', ''))
+                get_login_conflict_badge(l.get('CONFLICT_HINT', ''))
             ]
             for l in self.governance.get('login_conflicts', [])[:200]
         ]
@@ -276,56 +259,46 @@ class DataProcessor:
             [
                 w.get('RAW_ID'),
                 w.get('DISPLAYNAME'),
-                w.get('HYPOTHESIS'),
+                get_identity_hypothesis_badge(w.get('HYPOTHESIS')),
                 w.get('MERGE_DECISION')
             ]
             for w in self.governance.get('worklist', [])[:200]
         ]
 
-        # Matriz de divergências (restaurada)
         title_divergence_html = []
         for div in self.governance.get('detailed_divergences', [])[:30]:
             title = div.get('title')
             data = div.get('data', {})
             alerts = []
 
-            # Divergência de TYPE
             all_types = {t for types in data.get('types', {}).values() for t in types if t}
             if len(all_types) > 1:
                 alerts.append('<span class="badge badge-critical">TYPE DIVERGENTE</span>')
 
-            # Divergência de GRUPOS
             base_groups = next(iter(data.get('groups', {}).values()), set())
             if any(s != base_groups for s in data.get('groups', {}).values()):
                 alerts.append('<span class="badge badge-high">GRUPOS DIVERGENTES</span>')
 
-            title_divergence_html.append(
-                f'<div class="type-card"><h4>{title} {" ".join(alerts)}</h4>'
-            )
+            title_divergence_html.append(f'<div class="type-card"><h4>{title} {" ".join(alerts)}</h4>')
 
-            # Detalhamento dos ambientes para TYPE
             if len(all_types) > 1:
-                title_divergence_html.append(
-                    '<div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div>'
-                )
+                title_divergence_html.append('<div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div>')
                 for env, types in sorted(data.get('types', {}).items()):
-                    title_divergence_html.append(
-                        f'<div>📍 {env}: {", ".join(sorted(t for t in types if t))}</div>'
-                    )
+                    title_divergence_html.append(f'<div>📍 {env}: {", ".join(sorted(t for t in types if t))}</div>')
                 title_divergence_html.append('</div>')
 
             title_divergence_html.append('</div>')
 
         return {
             'cross_env_rows': cross_env_rows,
+            'cross_env_total': len(self.governance.get('cross_env', [])),
             'login_conflicts_rows': login_conflicts_rows,
+            'login_conflicts_total': len(self.governance.get('login_conflicts', [])),
             'worklist_rows': worklist_rows,
-            'title_divergence_html': "".join(title_divergence_html)
+            'worklist_total': len(self.governance.get('worklist', [])),
+            'title_divergence_html': ''.join(title_divergence_html)
         }
 
-    # ==========================================================
-    # TABELA DE AÇÕES (Plano de Ação)
-    # ==========================================================
     def prepare_app_points_rows(self):
         app_points_rows = []
 
@@ -335,27 +308,25 @@ class DataProcessor:
             current_license = s.get('LICENSE_MODEL', 'CONCURRENT')
             current_entitlement = s.get('ENTITLEMENT', 'BASE')
 
-            # Determina a licença To-Be baseada na recomendação
             if rec_code == 'MOVE_TO_CONCURRENT':
                 license_to_be = 'CONCURRENT'
-                recommendation_text = "Migrar para Concurrent (baixo uso)."
+                recommendation_text = 'Migrar para Concurrent (baixo uso).'
             elif rec_code == 'CONFIRMED_AUTHORIZED':
                 license_to_be = 'AUTHORIZED'
-                recommendation_text = "Manter Authorized (uso crítico)."
+                recommendation_text = 'Manter Authorized (uso crítico).'
             elif rec_code == 'DOWNGRADE_CANDIDATE':
                 license_to_be = 'CONCURRENT'
-                recommendation_text = "Downgrade de Premium para Base."
+                recommendation_text = 'Downgrade de Premium para Base.'
             elif rec_code == 'INATIVO (>90d)':
                 license_to_be = 'CONCURRENT'
-                recommendation_text = "Usuário inativo. Considerar remoção."
+                recommendation_text = 'Usuário inativo. Considerar remoção.'
             elif rec_code == 'REQUER_REVISAO':
                 license_to_be = 'CONCURRENT'
-                recommendation_text = "Requer revisão manual."
-            else:  # OK
+                recommendation_text = 'Requer revisão manual.'
+            else:
                 license_to_be = current_license
-                recommendation_text = "Licença atual adequada ao perfil de uso."
+                recommendation_text = 'Licença atual adequada ao perfil de uso.'
 
-            # Badge + descrição
             recommendation_badge_html = get_recommendation_badge(rec_code)
             full_recommendation_html = f"{recommendation_badge_html}<br><small>{recommendation_text}</small>"
 
@@ -367,9 +338,9 @@ class DataProcessor:
                 str(displayname)[:30],
                 full_recommendation_html,
                 current_entitlement,
-                license_to_be,  # Licença To-Be (corrigida)
+                license_to_be,
                 f"{points:,.0f}",
-                f"{points:,.0f}",  # Fator Analytics
+                f"{points:,.0f}",
                 s.get('LOGIN_COUNT_90D', 0),
                 s.get('LOCATION_SITE', 'N/A'),
                 s.get('TITLES', '')
@@ -377,9 +348,6 @@ class DataProcessor:
 
         return app_points_rows
 
-    # ==========================================================
-    # ORQUESTRADOR
-    # ==========================================================
     def get_all_data(self):
         analytics = self.process_app_points_analytics()
         gov_tables = self.prepare_governance_tables()

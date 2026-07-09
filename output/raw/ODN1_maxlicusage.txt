@@ -3380,7 +3380,7 @@ FetchAll:  Columns: 5
   MAXREG, OCY_EXPRESSCUR, 0, 0, 0
   GEORGEMEDEIROS, -, 0, 1, 1
   RENATOGRIBEIRO, -, 0, 1, 0
-  DAVIDSILVEIRA, -, 0, 1, 1
+  DAVIDSILVEIRA, -, 0, 1, 0
   JOAOGRIPP, -, 0, 1, 1
   ITEAM, -, 0, 1, 0
   ALLANSANTOS, -, 0, 1, 0
@@ -3390,14 +3390,14 @@ FetchAll:  Columns: 5
   JOSEFERNANDO, -, 0, 1, 0
   THIAGOFRIGHETTO, -, 0, 1, 1
   MAXREG, OCY_EXPRESSCUR, 0, 0, 0
-  AMARORANGEL, -, 0, 1, 1
+  AMARORANGEL, -, 0, 1, 0
   RAPHAELBRUNEZO, -, 0, 1, 0
   ROBSONMENDES, -, 0, 1, 1
   IRINEUSOUZA, -, 0, 1, 0
   SILVIOPEREIRA, -, 0, 1, 1
   WANDERDOSSANTOS, -, 0, 1, 1
   RICARDOAUGUSTODASILVA, -, 0, 1, 1
-  LUCASMACEDO, -, 0, 1, 1
+  LUCASMACEDO, -, 0, 1, 0
   WALDIRNETO, -, 0, 1, 1
   JOAOGODIM, -, 0, 1, 1
   BRUNOCRAMOS, -, 0, 1, 0
@@ -3405,7 +3405,7 @@ FetchAll:  Columns: 5
   ITEAM, -, 0, 1, 0
   MARCOGABRIEL, -, 0, 1, 1
   JOAOGUILHERME, -, 0, 1, 1
-  ALEXANDREROCHA, -, 0, 1, 1
+  ALEXANDREROCHA, -, 0, 1, 0
   D.SANTOS, -, 0, 1, 1
   IVANJUNIOR, -, 0, 1, 1
   RENATODUTRA, -, 0, 1, 1
@@ -3548,7 +3548,8 @@ FetchAll:  Columns: 5
   CARLOSCANOS, -, 0, 1, 1
   FABIANOVIRGILIO, -, 0, 1, 1
   EMANUELCOSTA, -, 0, 1, 1
-  ITEAM, -, 0, 1, 1
+  ITEAM, -, 0, 1, 0
   JOSEABREU, -, 0, 1, 1
-FetchAll: 3543 rows fetched.
+  MARCOVICENTE, -, 0, 1, 1
+FetchAll: 3544 rows fetched.
 > 

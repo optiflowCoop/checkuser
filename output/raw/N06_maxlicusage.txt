@@ -3073,6 +3073,6 @@ FetchAll:  Columns: 5
   JMACIEL, -, 0, 1, 1
   PASSOSEDEGILDO, -, 0, 1, 1
   ITEAM, -, 0, 1, 1
-  GREGORYMATOS, -, 0, 1, 1
+  GREGORYMATOS, -, 0, 1, 0
 FetchAll: 3067 rows fetched.
 > 

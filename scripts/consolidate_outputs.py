@@ -26,10 +26,20 @@ def parse_db2cli_output(path: Path, query: str):
     
     if query in HEADERS_MAP:
         header = HEADERS_MAP[query]
+        # Pular linhas de cabeçalho (copyright, query, metadados)
+        data_started = False
         for line in lines:
-            if 'CSV_ROW' in line or line.startswith('-') or 'record(s) selected' in line or not line.strip():
+            # Pular linhas até encontrar o header CSV_ROW
+            if not data_started:
+                if 'CSV_ROW' in line or 'Columns:' in line:
+                    data_started = True
+                continue
+            
+            # Pular linhas de separação ou vazias
+            if line.startswith('-') or 'record(s) selected' in line or not line.strip():
                 continue
                 
+            # Processar dados
             if ',' in line:
                 parts = [p.strip() for p in line.split(',')]
                 if len(parts) > len(header):
@@ -135,7 +145,7 @@ def consolidate():
             if csv_path.exists():
                 csv_path.unlink()
             with csv_path.open('w', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
+                writer = csv.writer(f, delimiter=',')
                 writer.writerow(['ENVIRONMENT'] + header)
                 for row in all_rows:
                     writer.writerow(row)
@@ -144,7 +154,7 @@ def consolidate():
             from datetime import datetime
             alt_path = OUT_DIR / f'consolidated_{query}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
             with alt_path.open('w', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
+                writer = csv.writer(f, delimiter=',')
                 writer.writerow(['ENVIRONMENT'] + header)
                 for row in all_rows:
                     writer.writerow(row)
