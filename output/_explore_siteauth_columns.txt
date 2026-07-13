@@ -1,0 +1,16 @@
+IBM Db2 Interactive CLI Sample Program
+(C) COPYRIGHT International Business Machines Corp. 1993,1996
+All Rights Reserved
+Licensed Materials - Property of IBM
+US Government Users Restricted Rights - Use, duplication or
+disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+> SELECT COLNAME, TYPENAME, LENGTH FROM SYSCAT.COLUMNS WHERE TABSCHEMA='MAXIMO' AND TABNAME='SITEAUTH' ORDER BY COLNO;
+FetchAll:  Columns: 3
+  COLNAME TYPENAME LENGTH 
+  GROUPNAME, VARGRAPHIC, 36
+  SITEID, VARGRAPHIC, 10
+  ORGID, VARGRAPHIC, 8
+  SITEAUTHID, BIGINT, 8
+  ROWSTAMP, BIGINT, 8
+FetchAll: 5 rows fetched.
+> 

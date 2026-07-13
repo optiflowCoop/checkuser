@@ -12,6 +12,9 @@ HEADERS_MAP = {
     'email': ['PERSONID', 'EMAILADDRESS'],
     'maxuser': ['USERID', 'PERSONID', 'STATUS', 'TYPE', 'DEFSITE', 'LOGINID', 'MAXUSERID'],
     'groupuser': ['GROUPUSERID', 'USERID', 'GROUPNAME'],
+    'pr_sod_evidence': ['SITEID', 'PRNUM', 'DESCRIPTION', 'TOTALCOST', 'STATUS', 'REQUESTEDBY', 'PERSONID', 'DATA_SUBMISSAO', 'DATA_APROVACAO', 'ROTEADO_2A_INSTANCIA'],
+    'pr_self_approval': ['SITEID', 'PRNUM', 'DESCRIPTION', 'TOTALCOST', 'STATUS', 'SOLICITANTE_REAL', 'PERSONID_APROVOU', 'DATA_APROVACAO', 'ROTEADO_2A_INSTANCIA'],
+    'pr_po_same_approver': ['SITEID', 'PRNUM', 'DESCRIPTION', 'TOTALCOST', 'STATUS', 'PERSONID', 'DATA_APROVACAO_PR', 'DATA_CRIACAO_PO', 'PONUM_GERADA'],
     'persongroupview': [
         "personid", "status", "displayname", "firstname", "lastname", "department", "title", "employeetype", "jobcode", "supervisor", "birthdate", "lastevaldate", "nextevaldate", "hiredate", "terminationdate", "location", "locationsite", "locationorg", "shiptoaddress", "billtoaddress", "droppoint", "wfmailelection", "transemailelection", "delegate", "delegatefromdate", "delegatetodate", "pcardnum", "pcardtype", "pcardexpdate", "pcardverification", "addressline1", "addressline2", "addressline3", "city", "regiondistrict", "county", "stateprovince", "country", "postalcode", "vip", "statusdate", "acceptingwfmail", "wopriority", "loctoservreq", "personuid", "langcode", "sendersysid", "sourcesysid", "ownersysid", "externalrefid", "language", "locale", "timezone", "hasld", "rowstamp", "resppartygroup", "respparty", "resppartygroupseq", "resppartyseq", "usefororg", "useforsite", "groupdefault", "orgdefault", "sitedefault", "persongroupteamid", "persongroup"
     ]
@@ -117,18 +120,33 @@ def consolidate():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     query_data = defaultdict(list)
     txt_files = sorted(IN_DIR.glob('*_*.txt'))
-    
+    failed_extractions = []
+
     for fpath in txt_files:
         if fpath.name.startswith('validate_'): continue
         parts = fpath.stem.split('_', 1)
         if len(parts) != 2: continue
         env, query = parts
-        
+
         header, rows = parse_db2cli_output(fpath, query)
+
+        # Extração que falhou (erro de conexão/SQL) deixa um .txt contendo o
+        # erro do driver em vez de dados — antes isso virava silenciosamente
+        # "0 linhas daquele ambiente" e ambientes inteiros sumiam das
+        # análises sem aviso (aconteceu com ODN2, subcontando a auditoria de
+        # SoD por semanas). Só marca como podre se NÃO houver dado nenhum:
+        # um arquivo com dados + aviso SQL não pode ser descartado.
+        if not rows:
+            raw_text = fpath.read_text(encoding='utf-8', errors='replace')
+            if 'SQL30081N' in raw_text or 'SQLError' in raw_text:
+                failed_extractions.append((env, query, fpath.name))
+                print(f"!! EXTRACAO PODRE {fpath.name}: erro DB2 sem dados — 0 linhas para {env}/{query}")
+                continue
+
         if not header:
             print(f"SKIP {fpath.name}: no header found")
             continue
-        
+
         query_data[query].append((env, header, rows))
         print(f"PARSED {fpath.name}: {len(rows)} rows")
     
@@ -159,6 +177,14 @@ def consolidate():
                 for row in all_rows:
                     writer.writerow(row)
             print(f"WROTE {alt_path.name}: {len(all_rows)} rows (arquivo original estava aberto)")
+
+    if failed_extractions:
+        print("\n" + "!" * 80)
+        print(f"ATENCAO: {len(failed_extractions)} extracao(oes) com ERRO DE CONEXAO — dados desses")
+        print("ambientes/queries estao FALTANDO nos consolidados. Reprocesse com:")
+        for env, query, fname in failed_extractions:
+            print(f"  python scripts/run_db2cli_queries.py --only-env {env} --only-query {query}   # {fname}")
+        print("!" * 80)
 
 if __name__ == '__main__':
     consolidate()

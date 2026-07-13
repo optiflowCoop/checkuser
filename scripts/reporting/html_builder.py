@@ -2,11 +2,11 @@
 from .html_data_processor import DataProcessor
 from .html_template import render_html
 
-def build_html_structure(summary, governance, app_points, domains, identity_analytics, ad_users=None, maximo_users=None, sanity_data=None, migration_data=None, allocation_data=None):
+def build_html_structure(summary, governance, app_points, domains, identity_analytics, ad_users=None, maximo_users=None, sanity_data=None, migration_data=None, allocation_data=None, security_audit_data=None, group_baseline_data=None, role_standardization_data=None, reconciliation_data=None):
     """
     Orchestrates the data processing and HTML rendering.
     """
-    processor = DataProcessor(summary, governance, app_points, domains, identity_analytics)
+    processor = DataProcessor(summary, governance, app_points, domains, identity_analytics, reconciliation_data=reconciliation_data)
     processed_data = processor.get_all_data()
     # Injeta dados de AD e Maximo para a Aba 7
     processed_data['ad_users'] = ad_users or []
@@ -17,4 +17,12 @@ def build_html_structure(summary, governance, app_points, domains, identity_anal
     processed_data['migration_data'] = migration_data
     # Injeta dados de allocation analysis (Maximo 9)
     processed_data['allocation_data'] = allocation_data
+    # Injeta dados da auditoria de segregação de funções (Emissor x Aprovador)
+    processed_data['security_audit_data'] = security_audit_data
+    # Injeta dados do perfil de acesso por cargo (baseline de grupos x desvios)
+    processed_data['group_baseline_data'] = group_baseline_data
+    # Injeta dados de padronização de acesso (cargo x grupo padrão único)
+    processed_data['role_standardization_data'] = role_standardization_data
+    # Injeta o cenário conciliado de licenciamento (dimensionamento oficial MAS 9)
+    processed_data['reconciliation_data'] = reconciliation_data
     return render_html(processed_data)

@@ -13,7 +13,7 @@ FetchAll:  Columns: 1
   KAIANBERNARDINO,KAIAN,BERNARDINO DE OLIVEIRA FERREIRA,KAIAN BERNARDINO DE OLIVEIRA FERREIRA
   LUISAUGUSTO,LUIS,AUGUSTO ALMEIDA DIAS,Luis Augusto Almeida Dias
   MARCELOGALLO,MARCELO,DE ARAUJO GALLO,MARCELO DE ARAUJO GALLO
-  TIAGOCANCADO,Tiago,Ribeiro canÁado,Tiago Ribeiro canÁado
+  TIAGOCANCADO,Tiago,Ribeiro can√ßado,Tiago Ribeiro can√ßado
   CAIOQUITETE,CAIO,QUITETE CARVALHO,CAIO QUITETE CARVALHO
   AGILDOAVELINO,AGILDO,SA BARRETO AVELINO,AGILDO SA BARRETO AVELINO
   FABIOBARCELOS,FABIO,FARIAS BARCELOS,FABIO FARIAS BARCELOS
@@ -30,7 +30,7 @@ FetchAll:  Columns: 1
   ARTHURJORGE,ARTHUR JORGE,BEZERRA DE FREITAS,ARTHUR JORGE BEZERRA DE FREITAS
   EDILSONMARTINS,Edilson,Martins,Edilson Martins
   ISRAELCAIO,ISRAEL CAIO,DA PENHA FREIRE,ISRAEL CAIO DA PENHA FREIRE
-  JOSECAROLINO,JosÈ,Carolino,JosÈ Carolino
+  JOSECAROLINO,Jos√©,Carolino,Jos√© Carolino
   GERALDOCABECEIRAS,GERALDO HENRIQUE,DE VIVEIROS CABECEIRAS,GERALDO HENRIQUE DE VIVEIROS CABECEIRAS
   LEONIDASOLIVEIRA,Leonidas,Oliveira,Leonidas Oliveira
   CARLAMALAFAIA,CARLA,CARDOSO MALAFAIA,CARLA CARDOSO MALAFAIA
@@ -71,7 +71,7 @@ FetchAll:  Columns: 1
   KYLLENHOWARD,Kyllen,Haven Howard,Kyllen Haven Howard
   ILIDIOLOBO,Ilidio,Lobo,Ilidio Lobo
   COSMECORREIA,COSME,LUIZ RAMOS CORREA,COSME LUIZ RAMOS CORREA
-  FRANCISCOBRAGA,Francisco,Antonio† Braga,Francisco Antonio† Braga
+  FRANCISCOBRAGA,Francisco,Antonio¬† Braga,Francisco Antonio¬† Braga
   JAIROSANTOS,Jairo,dos Santos,Jairo dos Santos
   GABRIELARCURI,GABRIEL,FROEDER ARCURI,GABRIEL FROEDER ARCURI
   JOSERALMEIDA,Jose,Rafael de Almeida,Jose Rafael de Almeida
@@ -136,13 +136,13 @@ FetchAll:  Columns: 1
   ROBERTTHOMSON,ROBERT,JAMES JOHN THOMSON,ROBERT JAMES JOHN THOMSON
   SUDEEPJADHAV,Sudeep,Jadhav,Sudeep Jadhav
   ANDREMENESES,Andre,Meneses,Andre Meneses
-  KELIOCESAR,KÈlio,Cesar,KÈlio Cesar
+  KELIOCESAR,K√©lio,Cesar,K√©lio Cesar
   JOSEMAURICIO,Jose,Mauricio,Jose Mauricio
   TIAGOSANTOS,Tiago,Santos,Tiago Santos
   THOMASZSADZA,TOMASZ,SADZA,TOMASZ SADZA
   TIBERIUGEORGESCU,Tiberiu,Georgescu,Tiberiu Georgescu
   ALEKSANDERMADRAK,ALEKSANDER,MARCIN MADRAK,ALEKSANDER MARCIN MADRAK
-  ALFREDOANGULO,Alfredo,¬ngulo,Alfredo ¬ngulo
+  ALFREDOANGULO,Alfredo,√Çngulo,Alfredo √Çngulo
   FIELDSUPPORT,,,Field Support
   ASSETMANAGER,,,Asset Manager
   ODN1ASSISTANTRIGMANAGER,,,ODN1 Assistant Rig Manager
@@ -179,7 +179,7 @@ FetchAll:  Columns: 1
   ROBERTOFERREIRA,Roberto,Ferreira,Roberto Ferreira
   TIAGOPINHEIRO,TIAGO,PINHEIRO TEIXEIRA,TIAGO PINHEIRO TEIXEIRA
   CARLOSEDUARDO,Carlos,Eduardo Souza dos Santos,Carlos Eduardo Souza dos Santos
-  SOCRATESOLIVEIRA,SÛcrates,Oliveira,SÛcrates Oliveira
+  SOCRATESOLIVEIRA,S√≥crates,Oliveira,S√≥crates Oliveira
   DANIELFONSECA,DANIEL THOMAZ,CARVALHO FONSECA FILHO,DANIEL THOMAZ CARVALHO FONSECA FILHO
   MARCOSLEONARDO,Marcos,Leonardo,Marcos Leonardo
   IGORHARBS,IGOR,SERGIO HARBS,IGOR SERGIO HARBS
@@ -200,7 +200,7 @@ FetchAll:  Columns: 1
   EDERFERNANDES,Eder,Fernandes,Eder Fernandes
   GLAUCIOPUPPIN,Glaucio,Puppin,Glaucio Puppin
   JEREMIASPAULO,JEREMIAS,BARCELOS PAULO,JEREMIAS BARCELOS PAULO
-  JOSEPAULO,JosÈ,Paulo,JosÈ Paulo
+  JOSEPAULO,Jos√©,Paulo,Jos√© Paulo
   LEANDROSILVA,LEANDRO,LEMOS SILVA,LEANDRO LEMOS SILVA
   LUIZAUGUSTO,Luiz,Augusto,Luiz Augusto
   SINIBALDOFILHO,Sinibaldo,Filho,Sinibaldo Filho
@@ -357,7 +357,7 @@ FetchAll:  Columns: 1
   ELENIZESEMTCHUK,Elenize,Semtchuk,Elenize Semtchuk
   LIVIANUNES,Livia,Nunes,Livia Nunes
   MAGNOSILVA,MAGNO,GOMES SILVA,MAGNO GOMES SILVA
-  MARCOAURELIOPINTO,Marco AurÈlio,Pinto,Marco AurÈlio Pinto
+  MARCOAURELIOPINTO,Marco Aur√©lio,Pinto,Marco Aur√©lio Pinto
   VEDRAN,,,
   BURGHARDT,alvaro,burghardt,alvaro burghardt
   WESLLEYSILVA,WESLLEY,DA SILVA OLIVEIRA,WESLLEY DA SILVA OLIVEIRA
@@ -455,7 +455,7 @@ FetchAll:  Columns: 1
   ANDRESANTOS,ANDRE,MARINHO RODRIGUES DOS SANTOS,ANDRE MARINHO RODRIGUES DOS SANTOS
   EDIVALDOJUNIOR,Edivaldo,Junior,Edivaldo Junior
   HUMBERTOCARVALHO,Humberto,Carvalho,Humberto Carvalho
-  ROMERICOARAUJO,RomÈrico,BasÌlio de Ara˙jo,RomÈrico BasÌlio de Ara˙jo
+  ROMERICOARAUJO,Rom√©rico,Bas√≠lio de Ara√∫jo,Rom√©rico Bas√≠lio de Ara√∫jo
   EDUARDONETO,EDUARDO,JOSE NETO,EDUARDO JOSE NETO
   JORISVANTLAND,Joris,van 't Land,Joris van 't Land
   CIDCOSTA,CID,AUGUSTO DE CASTRO COSTA,CID AUGUSTO DE CASTRO COSTA
@@ -468,7 +468,7 @@ FetchAll:  Columns: 1
   NIKOLADASOVIC,NIKOLA,DASOVIC,NIKOLA DASOVIC
   PATRICKDOMINGUES,Patrick,Domingues,Patrick Domingues
   MARCELORODRIGUES,Marcelo,Rodrigues Silva,Marcelo Rodrigues Silva
-  LARAUJO,Leonardo,Ara˙jo,Leonardo Ara˙jo
+  LARAUJO,Leonardo,Ara√∫jo,Leonardo Ara√∫jo
   RACRUZ,Rafael,Cruz,Rafael Cruz
   ADELMELLOUK,Adel,Mellouk,Adel Mellouk
   ROBERTMATECKI,ROBERT,MAREK MATECKI,ROBERT MAREK MATECKI
@@ -573,7 +573,7 @@ FetchAll:  Columns: 1
   ANDERSONARAUJO,ANDERSON,DAS NEVES ARAUJO,ANDERSON DAS NEVES ARAUJO
   EDUARDOSANTOS,EDUARDO,DE SOUZA SANTOS,EDUARDO DE SOUZA SANTOS
   ANDRELUISROSA,,,
-  ROGERIOCARDOSO,RogÈrio,Ramos Cardoso,RogÈrio Ramos Cardoso
+  ROGERIOCARDOSO,Rog√©rio,Ramos Cardoso,Rog√©rio Ramos Cardoso
   TADMORFREITAS,Tadmor,Freitas,Tadmor Freitas
   RENANCARVALHO,RENAN,CAMPOS DE CARVALHO,RENAN CAMPOS DE CARVALHO
   GABRIELALINO,Gabriela,da Costa Lino,Gabriela da Costa Lino de Souza
@@ -623,7 +623,7 @@ FetchAll:  Columns: 1
   PAULOCRAVO,Paulo,Martins Cravo,Paulo Martins Cravo
   LECIANOSILVA,Leciano,Vieira da Silva,Leciano Vieira da Silva
   THOMASSCHLINGENSIEPEN,Thomas Erich,M. da C. Schlingensiepen,Thomas Erich M. da C. Schlingensiepen
-  MARCOSGUIMARAES,Marcos Leonardo,Guimar„es,Marcos Leonardo Guimar„es
+  MARCOSGUIMARAES,Marcos Leonardo,Guimar√£es,Marcos Leonardo Guimar√£es
   AARONGUERRIERI,AARON,DE LIMA GUERRIERI PINHEIRO,AARON DE LIMA GUERRIERI PINHEIRO
   JOAOHORA,JOAO PAULO,PEREIRA DA HORA,JOAO PAULO PEREIRA DA HORA
   ISMAELHERINGER,ISMAEL,HERINGER JUNIOR,ISMAEL HERINGER JUNIOR
@@ -633,9 +633,9 @@ FetchAll:  Columns: 1
   MARCOSCASSIMIRO,MARCOS ANTONIO,CASSIMIRO ALVES,MARCOS ANTONIO CASSIMIRO ALVES
   WALDEMARFILIPIAK,WALDEMAR,FILIPIAK,WALDEMAR FILIPIAK
   PEDROSOUZA,PEDRO EDUARDO,OLIVEIRA DE SOUZA,PEDRO EDUARDO OLIVEIRA DE SOUZA
-  PAULOAURELIO,Paulo Henrique,de Souza AurÈlio,Paulo Henrique de Souza AurÈlio
+  PAULOAURELIO,Paulo Henrique,de Souza Aur√©lio,Paulo Henrique de Souza Aur√©lio
   ANDREARAUJO,ANDRE LUIZ,DIAS DE ARAUJO,ANDRE LUIZ DIAS DE ARAUJO
-  CLEIDEMARBRAGANCA,Cleidemar,BraganÁa,Cleidemar BraganÁa
+  CLEIDEMARBRAGANCA,Cleidemar,Bragan√ßa,Cleidemar Bragan√ßa
   EDUARDOARAGAO,EDUARDO,ARAGAO DE LIMA,EDUARDO ARAGAO DE LIMA
   JUCIMARMOURA,Jucimar,da Silva Moura,Jucimar da Silva Moura
   ALEXSANDROSILVA,,,
@@ -651,7 +651,7 @@ FetchAll:  Columns: 1
   CARLOSMOTTA,CARLOS FABIANO,GUIMARAES MOTTA,CARLOS FABIANO GUIMARAES MOTTA
   MARCELOPESSANHA,Marcelo,Silva Pessanha,Marcelo Silva Pessanha
   SANDROBERRIEL,Sandro,Magalhaes Berriel,Sandro Magalhaes Berriel
-  DIORDENESLESSA,DiÛrdenes,Broetto Lessa,DiÛrdenes Broetto Lessa
+  DIORDENESLESSA,Di√≥rdenes,Broetto Lessa,Di√≥rdenes Broetto Lessa
   TADMORARGOLO,Tadmor,Argolo,Tadmor Argolo
   MARCIOPACHECO,MARCIO,MOREIRA PACHECO,MARCIO MOREIRA PACHECO
   LUCASSOUZA,LUCAS,DE OLIVEIRA SOUZA,LUCAS DE OLIVEIRA SOUZA
@@ -725,7 +725,7 @@ FetchAll:  Columns: 1
   MARKVERHAAR,MARK,MICHIEL VERHAAR,MARK MICHIEL VERHAAR
   ODIRFREIRE,Odir,Freire,Odir Freire
   TBROWN,Tammy,Brown,Tammy Brown
-  VITORLOUREN«O,Vitor,LourenÁo,Vitor LourenÁo
+  VITORLOUREN√áO,Vitor,Louren√ßo,Vitor Louren√ßo
   ROBERTOSILVA,ROBERTO,DA SILVA,ROBERTO DA SILVA
   JOAO.SANTOS,Joao Carlos,Pereira dos Santos,Joao Carlos Pereira dos Santos
   DOUGLASFILHO,,,
@@ -743,7 +743,7 @@ FetchAll:  Columns: 1
   OSTACK,Oleg,Stack,Oleg Stack
   PSOBCZAK,Piotr,Sobczak,Piotr Sobczak
   AVERETSKY,Andrey,Veretsky,Andrey Veretsky
-  HPAIXAO,Hugo,Paix„o,Hugo Paix„o
+  HPAIXAO,Hugo,Paix√£o,Hugo Paix√£o
   RDANTAS,Rodrigo,Dantas,Rodrigo Dantas
   TSILVA,Thiago,da Silva,Thiago da Silva
   MMATVIYETS,Mykhaylo,Matviyets,Mykhaylo Matviyets
@@ -767,13 +767,13 @@ FetchAll:  Columns: 1
   EDM2NDENG,,,2nd Engeneer Estrela do Mar
   EDMETO,,,ETO Estrela do Mar
   EDMCRANE,,,Crane Technician Estrela do Mar
-  CDACHEENG,,,Chief Engeneer Coral do Atl‚ntico
-  CDAOCM,,,OCM Coral do Atl‚ntico
-  CDAROVSUP,,,ROV Supervisor Coral do Atl‚ntico
-  CDACPE,,,CPE Coral do Atl‚ntico
-  CDA2NDENG,,,2nd Engeneer Coral do Atl‚ntico
-  CDAETO,,,ETO Coral do Atl‚ntico
-  CDACRANE,,,Crane Technician Coral do Atl‚ntico
+  CDACHEENG,,,Chief Engeneer Coral do Atl√¢ntico
+  CDAOCM,,,OCM Coral do Atl√¢ntico
+  CDAROVSUP,,,ROV Supervisor Coral do Atl√¢ntico
+  CDACPE,,,CPE Coral do Atl√¢ntico
+  CDA2NDENG,,,2nd Engeneer Coral do Atl√¢ntico
+  CDAETO,,,ETO Coral do Atl√¢ntico
+  CDACRANE,,,Crane Technician Coral do Atl√¢ntico
   VITORNUNES,Vitor,Campista Nunes,Vitor Campista Nunes
   THIAGOWENDERROSCKY,Thiago,Pereira Wenderroscky,Thiago Pereira Wenderroscky
   DANNYREYNOLDS,Danny,Reynolds,Danny Reynolds
@@ -797,7 +797,7 @@ FetchAll:  Columns: 1
   PATRICKMACHADO,PATRICK,LAURINDO PEREIRA MACHADO,PATRICK LAURINDO PEREIRA MACHADO
   THIAGOSILVA,THIAGO,PEREIRA DA SILVA,THIAGO PEREIRA DA SILVA
   EDMROVSUPER,,,ROV Superintendent Estrela do Mar
-  CDAROVSUPER,,,ROV Superintendent coral do Atl‚ntico
+  CDAROVSUPER,,,ROV Superintendent coral do Atl√¢ntico
   ICITRIX,,,
   EDMPM,,,edmpm
   PAULOMEDEIROS,PAULO FERNANDO,OLIVEIRA DE MEDEIROS,PAULO FERNANDO OLIVEIRA DE MEDEIROS
@@ -810,7 +810,7 @@ FetchAll:  Columns: 1
   JOAOMACHADO,JOAO,ANTONIO MACHADO,JOAO ANTONIO MACHADO
   ELCIODIAS,ELCIO,DIAS JUNIOR,ELCIO DIAS JUNIOR
   BEATRIZSILVA,BEATRIZ,CASTRO SILVA,BEATRIZ CASTRO SILVA
-  GON«ALOORTEGA,GonÁalo,Ortega,GonÁalo Ortega
+  GON√áALOORTEGA,Gon√ßalo,Ortega,Gon√ßalo Ortega
   CINTIACARVALHO,Cintia,Lima Mota Pimenta Carvalho,Cintia Lima Mota Pimenta Carvalho
   SIMONEESTEVES,Simone,da Silva Esteves,Simone da Silva Esteves
   FERNANDOMENDONCA,FERNANDO,CESAR RIBEIRO MENDONCA,FERNANDO MENDONCA
@@ -860,12 +860,12 @@ FetchAll:  Columns: 1
   GABRIELJAIR,Gabriel,Jair,Gabriel Jair
   CDACHENG,,,Chief Engineer CDA
   CDAECR,,,2nd Engineer CDA
-  CDAELEC,,,Electrician Coral do Atl‚ntico
-  CDAIT,,,Instrument Technician Coral do Atl‚ntico
+  CDAELEC,,,Electrician Coral do Atl√¢ntico
+  CDAIT,,,Instrument Technician Coral do Atl√¢ntico
   CDAMEC,,,Mechanic CDA
   CDADPOP,,,DPOs CDA
   CDACAPTAIN,,,Captain CDA
-  CDACHOFF,,,Chief Officer Coral do Atl‚ntico
+  CDACHOFF,,,Chief Officer Coral do Atl√¢ntico
   EDMCHENG,,,Chief Engineer EDM
   EDMECR,,,2nd Engineer EDM
   EDMELEC,,,Electrician Estrela do Mar
@@ -905,7 +905,7 @@ FetchAll:  Columns: 1
   GSILMONI,Guy,Silmoni,Guy Silmoni
   BGARCIA,Bastien,Dedios Garcia,Bastien Dedios Garcia
   JSOBRY,Jimmy,Sobry,Jimmy Sobry
-  SGUIMAR√ES,SÈrgio Henriques,Souza Guimar„es,SÈrgio Henriques Souza Guimar„es
+  SGUIMAR√ÉES,S√©rgio Henriques,Souza Guimar√£es,S√©rgio Henriques Souza Guimar√£es
   SFERREIRA,Flavio,Augusto Da Silva Ferreira,Flavio Augusto Da Silva Ferreira
   WALTERFUENTES,WALTER,ERNESTO FLORES FUENTES,WALTER ERNESTO FLORES FUENTES
   FRANCISRIBEIRO,,,

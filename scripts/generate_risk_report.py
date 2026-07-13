@@ -7,6 +7,7 @@ from collections import Counter, defaultdict
 from datetime import datetime
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.worksheet.hyperlink import Hyperlink
 
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -32,6 +33,10 @@ from scripts.domain.identity_analyzer import get_unique_users_data
 from scripts.domain.sanity_analyzer import analyze_sanity
 from scripts.domain.migration_advisor import analyze_migration
 from scripts.domain.allocation_analyzer import analyze_allocation
+from scripts.domain.security_audit import analyze_security_audit
+from scripts.domain.group_baseline import analyze_group_baseline
+from scripts.domain.role_standardization import analyze_role_standardization
+from scripts.domain.license_reconciliation import analyze_license_reconciliation
 
 
 # --- Constants ---
@@ -51,6 +56,7 @@ def load_all_data():
         "emails": load_csv(IN_DIR / 'consolidated_email.csv'),
         "persons": load_csv(IN_DIR / 'consolidated_person.csv') + load_person_supplements(),
         "persongroupview": load_csv(IN_DIR / 'consolidated_persongroupview.csv'),
+        "groupuser": load_csv(IN_DIR / 'consolidated_groupuser.csv'),
         # --- NOVAS FONTES: AD e Maximo ---
         "ad_users": load_csv(IN_DIR / 'consolidated_ad_users.csv'),
         "maximo_users": load_csv(IN_DIR / 'consolidated_maximo_users.csv'),
@@ -127,7 +133,162 @@ def write_license_decision_plan(rows):
             writer.writerow(row)
     print(f'✓ WROTE {out_path.name}')
 
-def write_excel_workbook(summary, governance, license_rows, domain_counts, missing_email_rows, sanity_data=None, migration_data=None, identities=None, allocation_data=None):
+def build_master_rows(license_rows, sanity_data, migration_data, allocation_data):
+    """Consolida numa única linha por usuário os dados de AD, Maximo, licença,
+    saneamento, migração e alocação — a mesma finalidade da antiga "aba 2"
+    (todos os dados juntos para validação manual), reconstruída a partir dos
+    resultados já calculados pelas outras análises do pipeline.
+    """
+    sanity_data = sanity_data or {}
+    maximo_by_userid = sanity_data.get('maximo_by_userid', {})
+    ad_by_email = sanity_data.get('ad_by_email', {})
+    ad_disabled_by_email = sanity_data.get('ad_disabled_by_email', {})
+
+    alert_by_userid = {}
+    alert_by_email = {}
+    for d in sanity_data.get('analises', {}).get('ad_disabled_ativos_maximo', []):
+        email = str(d.get('email', '')).strip().lower()
+        if email:
+            alert_by_email[email] = d
+        for uid in str(d.get('maximo_userids', '')).split(' | '):
+            uid = uid.strip().upper()
+            if uid:
+                alert_by_userid[uid] = d
+
+    migration_by_userid = {}
+    for r in migration_data or []:
+        uid = str(r.get('userid', '')).strip().upper()
+        if uid and uid not in migration_by_userid:
+            migration_by_userid[uid] = r
+
+    allocation_rows = (allocation_data or {}).get('analises', []) if isinstance(allocation_data, dict) else (allocation_data or [])
+    allocation_by_userid = {}
+    for a in allocation_rows:
+        uid = str(a.get('userid', '')).strip().upper()
+        if uid:
+            allocation_by_userid[uid] = a
+
+    rows = []
+    for lr in license_rows:
+        uid = str(lr.get('USERID', '')).strip().upper()
+        email = str(lr.get('EMAIL', '')).strip().lower()
+        mx = maximo_by_userid.get(uid, {})
+        envs_total = sorted(e for e in mx.get('envs', []) if e)
+        envs_ativos = sorted(
+            e for e, s in mx.get('env_status', {}).items()
+            if s.upper() in ('ACTIVE', 'ATIVO', 'ENABLED')
+        )
+
+        if email and email in ad_by_email:
+            status_ad = 'ATIVO'
+        elif email and email in ad_disabled_by_email:
+            status_ad = 'DESATIVADO'
+        elif email:
+            status_ad = 'NAO ENCONTRADO NO AD'
+        else:
+            status_ad = 'SEM EMAIL (NAO COMPARAVEL)'
+
+        alerta = alert_by_userid.get(uid) or (alert_by_email.get(email) if email else None)
+        migr = migration_by_userid.get(uid)
+        aloc = allocation_by_userid.get(uid)
+
+        rows.append({
+            'USERID': uid,
+            'NOME': lr.get('DISPLAYNAME', ''),
+            'EMAIL': lr.get('EMAIL', ''),
+            'DOMINIO': lr.get('DOMAIN_CATEGORY', ''),
+            'TYPE': lr.get('TYPE', ''),
+            'GRUPOS_MAXIMO': lr.get('GROUPS', ''),
+            'STATUS_AD': status_ad,
+            'AMBIENTES_MAXIMO_TOTAL': '; '.join(envs_total),
+            'AMBIENTES_MAXIMO_ATIVOS': '; '.join(envs_ativos),
+            'AMBIENTES_ATIVOS_DE_TOTAL': f'{len(envs_ativos)}/{len(envs_total)}' if envs_total else '',
+            'STATUS_MAXIMO': '; '.join(sorted(mx.get('statuses', []))),
+            'ENTITLEMENT': lr.get('ENTITLEMENT', ''),
+            'LICENSE_MODEL': lr.get('LICENSE_MODEL', ''),
+            'APP_POINTS': lr.get('APP_POINTS', ''),
+            'LOCATION_SITE': lr.get('LOCATION_SITE', ''),
+            'USAGE_PROFILE': lr.get('USAGE_PROFILE', ''),
+            'LOGIN_COUNT_90D': lr.get('LOGIN_COUNT_90D', ''),
+            'DAYS_SINCE_LAST': lr.get('DAYS_SINCE_LAST', ''),
+            'OPTIMIZATION_REC': lr.get('OPTIMIZATION_REC', ''),
+            'OPTIMIZATION_REASON': lr.get('OPTIMIZATION_REASON', ''),
+            'ALERTA_AD_DESATIVADO_MAXIMO_ATIVO': (
+                f"CRITICO: {alerta.get('qtd_envs_ativos_de_total', '')} ambientes ativos"
+                if alerta else ''
+            ),
+            'MIGRACAO_TIPO': migr.get('tipo', '') if migr else '',
+            'MIGRACAO_ACAO': migr.get('acao', '') if migr else '',
+            'ALOCACAO_PRINCIPAL': aloc.get('allocation_primary', '') if aloc else '',
+            'ALOCACAO_SUGERIDA': '; '.join(aloc.get('suggested_accounts', [])) if aloc else '',
+            'TITLES': lr.get('TITLES', ''),
+        })
+    return rows
+
+
+def add_index_sheet(wb, add_sheet):
+    """Cria a aba de índice/navegação (descrição + contagem de linhas de cada
+    aba) e move-a para a primeira posição do workbook."""
+    descriptions = {
+        '1_VisaoExecutiva': 'Resumo executivo: contagens gerais, distribuicao de licencas e dominios.',
+        '2_Master_Analise': 'CONSOLIDADO MESTRE: 1 linha por usuario cruzando AD, Maximo, licenca e alertas de saneamento. Use para validacao manual.',
+        '3_LicenseDecisionPlan': 'Plano detalhado de decisao de licenca por usuario (entitlement, modelo, AppPoints, uso).',
+        '4_RevisarSemDominio': 'Usuarios sem email/dominio valido - revisar antes de contabilizar licenca.',
+        '5_ReusoUSERID_CrossEnv': 'USERIDs reutilizados entre ambientes Maximo diferentes.',
+        '6_ConflitosLoginID': 'Conflitos de login (mesmo LOGINID usado por multiplas pessoas/USERIDs).',
+        '7_FilaSaneamento': 'Fila de identidades para saneamento manual (hipoteses de colisao).',
+        '9_Saneamento_Resumo': 'Resumo estatistico do saneamento de identidades AD x Maximo.',
+        '10_Saneamento_AD_Achados': 'TODOS os achados AD x Maximo numa so aba — filtre ACHADO: AD_DESATIVADO_MAS_ATIVO (critico, vermelho), DIVERGENCIA_NOME, MULTIPLOS_USERIDS, MATCH_POR_PREFIXO, AD_SEM_MATCH_MAXIMO, MAXIMO_SEM_EMAIL_COM_AD, DIVERGENCIA_DOMINIO.',
+        '11_Migracao_MAS9': 'ENTREGAVEL DE MIGRACAO: por usuario — migrar?, grupos Maximo atuais, grupo recomendado MAS 9, cargo, pares ambiente:status. Resumo por tipo na aba 17.',
+        '12_Alocacao_Resumo': 'Resumo do saneamento de alocacao de contas por ambiente (Maximo 9).',
+        '13_Alocacao_Sugestao': 'Sugestao detalhada de alocacao de contas por ambiente, por usuario.',
+        '14_Maximo_Usuarios_Ativos': 'Lista unica de todos os usuarios ativos no Maximo (todos os ambientes).',
+        '15_Acessos_por_Perfil': 'Contagem de usuarios ativos agrupados por tipo de perfil (TYPE).',
+        '16_Auditoria_Acesso': 'Data de concessao de acesso (auditoria) por usuario.',
+        '17_Resumo_Consolidado': 'RESUMO EXECUTIVO em secoes: Migracao MAS 9 (contagens por tipo), Cenario Conciliado (P95/P100 vs teto 1200) e SoD em Compras (conflitos + evidencias em USD).',
+        '18_SoD_Grupos': 'SoD Nivel 1: grupos que sozinhos concedem emissao E aprovacao na mesma app. Filtre a coluna APP para ver so PR, PO ou Requisicao Simplificada.',
+        '19_SoD_Pessoas': 'SoD Nivel 2 + governanca: pessoas com o conflito emissor/aprovador E membros de MAXADMIN, na mesma aba (filtre a coluna TIPO). Com cargo e papel recomendado.',
+        '20_SoD_Evidencias': 'EVIDENCIAS das 3 camadas numa so aba (filtre CAMADA): SUBMETEU_E_APROVOU (WFTRANSACTION), AUTOAPROVACAO (solicitante real=aprovador) e APROVOU_PR_GEROU_PO (cadeia PR->PO). Valores em USD, por PR unica.',
+        '21_Cargo_x_Grupos': 'MODELO DE ACESSO POR CARGO: linhas UNIDADE=TODAS sao o padrao global recomendado MAS 9 (material para terceirizada); linhas por unidade sao o baseline real observado hoje.',
+        '22_Perfil_Cargo_Desvios': 'Pessoas cujos grupos desviam do padrao do proprio cargo na mesma unidade (excesso = risco, falta = possivel bloqueio).',
+        '23_Grupos_Duplicados': 'MATERIAL PARA TERCEIRIZADA: grupos com permissao >=95% identica sob nomes diferentes — candidatos a fusao. Alertas: privilegio divergente (ADM=leitura) e papeis nominalmente distintos.',
+        '24_Cenario_Conciliado_Usuarios': 'DIMENSIONAMENTO MAS 9 por usuario: conciliacao AD (email/prefixo/nome), presenca % em 90d, licenca economica vs final, custo. POPULACAO=TERCEIRO_ATIVO em amarelo. Resumo na aba 17.',
+    }
+    rows = []
+    for name in wb.sheetnames:
+        ws = wb[name]
+        rows.append({
+            'Aba': name,
+            'Descricao': descriptions.get(name, ''),
+            'Linhas de Dados': max(ws.max_row - 1, 0),
+        })
+
+    def index_highlight(row, idx):
+        if str(row.get('Aba', '')).startswith('11_'):
+            return 'fecaca'  # achado crítico em destaque também no índice
+        return 'f8fafc' if idx % 2 else None  # zebra
+
+    add_sheet('0_Indice', ['Aba', 'Descricao', 'Linhas de Dados'], rows, highlight=index_highlight)
+
+    # Torna cada linha da coluna "Aba" um link clicável que leva direto para a
+    # aba correspondente (referência interna do Excel: #'NomeDaAba'!A1).
+    idx_ws = wb['0_Indice']
+    link_font = Font(color='1D4ED8', underline='single', bold=True)
+    for r in range(2, idx_ws.max_row + 1):
+        cell = idx_ws.cell(row=r, column=1)
+        sheet_name = cell.value
+        if sheet_name and sheet_name in wb.sheetnames:
+            # A forma "cell.hyperlink = '#...'" não sobrevive ao save/reload do
+            # Excel (perde a location) — é preciso um Hyperlink explícito com
+            # location=(sem '#') para o link interno funcionar de fato.
+            cell.hyperlink = Hyperlink(ref=cell.coordinate, location=f"'{sheet_name}'!A1", display=sheet_name)
+            cell.font = link_font
+    idx_ws.column_dimensions['B'].width = 85
+
+    wb.move_sheet('0_Indice', offset=-(len(wb.sheetnames) - 1))
+
+
+def write_excel_workbook(summary, governance, license_rows, domain_counts, missing_email_rows, sanity_data=None, migration_data=None, identities=None, allocation_data=None, security_audit_data=None, group_baseline_data=None, role_standardization_data=None, reconciliation_data=None):
     """Creates the final consolidated governance workbook used by the pipeline."""
     wb = Workbook()
     wb.remove(wb.active)
@@ -141,7 +302,10 @@ def write_excel_workbook(summary, governance, license_rows, domain_counts, missi
         bottom=Side(style='thin', color='e2e8f0'),
     )
 
-    def add_sheet(title, headers, rows):
+    def add_sheet(title, headers, rows, highlight=None):
+        """highlight(row, idx) -> hex color string (sem '#') ou None. `row` é o
+        item original (dict ou lista) e `idx` é a posição (0-based) na lista de
+        dados — usado para zebra-striping e para destacar linhas críticas."""
         ws = wb.create_sheet(title[:31])
         ws.append(headers)
         for cell in ws[1]:
@@ -150,7 +314,7 @@ def write_excel_workbook(summary, governance, license_rows, domain_counts, missi
             cell.border = thin_border
             cell.alignment = Alignment(horizontal='center')
 
-        for row in rows:
+        for idx, row in enumerate(rows):
             if isinstance(row, dict):
                 values = []
                 for h in headers:
@@ -162,6 +326,12 @@ def write_excel_workbook(summary, governance, license_rows, domain_counts, missi
             else:
                 values = row
             ws.append(values)
+            if highlight:
+                color = highlight(row, idx)
+                if color:
+                    row_fill = PatternFill(start_color=color, end_color=color, fill_type='solid')
+                    for cell in ws[ws.max_row]:
+                        cell.fill = row_fill
 
         for row in ws.iter_rows(min_row=2):
             for cell in row:
@@ -195,77 +365,105 @@ def write_excel_workbook(summary, governance, license_rows, domain_counts, missi
     for domain, count in sorted(domain_counts.items()):
         executive_rows.append([f'Dominio: {domain}', count])
 
-    add_sheet('1_VisaoExecutiva', ['Metrica', 'Valor'], executive_rows)
-    add_sheet('2_LicenseDecisionPlan', license_headers, license_rows)
+    def executive_highlight(row, idx):
+        label = str(row[0]) if row else ''
+        if label.startswith('Dominio:'):
+            return 'eff6ff'  # azul claro - distribuição por domínio
+        if label in ('Authorized', 'Concurrent', 'Premium'):
+            return 'f5f3ff'  # lilás claro - split de licença
+        if label in ('Usuarios ativos analisados', 'Usuarios no plano de licenca'):
+            return 'ecfdf5'  # verde claro - totais-chave
+        return None
 
-    # Add concurrency peak and contributors if available in summary
-    concurrency = summary.get('concurrency', {})
-    if concurrency:
-        hourly_users = concurrency.get('hourly_counts', {})
-        hourly_points = concurrency.get('hourly_app_points', {})
-        hourly_nem = concurrency.get('hourly_app_points_nem', {})
-        if hourly_users or hourly_points or hourly_nem:
-            hours = sorted(set(hourly_users) | set(hourly_points) | set(hourly_nem))
-            hourly_rows = [
-                [h, hourly_users.get(h, 0), hourly_points.get(h, 0), hourly_nem.get(h, 0)]
-                for h in hours
-            ]
-            add_sheet(
-                '7_ConcurrentPeak',
-                ['Hour', 'Usuarios simultaneos', 'AppPoints observados', 'AppPoints NEM'],
-                hourly_rows,
-            )
+    # As abas são criadas EM ORDEM NUMÉRICA ESTRITA (1, 2, 3, 4, 5...) para que
+    # a ordem visível das abas no Excel corresponda ao prefixo do nome. Antes,
+    # cada bloco era adicionado fora de sequência (ex.: "7" e "8" eram criadas
+    # antes de "3"), deixando as abas na ordem visual 1,2,7,8,3,4,5,6,9,9b,...
+    add_sheet('1_VisaoExecutiva', ['Metrica', 'Valor'], executive_rows, highlight=executive_highlight)
 
-        # Peak contributors sheet (8_PeakContributors)
-        contributors = concurrency.get('peak_contributors', [])
-        if contributors:
-            # contributors is a list of USERID or dicts
-            if isinstance(contributors[0], dict):
-                contrib_headers = list(contributors[0].keys())
-                add_sheet('8_PeakContributors', contrib_headers, contributors)
-            else:
-                add_sheet('8_PeakContributors', ['USERID'], [[c] for c in contributors])
+    # Aba 2: MASTER — todos os dados de AD, Maximo, licença, saneamento,
+    # migração e alocação numa única linha por usuário, para validação manual
+    # cruzada (a antiga "aba 2 com tudo junto").
+    master_rows = build_master_rows(license_rows, sanity_data, migration_data, allocation_data)
+
+    def master_highlight(row, idx):
+        if row.get('ALERTA_AD_DESATIVADO_MAXIMO_ATIVO'):
+            return 'fecaca'  # vermelho - inconsistência crítica AD x Maximo
+        status_ad = row.get('STATUS_AD')
+        if status_ad == 'DESATIVADO':
+            return 'fef3c7'  # âmbar - desativado no AD (sem alerta de Maximo ativo)
+        if status_ad == 'NAO ENCONTRADO NO AD':
+            return 'f1f5f9'  # cinza claro - não encontrado no AD
+        if row.get('ENTITLEMENT') == 'PREMIUM':
+            return 'ede9fe'  # lilás - entitlement premium
+        return 'f8fafc' if idx % 2 else None  # zebra sutil no restante
+
+    if master_rows:
+        add_sheet('2_Master_Analise', list(master_rows[0].keys()), master_rows, highlight=master_highlight)
+
+    add_sheet('3_LicenseDecisionPlan', license_headers, license_rows)
 
     if missing_email_rows:
         review_headers = [
             'USERID', 'DISPLAYNAME', 'STATUS', 'ENVS', 'TYPE', 'GROUPS_COUNT',
             'GROUPS', 'TITLES', 'PERSONGROUPS', 'REVIEW_REASON'
         ]
-        add_sheet('3_RevisarSemDominio', review_headers, missing_email_rows)
+        add_sheet('4_RevisarSemDominio', review_headers, missing_email_rows)
 
     for sheet_name, key in [
-        ('4_ReusoUSERID_CrossEnv', 'cross_env'),
-        ('5_ConflitosLoginID', 'login_conflicts'),
-        ('6_FilaSaneamento', 'worklist'),
+        ('5_ReusoUSERID_CrossEnv', 'cross_env'),
+        ('6_ConflitosLoginID', 'login_conflicts'),
+        ('7_FilaSaneamento', 'worklist'),
     ]:
         rows = governance.get(key, [])
         if rows:
             add_sheet(sheet_name, list(rows[0].keys()), rows)
 
-    # Adicionar Aba 7: Saneamento de Identidades (AD vs Maximo)
+    # Adicionar Abas 10-17: Saneamento de Identidades (AD vs Maximo)
     if sanity_data:
         add_sanity_sheets(wb, sanity_data, add_sheet)
 
-    # Adicionar Aba 8: Recomendações de Migração
+    # Adicionar Abas 18-19: Recomendações de Migração
     if migration_data:
         add_migration_sheets(wb, migration_data, add_sheet)
 
-    # Adicionar Aba 21/22: Saneamento de Alocação (Maximo 9)
+    # Adicionar Abas 20-21: Saneamento de Alocação (Maximo 9)
     if allocation_data:
         add_allocation_sheets(wb, allocation_data, add_sheet)
 
-    # Adicionar Aba 18: Usuários Ativos Únicos do Maximo
+    # Adicionar Aba 22: Usuários Ativos Únicos do Maximo
     if identities:
         add_maximo_active_users_sheet(wb, identities, add_sheet)
 
-    # Adicionar Aba 19: Acessos por Tipo de Perfil
+    # Adicionar Aba 23: Acessos por Tipo de Perfil
     if identities:
         add_profile_access_sheet(wb, identities, add_sheet)
 
-    # Adicionar Aba 20: Auditoria - Data de Concessão de Acesso
+    # Adicionar Aba 24: Auditoria - Data de Concessão de Acesso
     persongroupview = governance.get('persongroupview', [])
     if persongroupview:
-        add_audit_sheet(wb, persongroupview, add_sheet)
+        add_audit_sheet(wb, persongroupview, identities, governance.get('groupuser', []),
+                         governance.get('logintrack', []), add_sheet)
+
+    # Aba 25: resumo executivo consolidado (migração + SoD + cenário conciliado)
+    if migration_data or security_audit_data or reconciliation_data:
+        add_consolidated_summary(wb, migration_data, security_audit_data, reconciliation_data, add_sheet)
+
+    # Abas 26-28: Auditoria de Segregação de Funções (grupos, pessoas, evidências)
+    if security_audit_data:
+        add_security_audit_sheets(wb, security_audit_data, add_sheet)
+
+    # Abas 29-31: Modelo de acesso por cargo (baseline+padrão, desvios, grupos duplicados)
+    if group_baseline_data or role_standardization_data:
+        add_access_model_sheets(wb, group_baseline_data, role_standardization_data, add_sheet)
+
+    # Aba 32: Cenário Conciliado — detalhe por usuário
+    if reconciliation_data:
+        add_reconciliation_sheets(wb, reconciliation_data, add_sheet)
+
+    # Aba 0 (Índice): navegação com descrição e contagem de linhas de cada
+    # aba — necessária num workbook com mais de 20 abas numeradas.
+    add_index_sheet(wb, add_sheet)
 
     out_path = OUT_DIR / 'maximo_risk_and_optimization_workbook.xlsx'
     try:
@@ -284,10 +482,13 @@ def write_excel_workbook(summary, governance, license_rows, domain_counts, missi
 def add_sanity_sheets(wb, sanity_data, add_sheet):
     """Adiciona abas do Excel com dados de saneamento de identidades."""
 
-    # Aba 9: Resumo de Saneamento
+    # Aba 10: Resumo de Saneamento
     stats = sanity_data['stats']
+    SECTION_LABELS = {
+        'MATCH POR EMAIL', 'DIVERGÊNCIAS', 'MATCH POR PREFIXO (USERID)',
+        'MAXIMO SEM EMAIL', 'AUDITORIA CRÍTICA',
+    }
     summary_rows = [
-        ['Métrica', 'Valor'],
         ['Total AD', stats['total_ad']],
         ['Total Maximo (identities)', stats['total_maximo_identities']],
         ['Total Maximo (USERIDs únicos)', stats['total_maximo_userids']],
@@ -309,152 +510,69 @@ def add_sanity_sheets(wb, sanity_data, add_sheet):
         ['MAXIMO SEM EMAIL', ''],
         ['Com match no AD', stats['maximo_sem_email_match']],
         ['Sem match no AD', stats['maximo_sem_email_nomatch']],
+        ['', ''],
+        ['AUDITORIA CRÍTICA', ''],
+        ['Desativados no AD mas ativos no Maximo (aba 10, ACHADO=AD_DESATIVADO_MAS_ATIVO)', stats['ad_disabled_ativos_maximo']],
     ]
-    add_sheet('9_Saneamento_Resumo', ['Métrica', 'Valor'], summary_rows)
 
-    # Aba 9b: AUDITORIA CRÍTICA — Desativado no AD mas ativo em algum ambiente do Maximo.
-    # Esta é a mesma lista renderizada na Aba 7 do dashboard HTML (tabela vermelha
-    # "Auditoria: Usuários Desativados no AD mas com Acesso no Maximo") — antes não
-    # existia sheet equivalente no Excel para o achado mais crítico deste relatório.
-    if sanity_data['analises'].get('ad_disabled_ativos_maximo'):
-        headers = ['Email AD', 'Nome AD', 'GivenName AD', 'Surname AD', 'Qtd Grupos AD',
-                   'Tipo de Match', 'USERIDs Maximo', 'Ambientes Ativos', 'Ambientes Total',
-                   'Ativos/Total', 'Status Maximo', 'Domínio']
-        rows = []
-        for d in sanity_data['analises']['ad_disabled_ativos_maximo']:
-            rows.append({
-                'Email AD': d['email'],
-                'Nome AD': d['ad_displayname'],
-                'GivenName AD': d['ad_givenname'],
-                'Surname AD': d['ad_surname'],
-                'Qtd Grupos AD': d['ad_groups_count'],
-                'Tipo de Match': d.get('match_type', 'EMAIL'),
-                'USERIDs Maximo': d['maximo_userids'],
-                'Ambientes Ativos': d['maximo_envs'],
-                'Ambientes Total': d.get('maximo_envs_total', d['maximo_envs']),
-                'Ativos/Total': d.get('qtd_envs_ativos_de_total', ''),
-                'Status Maximo': d['maximo_statuses'],
-                'Domínio': d['domain'],
-            })
-        add_sheet('9b_AD_Desativado_Mas_Ativo', headers, rows)
+    def resumo_highlight(row, idx):
+        label = str(row[0]) if row else ''
+        if label in SECTION_LABELS:
+            return 'dbeafe'  # azul claro - separador de seção
+        if 'AD mas ativos no Maximo' in label:
+            return 'fecaca'  # vermelho claro - achado crítico
+        return None
 
-    # Aba 10: Divergências de Nome
-    if sanity_data['analises']['name_divergences']:
-        headers = ['Email', 'Nome AD', 'GivenName AD', 'Surname AD', 'Nomes Maximo',
-                   'USERIDs Maximo', 'Ambientes Maximo', 'Status Maximo', 'Domínio',
-                   'AD Habilitado', 'Qtd Grupos AD', 'Tipo']
-        rows = []
-        for d in sanity_data['analises']['name_divergences']:
-            rows.append({
-                'Email': d['email'],
-                'Nome AD': d['ad_displayname'],
-                'GivenName AD': d['ad_givenname'],
-                'Surname AD': d['ad_surname'],
-                'Nomes Maximo': d['maximo_names'],
-                'USERIDs Maximo': d['maximo_userids'],
-                'Ambientes Maximo': d['maximo_envs'],
-                'Status Maximo': d['maximo_statuses'],
-                'Domínio': d['domain'],
-                'AD Habilitado': 'Sim' if d['ad_enabled'] else 'Não',
-                'Qtd Grupos AD': d['ad_groups_count'],
-                'Tipo': d['tipo'],
-            })
-        add_sheet('10_Divergencias_Nome', headers, rows)
+    add_sheet('9_Saneamento_Resumo', ['Métrica', 'Valor'], summary_rows, highlight=resumo_highlight)
 
-    # Aba 11: Múltiplos USERIDs
-    if sanity_data['analises']['multi_userid']:
-        headers = ['Email', 'Nome AD', 'Qtd USERIDs', 'USERIDs', 'Ambientes', 'Status', 'Domínio', 'Tipo']
-        rows = []
-        for d in sanity_data['analises']['multi_userid']:
-            rows.append({
-                'Email': d['email'],
-                'Nome AD': d['ad_displayname'],
-                'Qtd USERIDs': d['qtd_userids'],
-                'USERIDs': d['userids'],
-                'Ambientes': d['envs'],
-                'Status': d['statuses'],
-                'Domínio': d['domain'],
-                'Tipo': d['tipo'],
-            })
-        add_sheet('11_Multiplos_USERIDs', headers, rows)
+    # Aba 10: TODOS os achados do saneamento AD × Maximo numa só aba
+    # (consolidação a pedido do usuário 2026-07-11 — eram 7 abas, 11-17).
+    # Filtre a coluna ACHADO para ver cada categoria; o achado crítico
+    # (AD_DESATIVADO_MAS_ATIVO) fica destacado em vermelho.
+    achados = []
 
-    # Aba 12: Match por Prefixo (USERID)
-    if sanity_data['analises']['prefix_match']:
-        headers = ['Email', 'Nome AD', 'USERID Maximo', 'Nomes Maximo', 'Ambientes Maximo',
-                   'Status Maximo', 'Emails Maximo', 'Domínio', 'AD Habilitado', 'Qtd Grupos AD', 'Tipo']
-        rows = []
-        for d in sanity_data['analises']['prefix_match']:
-            rows.append({
-                'Email': d['email'],
-                'Nome AD': d['ad_displayname'],
-                'USERID Maximo': d['maximo_userid'],
-                'Nomes Maximo': d['maximo_displaynames'],
-                'Ambientes Maximo': d['maximo_envs'],
-                'Status Maximo': d['maximo_statuses'],
-                'Emails Maximo': d['maximo_emails'],
-                'Domínio': d['domain'],
-                'AD Habilitado': 'Sim' if d['ad_enabled'] else 'Não',
-                'Qtd Grupos AD': d['ad_groups_count'],
-                'Tipo': d['tipo'],
-            })
-        add_sheet('12_Match_Prefixo', headers, rows)
+    def _add(achado, email, nome_ad, userids, nomes_mx, envs, status_mx, ad_on, grupos_ad, detalhe):
+        achados.append({
+            'ACHADO': achado, 'EMAIL_AD': email, 'NOME_AD': nome_ad,
+            'USERIDS_MAXIMO': userids, 'NOMES_MAXIMO': nomes_mx, 'AMBIENTES': envs,
+            'STATUS_MAXIMO': status_mx, 'AD_HABILITADO': ad_on,
+            'QTD_GRUPOS_AD': grupos_ad, 'DETALHE': detalhe,
+        })
 
-    # Aba 13: Sem Match no Maximo
-    if sanity_data['analises']['no_match']:
-        headers = ['Email', 'Nome AD', 'GivenName AD', 'Surname AD', 'Prefixo',
-                   'Domínio', 'AD Habilitado', 'Qtd Grupos AD', 'Tipo']
-        rows = []
-        for d in sanity_data['analises']['no_match']:
-            rows.append({
-                'Email': d['email'],
-                'Nome AD': d['ad_displayname'],
-                'GivenName AD': d['ad_givenname'],
-                'Surname AD': d['ad_surname'],
-                'Prefixo': d['prefix'],
-                'Domínio': d['domain'],
-                'AD Habilitado': 'Sim' if d['ad_enabled'] else 'Não',
-                'Qtd Grupos AD': d['ad_groups_count'],
-                'Tipo': d['tipo'],
-            })
-        add_sheet('13_Sem_Match_Maximo', headers, rows)
+    for d in sanity_data['analises'].get('ad_disabled_ativos_maximo', []):
+        _add('AD_DESATIVADO_MAS_ATIVO', d['email'], d['ad_displayname'], d['maximo_userids'],
+             '', d['maximo_envs'], d['maximo_statuses'], 'Não', d['ad_groups_count'],
+             f"match {d.get('match_type', 'EMAIL')}; ambientes ativos/total: {d.get('qtd_envs_ativos_de_total', '')}")
+    for d in sanity_data['analises'].get('name_divergences', []):
+        _add('DIVERGENCIA_NOME', d['email'], d['ad_displayname'], d['maximo_userids'],
+             d['maximo_names'], d['maximo_envs'], d['maximo_statuses'],
+             'Sim' if d['ad_enabled'] else 'Não', d['ad_groups_count'], '')
+    for d in sanity_data['analises'].get('multi_userid', []):
+        _add('MULTIPLOS_USERIDS', d['email'], d['ad_displayname'], d['userids'],
+             '', d['envs'], d['statuses'], '', '', f"{d['qtd_userids']} USERIDs para o mesmo e-mail")
+    for d in sanity_data['analises'].get('prefix_match', []):
+        _add('MATCH_POR_PREFIXO', d['email'], d['ad_displayname'], d['maximo_userid'],
+             d['maximo_displaynames'], d['maximo_envs'], d['maximo_statuses'],
+             'Sim' if d['ad_enabled'] else 'Não', d['ad_groups_count'],
+             f"emails Maximo: {d['maximo_emails']}")
+    for d in sanity_data['analises'].get('no_match', []):
+        _add('AD_SEM_MATCH_MAXIMO', d['email'], d['ad_displayname'], '', '', '', '',
+             'Sim' if d['ad_enabled'] else 'Não', d['ad_groups_count'], f"prefixo: {d['prefix']}")
+    for d in sanity_data['analises'].get('maximo_sem_email_match', []):
+        _add('MAXIMO_SEM_EMAIL_COM_AD', d['ad_email'], d['ad_displayname'], d['userid'],
+             d['maximo_displaynames'], d['maximo_envs'], d['maximo_statuses'],
+             'Sim' if d['ad_enabled'] else 'Não', d['ad_groups_count'],
+             f"títulos: {d['maximo_titles']}")
+    for d in sanity_data['analises'].get('domain_divergences', []):
+        _add('DIVERGENCIA_DOMINIO', d['email'], d['ad_displayname'], d['maximo_userid'],
+             '', d['maximo_env'], d['maximo_status'], '', '',
+             f"AD {d['ad_domain']} vs Maximo {d['maximo_domain']}")
 
-    # Aba 14: Maximo sem Email (com match AD)
-    if sanity_data['analises']['maximo_sem_email_match']:
-        headers = ['USERID', 'Nomes Maximo', 'Ambientes Maximo', 'Status Maximo', 'Títulos Maximo',
-                   'Email AD', 'Nome AD', 'AD Habilitado', 'Qtd Grupos AD', 'Tipo']
-        rows = []
-        for d in sanity_data['analises']['maximo_sem_email_match']:
-            rows.append({
-                'USERID': d['userid'],
-                'Nomes Maximo': d['maximo_displaynames'],
-                'Ambientes Maximo': d['maximo_envs'],
-                'Status Maximo': d['maximo_statuses'],
-                'Títulos Maximo': d['maximo_titles'],
-                'Email AD': d['ad_email'],
-                'Nome AD': d['ad_displayname'],
-                'AD Habilitado': 'Sim' if d['ad_enabled'] else 'Não',
-                'Qtd Grupos AD': d['ad_groups_count'],
-                'Tipo': d['tipo'],
-            })
-        add_sheet('14_Maximo_Sem_Email_Match', headers, rows)
-
-    # Aba 15: Divergências de Domínio
-    if sanity_data['analises']['domain_divergences']:
-        headers = ['Email', 'Nome AD', 'Domínio AD', 'Domínio Maximo', 'USERID Maximo',
-                   'Ambiente Maximo', 'Status Maximo', 'Tipo']
-        rows = []
-        for d in sanity_data['analises']['domain_divergences']:
-            rows.append({
-                'Email': d['email'],
-                'Nome AD': d['ad_displayname'],
-                'Domínio AD': d['ad_domain'],
-                'Domínio Maximo': d['maximo_domain'],
-                'USERID Maximo': d['maximo_userid'],
-                'Ambiente Maximo': d['maximo_env'],
-                'Status Maximo': d['maximo_status'],
-                'Tipo': d['tipo'],
-            })
-        add_sheet('15_Divergencias_Dominio', headers, rows)
+    if achados:
+        headers = ['ACHADO', 'EMAIL_AD', 'NOME_AD', 'USERIDS_MAXIMO', 'NOMES_MAXIMO',
+                   'AMBIENTES', 'STATUS_MAXIMO', 'AD_HABILITADO', 'QTD_GRUPOS_AD', 'DETALHE']
+        add_sheet('10_Saneamento_AD_Achados', headers, achados,
+                  highlight=lambda r, i: 'fee2e2' if r.get('ACHADO') == 'AD_DESATIVADO_MAS_ATIVO' else None)
 
 
 # --- Maximo Active Users Excel Sheet ---
@@ -471,13 +589,19 @@ def add_maximo_active_users_sheet(wb, identities, add_sheet):
     # Filtrar apenas usuários ativos
     active_users = [r for r in identities if r.get('STATUS', '').strip().upper() == 'ACTIVE']
 
-    # Deduplicar por USERID (pegar primeiro registro de cada USERID)
-    seen_userids = set()
+    # Deduplicar por (ENV_DB, USERID) — não só USERID. A mesma conta pode
+    # estar ativa em múltiplos ambientes (ex.: HELPDESK, ITEAM em 6 bases) e
+    # a aba exibe ENV_DB por linha; dedup só por USERID descartava essas
+    # ocorrências (auditoria 2026-07-13 confirmou 210/1840 linhas ativas
+    # perdidas, 73 USERIDs afetados).
+    seen_keys = set()
     unique_active = []
     for user in active_users:
         userid = user.get('USERID', '').strip().upper()
-        if userid and userid not in seen_userids:
-            seen_userids.add(userid)
+        env = user.get('ENV_DB', '').strip().upper()
+        key = (env, userid)
+        if userid and key not in seen_keys:
+            seen_keys.add(key)
             unique_active.append(user)
 
     # Preparar headers e rows
@@ -500,8 +624,8 @@ def add_maximo_active_users_sheet(wb, identities, add_sheet):
             'PERSONGROUP': clean_value(user.get('PERSONGROUP', '')),
         })
 
-    add_sheet('18_Maximo_Usuarios_Ativos', headers, rows)
-    print(f'✓ Aba 18 adicionada: {len(rows)} usuários ativos únicos do Maximo')
+    add_sheet('14_Maximo_Usuarios_Ativos', headers, rows)
+    print(f'✓ Aba 14 adicionada: {len(rows)} usuários ativos únicos do Maximo')
 
 
 # --- Profile Access Excel Sheet ---
@@ -551,13 +675,248 @@ def add_profile_access_sheet(wb, identities, add_sheet):
             'PersonGroups': '; '.join(sorted(pg for pg in persongroups if pg))[:100],
         })
 
-    add_sheet('19_Acessos_por_Perfil', headers, rows)
-    print(f'✓ Aba 19 adicionada: {len(rows)} tipos de perfil analisados')
+    add_sheet('15_Acessos_por_Perfil', headers, rows)
+    print(f'✓ Aba 15 adicionada: {len(rows)} tipos de perfil analisados')
 
 
 # --- Audit Excel Sheet ---
-def add_audit_sheet(wb, persongroupview, add_sheet):
-    """Adiciona aba com dados de auditoria - data de concessão de acesso."""
+# --- Security Audit (Emissor x Aprovador) Excel Sheets ---
+def add_consolidated_summary(wb, migration_data, security_audit_data, reconciliation_data, add_sheet):
+    """Aba única de resumo executivo — funde os antigos resumos de Migração
+    (18), SoD (25) e Cenário Conciliado (38) em seções de uma só aba
+    (pedido do usuário 2026-07-11: menos abas para facilitar a análise)."""
+    rows = []
+
+    if migration_data:
+        rows.append(['MIGRAÇÃO MAS 9 — recomendações por tipo (detalhe: aba 11)', ''])
+        tipo_counts = {}
+        for r in migration_data:
+            tipo_counts[r['tipo']] = tipo_counts.get(r['tipo'], 0) + 1
+        for tipo, count in sorted(tipo_counts.items(), key=lambda x: -x[1]):
+            rows.append([f'  {tipo}', count])
+        rows.append(['', ''])
+
+    if reconciliation_data:
+        s = reconciliation_data['stats']
+        nc, nr = s['nem_conciliado'], s['nem_realista']
+        rows += [
+            ['CENÁRIO CONCILIADO — dimensionamento oficial MAS 9 (detalhe: aba 24)', ''],
+            ['Maximo ativos / conciliados com AD ativo', f"{s['maximo_ativos_total']} / {s['conciliados']}"],
+            ['  ...match por e-mail / prefixo / nome', f"{s['conciliados_por_email']} / {s['conciliados_por_prefixo']} / {s['conciliados_por_nome']}"],
+            ['Licença estatística: AUTHORIZED / CONCURRENT', f"{s['conciliados_authorized']} / {s['conciliados_concurrent']}"],
+            ['Reserva fixa Authorized (AppPoints)', s['reserva_authorized']],
+            ['Terceiros ativos mantidos como Concurrent', s['terceiros_ativos']],
+            ['Não conciliados sem uso em 90d (limpeza, não migram)', s['nao_conciliados_sem_uso']],
+            ['NEM só-conciliados — P50 / P95 / P100', f"{nc['p50']} / {nc['p95']} / {nc['p100']}"],
+            ['NEM realista (+terceiros) — P50 / P95 / P100 (teto 1.200)', f"{nr['p50']} / {nr['p95']} / {nr['p100']}"],
+            ['', ''],
+        ]
+
+    if security_audit_data:
+        stats = security_audit_data['stats']
+        rows += [
+            ['SEGREGAÇÃO DE FUNÇÕES (SoD) EM COMPRAS — detalhe: abas 18-20', ''],
+            ['Ambientes cobertos', ', '.join(stats['envs_covered'])],
+            ['Grupos estruturalmente conflitantes (Nível 1)', stats['total_group_conflicts']],
+            ['Pessoas únicas ATIVAS com conflito (Nível 2)', stats['distinct_users_active']],
+        ]
+        for app, qtd in stats['distinct_users_active_by_app'].items():
+            rows.append([f'  ...ativas em {app}', qtd])
+        rows += [
+            ['Usuários com acesso MAXADMIN', stats['total_maxadmin_users']],
+            ['EVIDÊNCIA: mesma pessoa submeteu E aprovou (365d)', stats['total_real_evidence_cases']],
+            ['  ...valor envolvido (USD, por PR única)', f"{stats['total_real_evidence_value']:,.2f}"],
+            ['  ...CRÍTICO (2ª instância exigida e não houve)', stats['total_critical_evidence_cases']],
+            ['  ...valor dos CRÍTICOS (USD)', f"{stats['total_critical_evidence_value']:,.2f}"],
+            ['AUTOAPROVAÇÃO DIRETA (solicitante real = aprovador)', stats['total_self_approval_cases']],
+            ['  ...valor envolvido (USD)', f"{stats['total_self_approval_value']:,.2f}"],
+            ['CADEIA PR→PO (aprovou a PR e gerou a PO)', stats['total_pr_po_chain_cases']],
+        ]
+
+    def resumo_highlight(row, idx):
+        label = str(row[0])
+        if label and not label.startswith('  ') and label.rstrip('') == label and ('—' in label or label.isupper()):
+            return 'dbeafe'
+        if 'CRÍTICO' in label or 'AUTOAPROVAÇÃO' in label or 'ATIVAS com conflito' in label:
+            return 'fecaca'
+        return None
+
+    add_sheet('17_Resumo_Consolidado', ['Métrica', 'Valor'], rows, highlight=resumo_highlight)
+
+
+def add_security_audit_sheets(wb, security_audit_data, add_sheet):
+    """Abas da auditoria de segregação de funções (SoD) em Compras,
+    consolidadas em 3 abas (era 9): grupos (26), pessoas incl. MAXADMIN (27)
+    e evidências das 3 camadas numa só aba com coluna CAMADA (28). Os
+    antigos recortes de PO (31/32) eram subconjuntos filtráveis pela coluna
+    APP e foram removidos."""
+
+    # Aba 26: Nível 1 — grupos estruturalmente conflitantes (todas as apps;
+    # filtre a coluna APP para ver só PO/PR/Requisição Simplificada)
+    if security_audit_data['group_conflicts']:
+        headers = ['ENVIRONMENT', 'GROUPNAME', 'APP', 'APP_LABEL', 'DESCRIPTION',
+                   'OPCOES_EMISSOR', 'OPCOES_APROVADOR', 'RECOMENDACAO']
+        add_sheet('18_SoD_Grupos', headers, security_audit_data['group_conflicts'],
+                  highlight=lambda r, i: 'fee2e2')
+
+    # Aba 27: pessoas — conflitos de Nível 2 + membros de MAXADMIN, com
+    # coluna TIPO para filtrar
+    pessoas = []
+    for c in security_audit_data.get('user_conflicts', []):
+        pessoas.append({**c, 'TIPO': 'CONFLITO_SOD'})
+    for m in security_audit_data.get('maxadmin_users', []):
+        pessoas.append({'TIPO': 'MAXADMIN', 'ENVIRONMENT': m['ENVIRONMENT'], 'USERID': m['USERID'],
+                        'DISPLAYNAME': m['DISPLAYNAME'], 'TITLE': m['TITLE'], 'STATUS': m['STATUS']})
+    if pessoas:
+        headers = ['TIPO', 'ENVIRONMENT', 'USERID', 'DISPLAYNAME', 'TITLE', 'STATUS', 'APP', 'APP_LABEL',
+                   'GRUPOS_EMISSOR', 'GRUPOS_APROVADOR', 'ORIGEM_CONFLITO', 'RECOMENDACAO',
+                   'PAPEL_RECOMENDADO', 'JUSTIFICATIVA_PAPEL']
+
+        def user_highlight(row, idx):
+            if row.get('TIPO') == 'MAXADMIN':
+                return 'e2e8f0'
+            if row.get('STATUS', '').strip().upper() not in ('ACTIVE', 'ATIVO', 'ENABLED'):
+                return 'f1f5f9'
+            return 'fee2e2' if row.get('ORIGEM_CONFLITO') == 'MESMO_GRUPO' else 'fef3c7'
+
+        add_sheet('19_SoD_Pessoas', headers, pessoas, highlight=user_highlight)
+
+    # Aba 28: evidências das 3 camadas numa só aba (coluna CAMADA):
+    #   SUBMETEU_E_APROVOU  — WFTRANSACTION WAPPR+APPR pela mesma pessoa
+    #   AUTOAPROVACAO       — solicitante real (OOG_REQUESTEDBY) = aprovador
+    #   APROVOU_PR_GEROU_PO — cadeia PR→PO (OOG_CREAPOGRP)
+    evid = []
+    for e in security_audit_data.get('real_evidence', []):
+        evid.append({
+            'CAMADA': 'SUBMETEU_E_APROVOU', 'SEVERIDADE': e['SEVERIDADE'],
+            'SITEID': e['SITEID'], 'PRNUM': e['PRNUM'], 'DESCRIPTION': e['DESCRIPTION'],
+            'TOTALCOST_USD': e['TOTALCOST'], 'STATUS_DOC': e['STATUS'],
+            'PESSOA': e['PERSONID'], 'NOME_PESSOA': e.get('NOME_PESSOA', ''),
+            'TITULO_PESSOA': e.get('TITULO_PESSOA', ''), 'STATUS_PESSOA': e.get('STATUS_PESSOA', ''),
+            'DATA_SUBMISSAO': e.get('DATA_SUBMISSAO', ''), 'DATA_APROVACAO': e.get('DATA_APROVACAO', ''),
+            'ROTEADO_2A_INSTANCIA': e.get('ROTEADO_2A_INSTANCIA', ''), 'PONUM_GERADA': '',
+        })
+    for e in security_audit_data.get('self_approval_evidence', []):
+        evid.append({
+            'CAMADA': 'AUTOAPROVACAO', 'SEVERIDADE': e['SEVERIDADE'],
+            'SITEID': e['SITEID'], 'PRNUM': e['PRNUM'], 'DESCRIPTION': e['DESCRIPTION'],
+            'TOTALCOST_USD': e['TOTALCOST'], 'STATUS_DOC': e['STATUS'],
+            'PESSOA': e['SOLICITANTE_REAL'], 'NOME_PESSOA': e.get('NOME_PESSOA', ''),
+            'TITULO_PESSOA': e.get('TITULO_PESSOA', ''), 'STATUS_PESSOA': e.get('STATUS_PESSOA', ''),
+            'DATA_SUBMISSAO': '', 'DATA_APROVACAO': e.get('DATA_APROVACAO', ''),
+            'ROTEADO_2A_INSTANCIA': e.get('ROTEADO_2A_INSTANCIA', ''), 'PONUM_GERADA': '',
+        })
+    for e in security_audit_data.get('pr_po_chain_evidence', []):
+        evid.append({
+            'CAMADA': 'APROVOU_PR_GEROU_PO', 'SEVERIDADE': 'CRITICO',
+            'SITEID': e['SITEID'], 'PRNUM': e['PRNUM'], 'DESCRIPTION': e['DESCRIPTION'],
+            'TOTALCOST_USD': e['TOTALCOST'], 'STATUS_DOC': e['STATUS'],
+            'PESSOA': e['PERSONID'], 'NOME_PESSOA': e.get('NOME_PESSOA', ''),
+            'TITULO_PESSOA': e.get('TITULO_PESSOA', ''), 'STATUS_PESSOA': e.get('STATUS_PESSOA', ''),
+            'DATA_SUBMISSAO': e.get('DATA_APROVACAO_PR', ''), 'DATA_APROVACAO': e.get('DATA_CRIACAO_PO', ''),
+            'ROTEADO_2A_INSTANCIA': '', 'PONUM_GERADA': e.get('PONUM_GERADA', ''),
+        })
+    if evid:
+        headers = ['CAMADA', 'SEVERIDADE', 'SITEID', 'PRNUM', 'DESCRIPTION', 'TOTALCOST_USD',
+                   'STATUS_DOC', 'PESSOA', 'NOME_PESSOA', 'TITULO_PESSOA', 'STATUS_PESSOA',
+                   'DATA_SUBMISSAO', 'DATA_APROVACAO', 'ROTEADO_2A_INSTANCIA', 'PONUM_GERADA']
+
+        def evid_highlight(row, idx):
+            if row.get('CAMADA') == 'AUTOAPROVACAO' or row.get('SEVERIDADE') == 'CRITICO':
+                return 'fecaca'
+            return None
+
+        add_sheet('20_SoD_Evidencias', headers, evid, highlight=evid_highlight)
+
+
+def add_access_model_sheets(wb, group_baseline_data, role_standardization_data, add_sheet):
+    """Abas do modelo de acesso por cargo, consolidadas em 3 (era 4):
+    - 29_Cargo_x_Grupos: funde o baseline por cargo/unidade (ex-35) e o
+      padrão global recomendado para o MAS 9 (ex-37), com coluna UNIDADE
+      ('TODAS (padrão MAS 9)' para o alvo global).
+    - 30_Perfil_Cargo_Desvios: pessoas fora do padrão do próprio cargo.
+    - 31_Grupos_Duplicados: clusters de grupos com permissão quase idêntica
+      sob nomes diferentes (material para a terceirizada fundir)."""
+    merged = []
+    for t in (role_standardization_data or {}).get('role_targets', []):
+        merged.append({
+            'CARGO': t['CARGO_NORMALIZADO'],
+            'UNIDADE': 'TODAS (padrão MAS 9)',
+            'QTD_PESSOAS': t['QTD_PESSOAS'],
+            'GRUPOS_PADRAO': t['GRUPO_PADRAO_RECOMENDADO'],
+            'CONSISTENTE_ENTRE_UNIDADES': t['CONSISTENTE_ENTRE_UNIDADES'],
+            'ACAO': t['ACAO'],
+        })
+    for p in (group_baseline_data or {}).get('profile_rows', []):
+        merged.append({
+            'CARGO': p['TITLE'],
+            'UNIDADE': p['ENVIRONMENT'],
+            'QTD_PESSOAS': p['QTD_PESSOAS'],
+            'GRUPOS_PADRAO': p['GRUPOS_PADRAO'],
+            'CONSISTENTE_ENTRE_UNIDADES': '',
+            'ACAO': '',
+        })
+    if merged:
+        merged.sort(key=lambda x: (x['CARGO'], x['UNIDADE'] != 'TODAS (padrão MAS 9)', x['UNIDADE']))
+        headers = ['CARGO', 'UNIDADE', 'QTD_PESSOAS', 'GRUPOS_PADRAO',
+                   'CONSISTENTE_ENTRE_UNIDADES', 'ACAO']
+        add_sheet('21_Cargo_x_Grupos', headers, merged,
+                  highlight=lambda r, i: 'fecaca' if r.get('CONSISTENTE_ENTRE_UNIDADES') is False
+                  else ('dbeafe' if r.get('UNIDADE') == 'TODAS (padrão MAS 9)' else None))
+
+    deviation_rows = (group_baseline_data or {}).get('deviation_rows', [])
+    if deviation_rows:
+        headers = ['ENVIRONMENT', 'USERID', 'DISPLAYNAME', 'TITLE', 'COHORT_SIZE',
+                   'GRUPOS_EXCESSO', 'GRUPOS_FALTANTES', 'QTD_EXCESSO', 'QTD_FALTANTES']
+        add_sheet('22_Perfil_Cargo_Desvios', headers, deviation_rows,
+                  highlight=lambda r, i: 'fecaca' if r.get('QTD_EXCESSO', 0) > 0 else 'fef3c7')
+
+    duplicate_clusters = (role_standardization_data or {}).get('duplicate_group_clusters', [])
+    if duplicate_clusters:
+        headers = ['CANONICO', 'MEMBROS', 'QTD_MEMBROS', 'DESCRICOES',
+                   'ALERTA_PRIVILEGIO_DIFERENTE', 'ALERTA_NOMES_DIVERGENTES']
+        rows = [{**c, 'MEMBROS': '; '.join(c['MEMBROS'])} for c in duplicate_clusters]
+        add_sheet('23_Grupos_Duplicados', headers, rows,
+                  highlight=lambda r, i: 'fecaca' if r.get('ALERTA_PRIVILEGIO_DIFERENTE') else 'fef3c7')
+
+
+def add_reconciliation_sheets(wb, reconciliation_data, add_sheet):
+    """Aba de detalhe por usuário do Cenário Conciliado (o resumo foi
+    fundido na 25_Resumo_Consolidado)."""
+    rows = reconciliation_data.get('rows', [])
+    if rows:
+        headers = list(rows[0].keys())
+        add_sheet('24_Cenario_Conciliado_Usuarios', headers, rows,
+                  highlight=lambda r, i: 'fef3c7' if r.get('POPULACAO') == 'TERCEIRO_ATIVO' else None)
+
+
+def add_audit_sheet(wb, persongroupview, identities, groupuser, logintrack, add_sheet):
+    """Adiciona aba única de auditoria (ativos + inativados) — pedido de
+    auditoria 2026-07-13.
+
+    TYPE vem de MAXUSER (via consolidated_user_identity.csv) — valores reais
+    'TYPE 1'..'TYPE 10' — não de PERSONGROUPVIEW.employeetype (campo
+    diferente, que ficava vazio/errado aqui). O Maximo guarda a data da
+    última mudança de status num único campo (PERSONGROUPVIEW.statusdate);
+    aqui ela é jogada em DATA_CONCESSAO (se STATUS=ACTIVE) ou DATA_INATIVACAO
+    (se não), nunca as duas ao mesmo tempo — colunas separadas para não
+    exigir olhar o STATUS pra saber o que aquela data significa. DEFSITE,
+    BASE_DO_PERFIL e BASE_LOGADA passam por norm_env() para exibição (ex.:
+    'OP-BASE'/'BASE-UNP' -> 'BASE', 'NORBE09' -> 'N09') — mesmos ambientes,
+    nomes diferentes por fonte. GRUPOS_ACESSO é a lista de GROUPNAME
+    (GROUPUSER) do USERID no mesmo ambiente. DATA_ULTIMO_ACESSO e
+    BASE_LOGADA vêm do histórico de LOGINTRACKING (evento real de acesso,
+    não a base de cadastro). ALERTA_INATIVIDADE sinaliza conta ATIVA sem
+    login há mais de 50 dias (ou nunca logada) — pedido de auditoria
+    2026-07-13: "conta ativa sem acesso há mais de 50 dias deve estar
+    inativa". Referência de "hoje" é a data mais recente encontrada no
+    próprio LOGINTRACKING (não a data corrida do sistema).
+
+    A aba inclui TODA identidade (ativa ou inativa), mesmo sem registro em
+    PERSONGROUPVIEW — quando não há data conhecida, DATA_CONCESSAO e
+    DATA_INATIVACAO ficam em branco em vez de a pessoa desaparecer da lista
+    sem aviso (686/1900 ativos, 36%, incluindo contas MAXADMIN, ficavam de
+    fora antes desta correção — auditoria 2026-07-13)."""
 
     def clean_value(v):
         """Remove caracteres ilegais do Excel (caracteres de controle)."""
@@ -566,28 +925,131 @@ def add_audit_sheet(wb, persongroupview, add_sheet):
         s = str(v)
         return ''.join(c if ord(c) >= 32 or c in '\n\r\t' else '' for c in s)
 
-    # Filtrar apenas usuários ativos com statusdate
-    active_with_date = [r for r in persongroupview if r.get('status', '').strip().upper() == 'ACTIVE' and r.get('statusdate', '').strip()]
+    def parse_dt(s):
+        for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d-%H.%M.%S", "%Y-%m-%d"):
+            try:
+                return datetime.strptime(s.strip(), fmt)
+            except (ValueError, AttributeError):
+                continue
+        return None
 
-    # Preparar headers
-    headers = ['USERID', 'DISPLAYNAME', 'STATUS', 'STATUSDATE', 'TYPE', 'DEFSITE', 'TITLE', 'PERSONGROUP', 'ENVIRONMENT']
+    # ENV_DB (identities) usa nomes como 'NORBE09'; GROUPUSER/LOGINTRACKING
+    # usam o alias curto 'N09' — sem normalizar, o cruzamento por ambiente
+    # falha silenciosamente e GRUPOS_ACESSO fica vazio para essas contas.
+    ENV_ALIAS = {'NORBE06': 'N06', 'NORBE08': 'N08', 'NORBE09': 'N09',
+                 'BASE-UNP': 'BASE', 'OP-BASE': 'BASE', 'ODRL-SP': 'BASE'}
+
+    def norm_env(env):
+        e = (env or '').strip().upper()
+        return ENV_ALIAS.get(e, e)
+
+    # STATUSDATE só existe em PERSONGROUPVIEW, indexado por PERSONID.
+    statusdate_by_personid = {}
+    for r in persongroupview:
+        pid = r.get('personid', '').strip().upper()
+        sd = r.get('statusdate', '').strip()
+        if pid and sd and pid not in statusdate_by_personid:
+            statusdate_by_personid[pid] = sd
+
+    # Grupos de acesso (GROUPNAME) por (ENVIRONMENT normalizado, USERID).
+    groups_by_env_userid = defaultdict(set)
+    for g in groupuser:
+        env = norm_env(g.get('ENVIRONMENT', ''))
+        uid = g.get('USERID', '').strip().upper()
+        grp = g.get('GROUPNAME', '').strip()
+        if uid and grp:
+            groups_by_env_userid[(env, uid)].add(grp)
+
+    # Último login real (data + base logada) por USERID, via LOGINTRACKING.
+    # max_login_dt é usado como referência de "hoje" para calcular dias sem
+    # acesso — mesmo padrão de allocation_analyzer.py (data corrida do
+    # servidor não é confiável neste ambiente de execução).
+    last_login_by_userid = {}
+    max_login_dt = None
+    for rec in logintrack:
+        if (rec.get('ATTEMPTRESULT') or '').strip().upper() != 'LOGIN':
+            continue
+        uid = (rec.get('USERID') or '').strip().upper()
+        if not uid:
+            continue
+        dt = parse_dt(rec.get('ATTEMPTDATE', ''))
+        if not dt:
+            continue
+        if not max_login_dt or dt > max_login_dt:
+            max_login_dt = dt
+        prev = last_login_by_userid.get(uid)
+        if not prev or dt > prev[0]:
+            last_login_by_userid[uid] = (dt, (rec.get('ENVIRONMENT') or '').strip())
+    INATIVIDADE_LIMITE_DIAS = 50
+
+    # Base: TODAS as identidades (ativos e inativos), com ou sem STATUSDATE
+    # conhecida. Antes, quem não tinha registro em PERSONGROUPVIEW (686/1900
+    # ativos, 36% — auditoria 2026-07-13, incluindo contas MAXADMIN) era
+    # excluído da aba sem nenhum aviso. Agora aparece igual, só com
+    # DATA_CONCESSAO/DATA_INATIVACAO em branco quando a data é desconhecida.
+    with_date = []
+    for r in identities:
+        pid = r.get('PERSONID', '').strip().upper()
+        statusdate = statusdate_by_personid.get(pid, '')
+        with_date.append((r, statusdate))
+
+    headers = ['USERID', 'DISPLAYNAME', 'EMAIL', 'STATUS', 'DATA_CONCESSAO', 'DATA_INATIVACAO', 'TYPE', 'DEFSITE', 'TITLE',
+               'PERSONGROUP', 'BASE_DO_PERFIL', 'GRUPOS_ACESSO', 'DATA_ULTIMO_ACESSO', 'BASE_LOGADA',
+               'DIAS_SEM_ACESSO', 'ALERTA_INATIVIDADE']
 
     rows = []
-    for r in active_with_date[:5000]:  # Limitar a 5000 linhas
+    for r, statusdate in with_date:  # Sem limite de linhas — ver nota acima sobre não esconder ninguém
+        env = r.get('ENV_DB', '').strip()
+        uid = r.get('USERID', '').strip().upper()
+        is_active = r.get('STATUS', '').strip().upper() == 'ACTIVE'
+        grupos = sorted(groups_by_env_userid.get((norm_env(env), uid), []))
+        last_login = last_login_by_userid.get(uid)
+
+        # Conta ATIVA sem login há mais de 50 dias (ou nunca logou) é
+        # sinalizada explicitamente — pedido de auditoria 2026-07-13:
+        # "se tiver alguma conta ativa sem acesso há mais de 50 dias,
+        # apontar na aba de auditoria".
+        dias_sem_acesso = ''
+        alerta = ''
+        if is_active and max_login_dt:
+            if last_login:
+                dias_sem_acesso = (max_login_dt - last_login[0]).days
+                if dias_sem_acesso > INATIVIDADE_LIMITE_DIAS:
+                    alerta = f'REVISAR — {dias_sem_acesso}d sem acesso'
+            else:
+                alerta = 'REVISAR — nenhum login registrado'
+
         rows.append({
-            'USERID': clean_value(r.get('personid', '')),
-            'DISPLAYNAME': clean_value(r.get('displayname', '')),
-            'STATUS': clean_value(r.get('status', '')),
-            'STATUSDATE': clean_value(r.get('statusdate', '')),
-            'TYPE': clean_value(r.get('employeetype', '')),
-            'DEFSITE': clean_value(r.get('location', '')),
-            'TITLE': clean_value(r.get('title', '')),
-            'PERSONGROUP': clean_value(r.get('persongroup', '')),
-            'ENVIRONMENT': clean_value(r.get('ENVIRONMENT', '')),
+            'USERID': clean_value(r.get('USERID', '')),
+            'DISPLAYNAME': clean_value(r.get('DISPLAYNAME', '')),
+            'EMAIL': clean_value(r.get('PRIMARYEMAIL', '')),
+            'STATUS': clean_value(r.get('STATUS', '')),
+            'DATA_CONCESSAO': clean_value(statusdate) if is_active else '',
+            'DATA_INATIVACAO': clean_value(statusdate) if not is_active else '',
+            'TYPE': clean_value(r.get('TYPE', '')),
+            'DEFSITE': clean_value(norm_env(r.get('DEFSITE', ''))),
+            'TITLE': clean_value(r.get('TITLE', '')),
+            'PERSONGROUP': clean_value(r.get('PERSONGROUP', '')),
+            'BASE_DO_PERFIL': clean_value(norm_env(env)),
+            'GRUPOS_ACESSO': '; '.join(grupos),
+            'DATA_ULTIMO_ACESSO': last_login[0].strftime('%Y-%m-%d %H:%M:%S') if last_login else '',
+            'BASE_LOGADA': clean_value(norm_env(last_login[1])) if last_login else '',
+            'DIAS_SEM_ACESSO': dias_sem_acesso,
+            'ALERTA_INATIVIDADE': alerta,
         })
 
-    add_sheet('20_Auditoria_Acesso', headers, rows)
-    print(f'✓ Aba 20 adicionada: {len(rows)} registros com data de concessão')
+    # Ativos primeiro, depois inativos; dentro dos ativos, quem tem alerta de
+    # inatividade sobe para o topo (é o que a auditoria mais precisa ver
+    # primeiro); resto ordenado por login mais antigo primeiro.
+    rows.sort(key=lambda x: (
+        x['STATUS'].upper() != 'ACTIVE',
+        x['ALERTA_INATIVIDADE'] == '',
+        x['DATA_ULTIMO_ACESSO'] == '',
+        x['DATA_ULTIMO_ACESSO'],
+    ), reverse=False)
+
+    add_sheet('16_Auditoria_Acesso', headers, rows)
+    print(f'✓ Aba 16 adicionada: {len(rows)} registros (ativos + inativados)')
 
 
 # --- Allocation Excel Sheets (Maximo 9) ---
@@ -602,16 +1064,21 @@ def add_allocation_sheets(wb, allocation_data, add_sheet):
         ['Usuários analisados', stats['total_users']],
         ['Usuários com login nos últimos 90d', stats['users_with_logins_90d']],
         ['Usuários inativos (no Maximo)', stats['users_inactive']],
+        ['Usuários com STATUS ausente na extração (revisar)', stats.get('users_status_desconhecido', 0)],
         ['Usuários que exigem conta em >1 ambiente', stats['users_multi_env']],
         ['Total de contas sugeridas (soma)', stats['total_suggested_accounts']],
         ['Limite mín. de acessos p/ ambiente secundário', stats['min_secundario']],
         ['Janela de análise (início)', stats['window_start']],
         ['Janela de análise (fim)', stats['window_end']],
     ]
-    add_sheet('21_Alocacao_Resumo', ['Métrica', 'Valor'], summary_rows)
+    add_sheet('12_Alocacao_Resumo', ['Métrica', 'Valor'], summary_rows)
 
     # Aba 22: Detalhamento de Alocação / Sugestão (com colunas individuais por ambiente)
-    ENV_COLS = ['BASE', 'ODN1', 'ODN2', 'N06', 'N08', 'N09', 'HTQ', 'POL', 'OUTROS']
+    # Precisa bater com allocation_analyzer.KNOWN_ENVS — um ambiente que está em
+    # KNOWN_ENVS mas não aqui é excluído do cálculo de 'OUTROS' (que só soma
+    # ambientes NÃO listados em KNOWN_ENVS) e também não ganha coluna própria,
+    # desaparecendo silenciosamente da aba se algum dia tiver login registrado.
+    ENV_COLS = ['BASE', 'ODN1', 'ODN2', 'ODN3', 'ODN4', 'N06', 'N08', 'N09', 'HTQ', 'POL', 'PGA', 'PGB', 'PGC', 'OUTROS']
     headers = (['USERID', 'NOME', 'STATUS', 'EMAIL', 'ALOCACAO_PRINCIPAL',
                 'AMBIENTE_PRINCIPAL_USO', 'LOGINS_90D', 'ULTIMO_LOGIN'] +
                ENV_COLS +
@@ -635,29 +1102,21 @@ def add_allocation_sheets(wb, allocation_data, add_sheet):
             'HISTORICO_90D': a['detail'],
             'MOTIVO': a['reason'],
         })
-    add_sheet('22_Alocacao_Sugestao', headers, rows)
+    add_sheet('13_Alocacao_Sugestao', headers, rows)
 
 
 # --- Migration Excel Sheets ---
 def add_migration_sheets(wb, migration_data, add_sheet):
-    """Adiciona abas do Excel com recomendações de migração."""
+    """Adiciona a aba de recomendações de migração. O resumo por tipo foi
+    consolidado na aba 17_Resumo_Consolidado (pedido do usuário 2026-07-11:
+    menos abas, informação fundida)."""
 
-    # Aba 16: Resumo de Recomendações
-    summary_rows = [['Tipo', 'Prioridade', 'Quantidade']]
-    tipo_counts = {}
-    for r in migration_data:
-        tipo = r['tipo']
-        tipo_counts[tipo] = tipo_counts.get(tipo, 0) + 1
-
-    for tipo, count in sorted(tipo_counts.items()):
-        prioridade = next((r['prioridade'] for r in migration_data if r['tipo'] == tipo), 'N/A')
-        summary_rows.append([tipo, prioridade, count])
-
-    add_sheet('16_Migracao_Resumo', ['Tipo', 'Prioridade', 'Quantidade'], summary_rows)
-
-    # Aba 17: Lista Completa de Recomendações
+    # Lista Completa de Recomendações — o entregável de migração MAS 9:
+    # migrar?, qual grupo (atuais + recomendado por cargo), quais acessos.
     headers = ['Tipo', 'Prioridade', 'USERID', 'E-mail', 'Nome AD', 'Nome Maximo',
-               'Status AD', 'Status Maximo', 'Ambientes', 'Grupos AD', 'Motivo', 'Ação']
+               'Status AD', 'Status Maximo', 'Ambientes (env:status)', 'Cargo',
+               'Grupos Maximo Atuais', 'Grupo Recomendado (MAS 9)', 'Match Por',
+               'Grupos AD', 'Motivo', 'Ação']
     rows = []
     for r in migration_data:
         rows.append({
@@ -669,12 +1128,16 @@ def add_migration_sheets(wb, migration_data, add_sheet):
             'Nome Maximo': r['nome_maximo'],
             'Status AD': r['status_ad'],
             'Status Maximo': r['status_maximo'],
-            'Ambientes': r['envs'],
+            'Ambientes (env:status)': r.get('envs_detalhe') or r['envs'],
+            'Cargo': r.get('cargo', ''),
+            'Grupos Maximo Atuais': r.get('grupos_maximo', ''),
+            'Grupo Recomendado (MAS 9)': r.get('grupo_recomendado_mas9', ''),
+            'Match Por': r.get('match_por', ''),
             'Grupos AD': r['grupos_ad'],
             'Motivo': r['motivo'],
             'Ação': r['acao'],
         })
-    add_sheet('17_Migracao_Detalhada', headers, rows)
+    add_sheet('11_Migracao_MAS9', headers, rows)
 
 
 # --- Main Orchestration ---
@@ -842,33 +1305,7 @@ def main():
     # Depois este valor será substituído por dados por escopo no frontend.
     app_points_data_optimized = all_app_points_for_plan
 
-    # 5b. Compute High-Water Mark and peak contributors for CONCURRENT pool
-    concurrency_summary = {}
-    try:
-        metrics_path = ROOT / 'output' / 'consolidated' / 'true_capacity_metrics.json'
-        concurrency_summary = {}
-
-        if metrics_path.exists():
-            metrics = json.loads(metrics_path.read_text(encoding='utf-8'))
-
-        concurrency_summary = {
-            'hourly_counts': metrics.get('hourly_counts', {}),
-            'hourly_app_points': metrics.get('hourly_app_points', {}),
-            'hourly_concurrent_app_points': metrics.get('hourly_concurrent_app_points', {}),
-            'hourly_app_points_nem': metrics.get('hourly_app_points_nem', {}),
-            'hourly_app_points_nem_by_scope': metrics.get('hourly_app_points_nem_by_scope', {}),
-            'true_total_app_points': metrics.get('true_total_app_points', 0),
-            'authorized_reserved_points': metrics.get('authorized_reserved_points', 0),
-            'peak_hours': metrics.get('peak_hours', []),
-            'peak_hours_users': metrics.get('peak_hours_users', []),
-            'peak_contributors_count': metrics.get('peak_contributors_count', 0),
-            'peak_contributors': metrics.get('peak_contributors', [])
-        }
-    except Exception as e:
-        print(f"[Aviso] Falha ao calcular concorrência avançada: {e}")
-
-
-        # 6. Prepare Data for HTML Builder
+    # 6. Prepare Data for HTML Builder
     summary_data = {
         'active_profiles_count': len(active_profiles),
         'title_divergence_count': len(title_divergences_list),
@@ -878,7 +1315,6 @@ def main():
             'conc_users': [s for s in app_points_data_optimized if s['LICENSE_MODEL'] == 'CONCURRENT'],
             'premium_users': [s for s in app_points_data_optimized if s['ENTITLEMENT'] == 'PREMIUM'],
         },
-        'concurrency': concurrency_summary
     }
 
 
@@ -892,6 +1328,8 @@ def main():
         'access_rows': all_data['access_rows'], # Needed for some original metrics
         'user_profiles': user_profiles, # Pass consolidated profiles for detailed tables
         'persongroupview': all_data['persongroupview'], # For audit sheet
+        'groupuser': all_data['groupuser'], # For audit sheet (grupos de acesso por USERID)
+        'logintrack': logintrack, # For audit sheet (data/base do último acesso real)
     }
 
     # 7. Análise de Saneamento de Identidades (AD vs Maximo)
@@ -912,7 +1350,37 @@ def main():
     print("=" * 100)
     allocation_result = analyze_allocation()
 
-    # 8. Build and Write HTML (com dados de AD, Maximo, Sanity, Migration e Allocation)
+    # 7d. Auditoria de Segregação de Funções (Emissor x Aprovador em Compras)
+    print("\n" + "=" * 100)
+    print("AUDITORIA DE SEGREGAÇÃO DE FUNÇÕES (EMISSOR x APROVADOR)")
+    print("=" * 100)
+    security_audit_result = analyze_security_audit()
+
+    # 7e. Perfil de Acesso por Cargo (excesso/falta de grupos vs. baseline do cargo)
+    print("\n" + "=" * 100)
+    print("PERFIL DE ACESSO POR CARGO (grupos padrão x desvios)")
+    print("=" * 100)
+    group_baseline_result = analyze_group_baseline()
+    from scripts.domain.group_baseline import print_summary as print_group_baseline_summary
+    print_group_baseline_summary(group_baseline_result)
+
+    # 7f. Padronização de Acesso (cargo x grupo padrão único para todas as unidades)
+    print("\n" + "=" * 100)
+    print("PADRONIZAÇÃO DE ACESSO (cargo x grupo padrão — material para terceirizada)")
+    print("=" * 100)
+    role_standardization_result = analyze_role_standardization()
+    from scripts.domain.role_standardization import print_summary as print_role_standardization_summary
+    print_role_standardization_summary(role_standardization_result)
+
+    # 7g. Cenário Conciliado de licenciamento (dimensionamento oficial MAS 9)
+    print("\n" + "=" * 100)
+    print("CENÁRIO CONCILIADO DE LICENCIAMENTO (AD ativo × Maximo ativo × uso real)")
+    print("=" * 100)
+    reconciliation_result = analyze_license_reconciliation()
+    from scripts.domain.license_reconciliation import print_summary as print_reconciliation_summary
+    print_reconciliation_summary(reconciliation_result)
+
+    # 8. Build and Write HTML (com dados de AD, Maximo, Sanity, Migration, Allocation, Security Audit, Perfil de Cargo e Padronização)
     html_content = build_html_structure(
         summary_data,
         governance_data,
@@ -923,12 +1391,16 @@ def main():
         maximo_users=all_data.get('maximo_users', []),
         sanity_data=sanity_result,
         migration_data=migration_recommendations,
-        allocation_data=allocation_result
+        allocation_data=allocation_result,
+        security_audit_data=security_audit_result,
+        group_baseline_data=group_baseline_result,
+        role_standardization_data=role_standardization_result,
+        reconciliation_data=reconciliation_result,
     )
     html_path = OUT_DIR / 'maximo_unified_dashboard.html'
     html_path.write_text(html_content, encoding='utf-8')
     print(f'WROTE {html_path.name}')
-    write_excel_workbook(summary_data, governance_data, app_points_data_optimized, domain_counts, missing_email_rows, sanity_result, migration_recommendations, identities=all_data.get('identities', []), allocation_data=allocation_result)
+    write_excel_workbook(summary_data, governance_data, app_points_data_optimized, domain_counts, missing_email_rows, sanity_result, migration_recommendations, identities=all_data.get('identities', []), allocation_data=allocation_result, security_audit_data=security_audit_result, group_baseline_data=group_baseline_result, role_standardization_data=role_standardization_result, reconciliation_data=reconciliation_result)
 
 if __name__ == '__main__':
     main()

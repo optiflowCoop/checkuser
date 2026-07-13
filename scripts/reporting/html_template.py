@@ -3,14 +3,15 @@ from datetime import datetime
 import json
 
 from .html_helpers import fmt_br, render_table
+from .ab0_extracao_modal import render_gear_icon, render_bat_modal, render_bat_modal_scripts
 from .ab1_painel import render_tab_painel
 from .ab2_governanca import render_tab_gov, render_allocation_summary
 from .ab3_cenarios import render_tab_apppoints
-from .ab4_eventos import render_tab_eventos
 from .ab5_plano_acao import render_tab_tabela
 from .ab6_peak import render_tab_peak
 from .ab7_saneamento import render_tab_saneamento, render_tab_saneamento_scripts
 from .ab8_migracao import render_tab_migracao, render_tab_migracao_scripts, render_allocation_detail
+from .ab9_seguranca import render_tab_seguranca, render_tab_seguranca_scripts
 
 
 def _render_styles():
@@ -149,6 +150,32 @@ def _render_styles():
         .border-accent { border-bottom: 3px solid var(--accent); }
         .border-success { border-bottom: 3px solid var(--success); }
         .border-neutral { border-bottom: 3px solid var(--neutral); }
+        .border-primary { border-bottom: 3px solid var(--primary); }
+        .border-secondary { border-bottom: 3px solid var(--secondary); }
+        .stat-card-warning { border-bottom: 3px solid var(--warning); }
+        .stat-card-danger { border-bottom: 3px solid var(--danger); }
+
+        /* ============================================================
+           TEXTO DE APOIO EM CARDS (descrição breve / rodapé)
+           ============================================================ */
+        .card-desc { color: var(--text-light); font-size: 0.85rem; margin: 0 0 1rem; line-height: 1.5; }
+        .card-footnote { color: var(--text-light); font-size: 0.78rem; margin: 0.75rem 0 0; }
+
+        /* ============================================================
+           FILTROS DE ESCOPO (radio) — usados em várias abas
+           ============================================================ */
+        .filter-bar {
+            display: flex; gap: 1.25rem; flex-wrap: wrap; align-items: center;
+            padding: 0.65rem 1rem; background: var(--neutral-bg); border: 1px solid var(--border);
+            border-radius: var(--radius); margin-bottom: 1rem;
+        }
+        .filter-bar-label { font-weight: 600; color: var(--secondary); font-size: 0.85rem; }
+        .radio-label { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.85rem; color: var(--text); }
+
+        .alert-inline {
+            margin-top: 1rem; padding: 0.6rem; background: var(--danger-bg); color: var(--danger);
+            font-weight: 600; border: 1px solid var(--danger); border-radius: 6px; font-size: 0.9rem; text-align: center;
+        }
 
         /* ============================================================
            TABLES
@@ -422,19 +449,20 @@ def _render_header_and_tabs():
             <h1>Dashboard Gerencial MAS 9.1 | Foresea</h1>
             <p>Capacity Planning Avançado e Saneamento de Identidades</p>
         </div>
-        <div>
+        <div style="display:flex; align-items:center; gap:1rem;">
             <p style="text-align: right; color: #cbd5e1;">Gerado em:<br><strong>{datetime.now().strftime("%d/%m/%Y %H:%M")}</strong></p>
+            {render_gear_icon()}
         </div>
     </div>
     <div class="tabs">
         <button class="tab-button active" onclick="openTab(event, 'tab-painel')">1. Painel Operacional</button>
         <button class="tab-button" onclick="openTab(event, 'tab-gov')">2. Governança & Saneamento</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-saneamento')" style="color:#ef4444;">3. Saneamento AD</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-migracao')" style="color:#10b981;">4. Recomendações de Migração</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-alloc-detail')" style="color:#7c3aed;">5. Detalhamento de Alocação</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-apppoints')" style="color:#60a5fa;">6. Cenários de AppPoints</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-eventos')" style="color:var(--warning);">7. Eventos Críticos</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-peak')" style="color:#7c3aed;">8. Peak Contributors</button>
+        <button class="tab-button" onclick="openTab(event, 'tab-seguranca')">3. Segregação de Funções</button>
+        <button class="tab-button" onclick="openTab(event, 'tab-saneamento')">4. Saneamento AD</button>
+        <button class="tab-button" onclick="openTab(event, 'tab-migracao')">5. Recomendações de Migração</button>
+        <button class="tab-button" onclick="openTab(event, 'tab-alloc-detail')">6. Detalhamento de Alocação</button>
+        <button class="tab-button" onclick="openTab(event, 'tab-apppoints')">7. Cenários de AppPoints</button>
+        <button class="tab-button" onclick="openTab(event, 'tab-peak')">8. Peak Contributors</button>
         <button class="tab-button" onclick="openTab(event, 'tab-tabela')">9. Plano de Ação</button>
     </div>
     """
@@ -543,7 +571,7 @@ def _render_scripts(analytics, identity_analytics):
             if (totalPoints > ceilingLimit) {{
                 document.getElementById('calcTotalDisplay').style.color = 'var(--danger)';
                 alertEl.style.display = 'block';
-                alertEl.innerText = '⚠️ TETO EXCEDIDO (>' + ceilingLimit.toLocaleString('pt-BR') + ')';
+                alertEl.innerText = 'TETO EXCEDIDO (>' + ceilingLimit.toLocaleString('pt-BR') + ')';
             }} else {{
                 document.getElementById('calcTotalDisplay').style.color = 'var(--success)';
                 alertEl.style.display = 'none';
@@ -568,42 +596,6 @@ def _render_scripts(analytics, identity_analytics):
                         datasets: [{{ data: data, backgroundColor: ['#1e3a8a', '#3b82f6', '#047857', '#10b981'] }}]
                     }},
                     options: {{ responsive: true, maintainAspectRatio: false, cutout: '50%', plugins: {{ legend: {{ position: 'right' }} }} }}
-                }});
-            }}
-        }}
-
-        let eventChartInstance = null;
-        function triggerEventScenario(type) {{
-            let totalPoints = Math.round(scenarioPoints[type] || 0);
-            let titleText = "", description = "";
-
-            if (type === 'p50') {{ titleText = "🟢 Cenário Cotidiano (P50)"; description = "Consumo normal em dia comum."; }} 
-            else if (type === 'p95') {{ titleText = "🟡 Pico Seguro (P95)"; description = "Consumo elevado dentro do esperado."; }}
-            else if (type === 'p100') {{ titleText = "🔴 Emergência Operacional (P100)"; description = "Pico máximo histórico registrado."; }}
-            else if (type === 'blackout') {{ titleText = "⚡ Blackout Total (100%)"; description = "Cenário extremo com todos os usuários ativos simultâneos."; }}
-
-            const outBox = document.getElementById('eventOutputBox');
-            outBox.innerText = titleText + ': ' + totalPoints.toLocaleString('pt-BR') + ' AppPoints. ' + description;
-            outBox.style.background = totalPoints > ceilingLimit ? '#fef2f2' : '#ecfdf5';
-            outBox.style.color = totalPoints > ceilingLimit ? 'var(--danger)' : '#047857';
-
-            const ctxEvent = document.getElementById('eventChart').getContext('2d');
-            if (eventChartInstance) {{
-                eventChartInstance.data.datasets[0].data = [totalPoints];
-                eventChartInstance.data.datasets[0].backgroundColor = totalPoints > 1200 ? '#ef4444' : '#2563eb';
-                eventChartInstance.update();
-            }} else {{
-                eventChartInstance = new Chart(ctxEvent, {{
-                    type: 'bar',
-                    data: {{
-                        labels: ['Consumo Simulado'],
-                        datasets: [{{ label: 'AppPoints Requeridos', data: [totalPoints], backgroundColor: '#2563eb', barThickness: 60 }}]
-                    }},
-                    options: {{
-                        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-                        scales: {{ x: {{ max: 2000, beginAtZero: true }} }},
-                        plugins: {{ legend: {{ display: false }} }}
-                    }}
                 }});
             }}
         }}
@@ -662,86 +654,131 @@ def _render_scripts(analytics, identity_analytics):
             downloadCSV(csv.join("\\n"), filename);
         }}
 
-        document.addEventListener('DOMContentLoaded', function() {{
-            try {{
-                const canvasEl = document.getElementById('peakLineChart');
-                if (canvasEl) {{
-                    const labels = JSON.parse(canvasEl.getAttribute('data-labels') || '[]');
-                    const usersData = JSON.parse(canvasEl.getAttribute('data-users-data') || '[]');
-                    const pointsData = JSON.parse(canvasEl.getAttribute('data-points-data') || '[]');
-                    const nemData = JSON.parse(canvasEl.getAttribute('data-nem-data') || '[]');
-                    const ctxPeak = canvasEl.getContext('2d');
-                    new Chart(ctxPeak, {{
-                        type: 'line',
-                        data: {{
-                            labels: labels,
-                            datasets: [{{
-                                label: 'Usuários Simultâneos',
-                                data: usersData,
-                                borderColor: '#7c3aed',
-                                backgroundColor: 'rgba(124, 58, 237, 0.1)',
-                                yAxisID: 'y-users',
-                                borderWidth: 3,
-                                tension: 0.3,
-                                unit: 'usuarios'
-                            }}, {{
-                                label: 'Consumo de AppPoints',
-                                data: pointsData,
-                                borderColor: '#f59e0b',
-                                backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                                yAxisID: 'y-points',
-                                borderWidth: 2,
-                                borderDash: [5, 5],
-                                tension: 0.3,
-                                unit: 'AppPoints'
-                            }}, {{
-                                label: 'AppPoints NEM',
-                                data: nemData,
-                                borderColor: '#ef4444',
-                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                                yAxisID: 'y-points',
-                                borderWidth: 2,
-                                tension: 0.3,
-                                unit: 'AppPoints'
-                            }}]
-                        }},
-                        options: {{
-                            responsive: true, maintainAspectRatio: false,
-                            interaction: {{ mode: 'index', intersect: false }},
-                            plugins: {{
-                                legend: {{ position: 'bottom' }},
-                                tooltip: {{
-                                    position: 'nearest', padding: 10,
-                                    titleFont: {{ weight: 'bold' }}, bodySpacing: 5,
-                                    callbacks: {{
-                                        label: function(ctx) {{
-                                            const label = ctx.dataset.label || '';
-                                            const unit = ctx.dataset.unit || '';
-                                            const value = Number(ctx.parsed.y || 0).toLocaleString('pt-BR');
-                                            return label + ': ' + value + ' ' + unit;
-                                        }}
-                                    }}
+        // ---- Gráfico + cards + tabela da aba Peak: reativos ao escopo
+        // (mesmo seletor de escopo da aba Cenários de AppPoints — pedido do
+        // usuário 2026-07-11). Cada escopo recalcula sua PRÓPRIA curva,
+        // pico e composição (não é um filtro visual sobre a série de TODOS).
+        let peakChartInstance = null;
+        function renderPeakChart(scope) {{
+            const canvasEl = document.getElementById('peakLineChart');
+            if (!canvasEl || typeof peakChartByScope === 'undefined') return;
+            const series = peakChartByScope[scope] || peakChartByScope['todos'] || {{labels: [], users: [], points_concurrent: [], points_nem: []}};
+            if (peakChartInstance) {{ peakChartInstance.destroy(); }}
+            const ctxPeak = canvasEl.getContext('2d');
+            peakChartInstance = new Chart(ctxPeak, {{
+                type: 'line',
+                data: {{
+                    labels: series.labels,
+                    datasets: [{{
+                        label: 'Usuários Simultâneos',
+                        data: series.users,
+                        borderColor: '#7c3aed',
+                        backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                        yAxisID: 'y-users',
+                        borderWidth: 3,
+                        tension: 0.3,
+                        unit: 'usuarios'
+                    }}, {{
+                        label: 'Consumo de AppPoints',
+                        data: series.points_concurrent,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        yAxisID: 'y-points',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        tension: 0.3,
+                        unit: 'AppPoints'
+                    }}, {{
+                        label: 'AppPoints NEM',
+                        data: series.points_nem,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        yAxisID: 'y-points',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        unit: 'AppPoints'
+                    }}]
+                }},
+                options: {{
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: {{ mode: 'index', intersect: false }},
+                    plugins: {{
+                        legend: {{ position: 'bottom' }},
+                        tooltip: {{
+                            position: 'nearest', padding: 10,
+                            titleFont: {{ weight: 'bold' }}, bodySpacing: 5,
+                            callbacks: {{
+                                label: function(ctx) {{
+                                    const label = ctx.dataset.label || '';
+                                    const unit = ctx.dataset.unit || '';
+                                    const value = Number(ctx.parsed.y || 0).toLocaleString('pt-BR');
+                                    return label + ': ' + value + ' ' + unit;
                                 }}
-                            }},
-                            scales: {{
-                                x: {{ title: {{ display: true, text: 'Hora do Dia' }} }},
-                                'y-users': {{ type: 'linear', position: 'left', beginAtZero: true, title: {{ display: true, text: 'Nº de Usuários Simultâneos', color: '#7c3aed' }} }},
-                                'y-points': {{ type: 'linear', position: 'right', beginAtZero: true, title: {{ display: true, text: 'AppPoints Consumidos', color: '#f59e0b' }}, grid: {{ drawOnChartArea: false }} }}
                             }}
                         }}
-                    }});
+                    }},
+                    scales: {{
+                        x: {{ title: {{ display: true, text: 'Hora do Dia' }} }},
+                        'y-users': {{ type: 'linear', position: 'left', beginAtZero: true, title: {{ display: true, text: 'Nº de Usuários Simultâneos', color: '#7c3aed' }} }},
+                        'y-points': {{ type: 'linear', position: 'right', beginAtZero: true, title: {{ display: true, text: 'AppPoints Consumidos (NEM)', color: '#ef4444' }}, grid: {{ drawOnChartArea: false }} }}
+                    }}
+                }}
+            }});
+        }}
+
+        function renderPeakBreakdownTable(breakdown) {{
+            const tbody = document.getElementById('peakBreakdownBody');
+            if (!tbody) return;
+            if (!breakdown || !breakdown.length) {{
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #64748b; padding: 2rem;">Nenhum contribuidor identificado nesse escopo.</td></tr>';
+                return;
+            }}
+            tbody.innerHTML = breakdown.map(function(b) {{
+                const color = peakLicenseBadgeColors[b.license_type] || '#64748b';
+                const label = peakLicenseBadgeLabels[b.license_type] || b.license_type;
+                const scopeLabel = peakScopeLabels[b.scope] || b.scope;
+                return '<tr data-scope="' + b.scope + '">' +
+                    '<td>' + scopeLabel + '</td>' +
+                    '<td><span style="background:' + color + '; color:white; padding:2px 8px; border-radius:4px; font-size:0.75rem;">' + label + '</span></td>' +
+                    '<td style="text-align:right;">' + b.qtd + '</td>' +
+                    '<td style="text-align:right;"><strong>' + b.pts + '</strong> pts</td></tr>';
+            }}).join('');
+        }}
+
+        function updateScopeFilterPeak() {{
+            const els = document.getElementsByName('scopeFilterPeak');
+            let scope = 'foresea';
+            for (let i = 0; i < els.length; i++) {{
+                if (els[i].checked) {{ scope = els[i].value; break; }}
+            }}
+            if (typeof peakStatsByScope === 'undefined') return;
+            const s = peakStatsByScope[scope] || peakStatsByScope['todos'];
+
+            renderPeakChart(scope);
+            renderPeakBreakdownTable(s.breakdown);
+
+            const setText = (id, val) => {{ const el = document.getElementById(id); if (el) el.innerText = val; }};
+            setText('peakCardP50', Math.round(s.p50 || 0).toLocaleString('pt-BR'));
+            setText('peakCardP100', Math.round(s.p100 || 0).toLocaleString('pt-BR'));
+            setText('peakCardP95', Math.round(s.p95 || 0).toLocaleString('pt-BR'));
+            setText('peakCardTime', s.peak_hour || 'N/A');
+            setText('peakCardTime2', '(' + (s.peak_hour || 'N/A') + ')');
+            setText('peakCardContributors', Number(s.contributors_count || 0).toLocaleString('pt-BR'));
+            setText('peakCardScopeLabel1', 'Escopo: ' + (peakScopeLabels[scope] || scope));
+            setText('peakContribText', Number(s.contributors_count || 0).toLocaleString('pt-BR') + ' pessoas simultâneas');
+        }}
+
+        document.addEventListener('DOMContentLoaded', function() {{
+            try {{
+                if (typeof peakChartByScope !== 'undefined') {{
+                    renderPeakChart('foresea');
                 }}
             }} catch(e) {{ console.error('peakLineChart init failed', e); }}
 
             const initialPoints = Math.round(scenarioPoints.p95);
             document.getElementById('calcTotalDisplay').innerText = initialPoints.toLocaleString('pt-BR');
-            try {{
-                const ceilLabel = document.getElementById('eventCeilingLabel');
-                if (ceilLabel) ceilLabel.innerText = 'Termômetro de Impacto (Limite: ' + ceilingLimit.toLocaleString('pt-BR') + ')';
-            }} catch(e) {{ }}
 
             loadScenario('otimizado_p95', document.getElementById('btnOtimizado'));
-            triggerEventScenario('p95');
         }});
 
         // ---- Escopo Filter Toggle (Aba 3) ----
@@ -760,18 +797,25 @@ def _render_scripts(analytics, identity_analytics):
             
             // Atualiza label de escopo
             const scopeLabelEl = document.getElementById('currentScopeLabel');
+            const scopeNames = {{
+                foresea: 'FORESEA + PARCEIRO', terceiros: 'TERCEIROS',
+                integracao: 'INTEGRAÇÃO (Oracle/Serviço)', todos: 'TODOS',
+            }};
             if (scopeLabelEl) {{
-                if (newScope === 'foresea') {{
-                    scopeLabelEl.innerText = 'Escopo: FORESEA + PARCEIRO';
-                }} else if (newScope === 'terceiros') {{
-                    scopeLabelEl.innerText = 'Escopo: TERCEIROS';
-                }} else if (newScope === 'integracao') {{
-                    scopeLabelEl.innerText = 'Escopo: INTEGRAÇÃO (Oracle/Serviço)';
-                }} else {{
-                    scopeLabelEl.innerText = 'Escopo: TODOS';
-                }}
+                scopeLabelEl.innerText = 'Escopo: ' + (scopeNames[newScope] || 'TODOS');
             }}
-            
+
+            // Card "Cenário Conciliado" acompanha o mesmo escopo selecionado.
+            const scopedPointsCard = scenarioPointsByScope[newScope] || scenarioPointsByScope['todos'];
+            const setCardText = (id, val) => {{ const el = document.getElementById(id); if (el) el.innerText = val; }};
+            setCardText('cardScopedP95', Math.round(scopedPointsCard.p95 || 0).toLocaleString('pt-BR'));
+            setCardText('cardScopedP100', Math.round(scopedPointsCard.p100 || 0).toLocaleString('pt-BR'));
+            setCardText('cardScopedP95Label', 'P95 — ' + (scopeNames[newScope] || 'TODOS'));
+            setCardText('cardScopedConciliados', Number(scopedPointsCard.conciliados || 0).toLocaleString('pt-BR'));
+            setCardText('cardScopedTerceiros', '+' + Number(scopedPointsCard.terceiros_ativos || 0).toLocaleString('pt-BR') + ' terceiros ativos');
+            setCardText('cardScopedAuthConc', Number(scopedPointsCard.authorized || 0).toLocaleString('pt-BR') + ' / ' + Number(scopedPointsCard.concurrent || 0).toLocaleString('pt-BR'));
+            setCardText('cardScopedReserva', Number(scopedPointsCard.reserva_authorized || 0).toLocaleString('pt-BR'));
+
             console.log("Filtro de escopo alterado para:", newScope);
             
             // Recarrega o cenário atualmente selecionado com novo escopo
@@ -790,22 +834,6 @@ def _render_scripts(analytics, identity_analytics):
             }}
         }}
 
-        // ---- Escopo Filter Toggle (Aba Peak Contributors) ----
-        function updateScopeFilterPeak() {{
-            var els2 = document.getElementsByName('scopeFilterPeak');
-            var sc2 = 'todos';
-            for (var j = 0; j < els2.length; j++) {{
-                if (els2[j].checked) {{ sc2 = els2[j].value; break; }}
-            }}
-            var table = document.getElementById('table-peak-contributors');
-            if (!table) return;
-            var rows = table.querySelectorAll('tbody tr');
-            for (var k = 0; k < rows.length; k++) {{
-                var rowScope = rows[k].getAttribute('data-scope');
-                if (!rowScope) continue;  // linha de "nenhum contribuidor" sem data-scope
-                rows[k].style.display = (sc2 === 'todos' || rowScope === sc2) ? '' : 'none';
-            }}
-        }}
     </script>
     """
 
@@ -830,18 +858,21 @@ def render_html(data):
 </head>
 <body>
     {_render_header_and_tabs()}
+    {render_bat_modal()}
     {render_tab_painel(analytics, identity_analytics)}
-    {render_tab_gov(gov_tables, data.get('allocation_data'))}
+    {render_tab_gov(gov_tables, data.get('allocation_data'), data.get('security_audit_data'))}
+    {render_tab_seguranca(data.get('security_audit_data'), data.get('group_baseline_data'), data.get('role_standardization_data'))}
     {render_tab_saneamento(data.get('sanity_data'))}
     {render_tab_migracao(data.get('migration_data'), data.get('allocation_data'))}
     {render_allocation_detail(data.get('allocation_data'))}
-    {render_tab_apppoints(analytics)}
-    {render_tab_eventos(analytics)}
+    {render_tab_apppoints(analytics, data.get('reconciliation_data'))}
     {render_tab_peak(analytics)}
     {render_tab_tabela(app_points_rows)}
     {_render_scripts(analytics, identity_analytics)}
     {render_tab_saneamento_scripts()}
     {render_tab_migracao_scripts()}
+    {render_tab_seguranca_scripts()}
+    {render_bat_modal_scripts()}
 </body>
 </html>"""
 

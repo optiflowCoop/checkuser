@@ -1,0 +1,9 @@
+IBM Db2 Interactive CLI Sample Program
+(C) COPYRIGHT International Business Machines Corp. 1993,1996
+All Rights Reserved
+Licensed Materials - Property of IBM
+US Government Users Restricted Rights - Use, duplication or
+disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+> SELECT COALESCE(p.SITEID,'') || ',' || COALESCE(p.PRNUM,'') || ',' || COALESCE(REPLACE(p.DESCRIPTION, ',', ';'), '') || ',' || COALESCE(REPLACE(CHAR(p.TOTALCOST), ',', '.'), '') || ',' || COALESCE(p.STATUS,'') || ',' || COALESCE(a.PERSONID,'') || ',' || COALESCE(CHAR(a.TRANSDATE),'') || ',' || COALESCE(CHAR(b.TRANSDATE),'') || ',' || COALESCE((SELECT MIN(pl.PONUM) FROM PRLINE pl WHERE pl.PRNUM=p.PRNUM AND pl.SITEID=p.SITEID AND pl.PONUM IS NOT NULL), '') AS CSV_ROW FROM WFTRANSACTION a JOIN WFTRANSACTION b ON a.OWNERID = b.OWNERID AND a.OWNERTABLE = b.OWNERTABLE AND a.PERSONID = b.PERSONID JOIN PR p ON p.PRID = a.OWNERID WHERE a.OWNERTABLE = 'PR' AND a.ACTIONPERFORMED = 'PR APPR' AND b.ACTIONPERFORMED = 'OOG_CREAPOGRP' AND a.PERSONID NOT IN ('MAXADMIN') AND a.TRANSDATE >= CURRENT_DATE - 365 DAYS;
+FetchAll: 0 rows fetched.
+> 

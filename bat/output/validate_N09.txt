@@ -1,0 +1,67 @@
+
+===============================================================================
+Client information for the current copy (copy name: C_Users_esilva_AppData_Local_Programs_Python_Python313_Lib_site-packages_clidriver):
+===============================================================================
+
+Client Package Type       : IBM Data Server Driver For ODBC and CLI
+Client Version (level/bit): DB2 v12.1.0.986 (s2410070955/64-bit)
+Client Platform           : NT 64BIT
+Install/Instance Path     : C:\Users\esilva\AppData\Local\Programs\Python\Python313\Lib\site-packages\clidriver
+
+Common App Data Path      : C:\ProgramData\IBM\DB2\C_Users_esilva_AppData_Local_Programs_Python_Python313_Lib_site-packages_clidriver
+DB2DSDRIVER_CFG_PATH value: <not-set>
+db2dsdriver.cfg Path      : <Common App Data Path>\cfg\db2dsdriver.cfg
+DB2CLIINIPATH value       : <not-set>
+db2cli.ini Path           : <Common App Data Path>\cfg\db2cli.ini
+db2diag.log Path          : <Common App Data Path>\db2diag.log
+
+===============================================================================
+List of all IBM Data Server client packages on the current workstation:
+===============================================================================
+
+Copyname                                                                              Version Package Language Installed-Location
+-------------------------------------------------------------------------------
+C_Users_esilva_AppData_Local_Programs_Python_Python313_Lib_site-packages_clidriver[C] 12.1.0000 CLI     EN       C:\Users\esilva\AppData\Local\Programs\Python\Python313\Lib\site-packages\clidriver
+-------------------------------------------------------------------------------
+ CLI: IBM Data Server Driver for ODBC and CLI
+-------------------------------------------------------------------------------
+
+===============================================================================
+db2dsdriver.cfg schema validation for the entire file:
+===============================================================================
+
+Note: The validation utility could not find the configuration file 
+db2dsdriver.cfg. The file is searched at 
+"C:\ProgramData\IBM\DB2\C_Users_esilva_AppData_Local_Programs_Python_Python313_Lib_site-packages_clidriver\cfg\db2dsdriver.cfg".
+
+===============================================================================
+db2cli.ini validation for database "prdmax76:10.120.149.24:50005":
+===============================================================================
+
+Note: The validation utility could not find the configuration file db2cli.ini. 
+The file is searched at 
+"C:\ProgramData\IBM\DB2\C_Users_esilva_AppData_Local_Programs_Python_Python313_Lib_site-packages_clidriver\cfg\db2cli.ini".
+
+===============================================================================
+db2dsdriver.cfg validation for database "prdmax76:10.120.149.24:50005":
+===============================================================================
+
+Note: The validation utility could not find the configuration file 
+db2dsdriver.cfg. The file is searched at 
+"C:\ProgramData\IBM\DB2\C_Users_esilva_AppData_Local_Programs_Python_Python313_Lib_site-packages_clidriver\cfg\db2dsdriver.cfg".
+
+===============================================================================
+Connection attempt for database "prdmax76:10.120.149.24:50005":
+===============================================================================
+
+[FAILED]: [IBM][CLI Driver] SQL30081N  A communication error has been detected. Communication protocol being used: "TCP/IP".  Communication API being used: "SOCKETS".  Location where the error was detected: "10.120.149.24".  Communication function detecting the error: "connect".  Protocol specific error code(s): "10060", "*", "*".  SQLSTATE=08001
+
+
+===============================================================================
+Error: The validation operation failed.
+===============================================================================
+
+===============================================================================
+The validation is completed.
+===============================================================================
+

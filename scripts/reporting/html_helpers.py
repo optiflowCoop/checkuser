@@ -27,19 +27,19 @@ def get_recommendation_badge(rec):
 # depende deste texto batendo com as opções do <select id="selGovDec">.
 def get_identity_hypothesis_badge(hypothesis):
     if hypothesis == 'CONFIRMED_DIFFERENT_PERSON':
-        return '<span class="badge badge-critical">🔴 ALTO - PESSOAS DIFERENTES</span>'
+        return '<span class="badge badge-critical">ALTO - PESSOAS DIFERENTES</span>'
     if hypothesis == 'REQUIRES_REVIEW':
-        return '<span class="badge badge-warning">🟡 MÉDIO - REQUER REVISÃO</span>'
+        return '<span class="badge badge-warning">MÉDIO - REQUER REVISÃO</span>'
     if hypothesis == 'POTENTIAL_SAME_PERSON':
-        return '<span class="badge badge-success">🟢 BAIXO - POSSÍVEL MESMA PESSOA</span>'
-    return '<span class="badge badge-neutral">⚖️ NÃO CLASSIFICADO</span>'
+        return '<span class="badge badge-success">BAIXO - POSSÍVEL MESMA PESSOA</span>'
+    return '<span class="badge badge-neutral">NÃO CLASSIFICADO</span>'
 
 
 # Vocabulário de CONFLICT_HINT real, produzido por src/login_conflicts.py
 # (ver login_conflicts.csv).
 def get_login_conflict_badge(conflict_hint):
     if conflict_hint == 'MULTIPLE_PERSONS_SAME_LOGIN':
-        return '<span class="badge badge-critical">🔴 ALTO - PESSOAS DIFERENTES</span>'
+        return '<span class="badge badge-critical">ALTO - PESSOAS DIFERENTES</span>'
     if conflict_hint == 'MULTIPLE_USERS_SAME_LOGIN':
-        return '<span class="badge badge-warning">🟡 MÉDIO - REQUER REVISÃO</span>'
-    return '<span class="badge badge-neutral">⚖️ NÃO CLASSIFICADO</span>'
+        return '<span class="badge badge-warning">MÉDIO - REQUER REVISÃO</span>'
+    return '<span class="badge badge-neutral">NÃO CLASSIFICADO</span>'

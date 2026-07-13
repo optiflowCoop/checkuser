@@ -44,14 +44,14 @@ O sistema CHECKUSER é uma ferramenta de **Capacity Planning e Governança de Li
 ┌─────────────────────────────────────────────────────────┐
 │                    APRESENTAÇÃO (HTML)                   │
 │  - Dashboard Interativo                                 │
-│  - 9 Abas (ordem atual, 2026-07-09):                    │
+│  - 9 Abas (ordem atual, 2026-07-11):                    │
 │    1. Painel Operacional                                │
 │    2. Governança & Saneamento                           │
-│    3. Saneamento AD                                     │
-│    4. Recomendações de Migração                         │
-│    5. Detalhamento de Alocação                          │
-│    6. Cenários de AppPoints                              │
-│    7. Eventos Críticos                                   │
+│    3. 🔐 Segregação de Funções (SoD) — Compras          │
+│    4. Saneamento AD                                     │
+│    5. Recomendações de Migração                         │
+│    6. Detalhamento de Alocação                          │
+│    7. Cenários de AppPoints (fonte única de P50/P95/P100)│
 │    8. Peak Contributors                                  │
 │    9. Plano de Ação                                       │
 └─────────────────────────────────────────────────────────┘
@@ -96,7 +96,7 @@ O sistema CHECKUSER é uma ferramenta de **Capacity Planning e Governança de Li
 **Função**: Renderizar interface do usuário
 
 **Responsabilidades**:
-- Estrutura HTML das 9 abas (ver ordem em 2.1) — cada aba é renderizada por um módulo dedicado em `scripts/reporting/ab1_painel.py` … `ab8_migracao.py`
+- Estrutura HTML das 10 abas (ver ordem em 2.1) — cada aba é renderizada por um módulo dedicado em `scripts/reporting/ab1_painel.py` … `ab9_seguranca.py`
 - Estilos CSS responsivos
 - JavaScript interativo (Chart.js)
 - Filtros e exportação
@@ -300,6 +300,8 @@ Investigação de 2026-07-09 (ver `docs/REFATORACAO_2026-07-09.md`) validou a ma
 2. **Sem calendário de escala/rotação offshore**: o sistema não sabe, a priori, quem está de folga ou embarcado num dado dia. Isso é compensado porque o cálculo de pico usa login **real** hora a hora (não um headcount teórico) — quem está de folga simplesmente não aparece nos dados. Funciona bem para medir o passado; teria menos precisão para *prever* picos futuros sem essa informação.
 3. **Reserva Authorized é sempre 100% do tempo**: por definição de negócio ("licença dedicada, disponibilidade garantida 100%"), o custo dos usuários AUTHORIZED entra em toda hora do cálculo, mesmo em horas em que a pessoa não está logada. Isso é intencional, não um bug — mas significa que reclassificar alguém como AUTHORIZED tem impacto fixo e permanente no NEM, independentemente do padrão real de uso dessa pessoa.
 4. **Blackout = P100**: no código atual, o cenário "Blackout" é idêntico ao pico histórico (P100), não um multiplicador dele. Documentação histórica de versões anteriores descrevia "Blackout = P100 × 2"; isso nunca foi implementado no código.
+5. **Percentis sobre horas com atividade** (auditoria 2026-07-11): P50/P95 são calculados só sobre as horas que tiveram ao menos um login (horas mortas não entram na série). Isso infla o P50 (mediana das horas de operação, não do calendário) mas quase não afeta o P95 — as horas ausentes valeriam o piso da reserva Authorized, abaixo do P95. Como as decisões usam P95, o impacto prático é baixo; documentado por transparência.
+6. **Usuários SEM DOMINIO agora entram no total** (correção 2026-07-11): antes eram descartados do cálculo inteiro (569 usuários CONCURRENT não-inativos), subestimando o pico em ~30%. Números vigentes: **P95 = 2.467 e P100 = 2.771 AppPoints** contra teto de 1.200. Eles seguem fora das visões POR ESCOPO (foresea/terceiros/integracao) por não terem e-mail classificável, mas contam no "todos".
 
 
 ### 4.5 Regras de Título Crítico
@@ -321,6 +323,24 @@ def is_critical_title(title, critical_keywords):
     title_upper = title.upper()
     return any(keyword in title_upper for keyword in critical_keywords)
 ```
+
+### 4.7 Auditoria de Segregação de Funções (SoD) em Compras — Aba 3
+
+**Módulos**: `scripts/domain/security_audit.py`, `group_baseline.py`, `role_standardization.py` · Renderização: `scripts/reporting/ab9_seguranca.py`
+
+Audita conflito de **Emissor x Aprovador** nas 3 aplicações de Compras do Maximo — Requisição de Compra (`PLUSGPR`), Ordem de Compra (`PLUSGPO`) e Requisição Simplificada (`CREATEDR`). Fonte: `APPLICATIONAUTH` (grupo + app + permissão), não `SECURITYRESTRICT` (que é só regra de campo).
+
+**Camadas do teste (da mais teórica à mais direta)**:
+1. **Nível 1 — Grupo conflitante**: o grupo, isoladamente, já tem permissão de Emissor (`INSERT`/`SAVE`/`WAPPR`) E Aprovador (`APPR`/`APPROVE`/`UNAPPROVE`) na mesma app.
+2. **Nível 2 — Pessoa conflitante**: usuário acumula grupo emissor + aprovador (mesmo grupo, ou grupos diferentes já confrontados por site via `SITEAUTH`/`AUTHALLSITES` — só conta se os dois grupos realmente se sobrepõem na mesma unidade).
+3. **Evidência real (não teórica)**: mesma pessoa fez `PR WAPPR` e `PR APPR` na mesma PR, via `WFTRANSACTION` — severidade `CRITICO` se o sistema roteou para 2ª instância (`OOG_PRWENG`) e mesmo assim foi aprovado sozinho; `REVISAR_REGRA` caso contrário.
+4. **Autoaprovação direta**: `PR.OOG_REQUESTEDBY` (quem pediu de fato) = quem aprovou — o teste mais direto, extraído só de BASE (~97% de cobertura real, os 7 "ambientes" replicam a mesma base de compras).
+5. **PO (Ordem de Compra)**: Nível 1/2 cobre PO normalmente, mas a camada de evidência real **não existe para PO** — `WFTRANSACTION` tem 0 linhas para `OWNERTABLE='PO'` nesta instalação (confirmado por contagem direta), e o teste alternativo (`PO.PURCHASEAGENT` = `PO.CHANGEBY`) deu 100% ruído de automação (processo em lote rodando como `MAXADMIN`, não gente aprovando).
+6. **Cadeia PR → PO**: a PR aprovada vira PO via `PRLINE.PONUM`; testamos se a mesma pessoa que aprovou a PR (`PR APPR`) também disparou a criação da PO (`WFTRANSACTION.ACTIONPERFORMED='OOG_CREAPOGRP'`) — checado contra 2.670 conversões históricas, 0 sobreposições (controle limpo).
+7. **Perfil de Acesso por Cargo** (`group_baseline.py`): para cargos com ≥3 pessoas ativas na MESMA unidade, calcula o conjunto de grupos que é padrão ali (≥60% dos pares) e sinaliza excesso/falta por pessoa. Cohort é por (ambiente, cargo), não só cargo — dados reais mostram que agrupar ignorando a unidade piora o resultado (o mesmo grupo nominal tem adesão muito inconsistente entre unidades).
+8. **Padronização de Acesso** (`role_standardization.py`, material para terceirizada): prescreve **um único grupo padrão por cargo, igual em todas as unidades** — diferente do item 7 (que descreve o desvio de cada unidade contra si mesma). Clusteriza grupos de nomes diferentes por unidade (ex.: `HTQ_MATERIALS_COORDINATOR`/`POL_MATERIALS_COORDINATOR`/`PRIO_MATERIALS_COORDINATOR`) como "o mesmo papel" só quando a permissão real (todas as aplicações, `APPLICATIONAUTH` sem filtro de app) bate em ≥95% (similaridade de Jaccard) — threshold alto deliberado para não fundir grupos com escopo diferente só por nome parecido.
+
+**Armadilha corrigida (importante para qualquer nova análise que cruze `consolidated_user_identity.csv` com `consolidated_groupuser.csv`/`consolidated_maxgroup.csv`)**: `consolidated_user_identity.csv` usa `ENV_DB` com nomes longos (`NORBE06`/`NORBE08`/`NORBE09`), enquanto toda a extração de segurança usa códigos curtos (`N06`/`N08`/`N09`). Sem normalizar (`ENV_ALIAS` em cada módulo), o cruzamento por `(ambiente, userid)` falha silenciosamente para essas 3 unidades — o mesmo padrão já existia em `migration_advisor.py`/`allocation_analyzer.py`, mas faltava em `security_audit.py` (bug pré-existente desde a criação da auditoria SoD) até ser corrigido em 2026-07-11. Corrigir isso, somado à recuperação de extrações de `groupuser`/`maxgroup`/`persongroupview` de ODN2 que haviam falhado silenciosamente por timeout de conexão (nunca reprocessadas), fez o número de "Pessoas Únicas Ativas com Conflito" saltar de 144 para 619 — os números anteriores estavam subcontados, não errados por lógica de regra.
 
 ---
 
@@ -524,9 +544,12 @@ CHECKUSER/
 │   ├── config.py                   # Tabela canônica de AppPoints e regras de classificação
 │   ├── domain/                      # Análise de domínio
 │   │   ├── user.py, identity_analyzer.py, env_normalizer.py
-│   │   ├── sanity_analyzer.py        # Cruzamento AD × Maximo (Aba 3 — Saneamento AD)
-│   │   ├── migration_advisor.py      # Recomendações de migração (Aba 4)
-│   │   └── allocation_analyzer.py    # Saneamento de alocação (Aba 5)
+│   │   ├── sanity_analyzer.py        # Cruzamento AD × Maximo (Aba 4 — Saneamento AD)
+│   │   ├── migration_advisor.py      # Recomendações de migração (Aba 5)
+│   │   ├── allocation_analyzer.py    # Saneamento de alocação (Aba 6)
+│   │   ├── security_audit.py         # Auditoria de SoD Emissor x Aprovador em Compras (Aba 3)
+│   │   ├── group_baseline.py         # Perfil de Acesso por Cargo: desvio por (ambiente, cargo) — Aba 3
+│   │   └── role_standardization.py   # Padronização cargo x grupo único p/ todas unidades (Aba 3, p/ terceirizada)
 │   ├── services/                    # Serviços de negócio
 │   │   ├── analysis.py               # Análise de governança
 │   │   └── app_points.py             # Simulação de AppPoints e classificação de licença (motor vigente)
@@ -535,7 +558,8 @@ CHECKUSER/
 │   │   └── classification.py         # Perfil de uso (POWER/LIGHT)
 │   └── reporting/                   # Geração de relatório (1 módulo por aba do dashboard)
 │       ├── html_builder.py, html_template.py, html_data_processor.py, html_helpers.py
-│       └── ab1_painel.py … ab8_migracao.py
+│       ├── ab1_painel.py … ab8_migracao.py
+│       └── ab9_seguranca.py          # Aba 3 — SoD, Perfil de Acesso por Cargo, Padronização
 │
 ├── src/                            # Pipeline de identidade e capacidade (chamado por run_pipeline.py)
 │   ├── consolidate_user_access.py, normalize.py
@@ -723,12 +747,70 @@ python -c "import csv; from pathlib import Path; p = Path('output/consolidated/l
 ## 11. Contato e Suporte
 
 **Desenvolvedor**: Equipe de TI - Foresea  
-**Última Atualização**: 2026-07-09  
-**Versão**: 2.2.0
+**Última Atualização**: 2026-07-11  
+**Versão**: 2.6.3
 
 ---
 
 ## 12. Changelog
+
+### v2.6.3 (2026-07-11 — Aba Peak com filtro de escopo real + regras de contas de integração/serviço)
+- ✅ **Aba Peak agora tem o MESMO seletor de escopo da aba Cenários de AppPoints** (FORESEA+PARCEIRO/TERCEIROS/INTEGRAÇÃO/TODOS), com gráfico, cards (P100/P95/hora do pico/contribuidores) e tabela de composição **recalculados de verdade** por escopo — não um filtro visual sobre a série de TODOS. `license_reconciliation.py` agora computa série horária, pico e composição próprios para cada um dos 4 escopos. Exemplo real: escopo FORESEA sozinho tem pico de **1.931 pts (P100) às 2026-05-19 14:00 com 87 pessoas simultâneas** — hora e composição bem diferentes do pico de TODOS (2.585 pts, 2026-05-25 07:00, 150 pessoas).
+- ✅ **Regra de negócio confirmada pelo usuário — contas de integração/serviço**: `WSORACLE`, `MAXADMIN` e `MAXREG` agora são fixadas como **Premium Authorized = 5 pts cada**, escopo INTEGRAÇÃO, sem passar pelo cálculo estatístico de presença (não são pessoas com padrão de uso a avaliar — são contas de integração com acesso garantido por definição). `ITEAM` corrigido para escopo TERCEIROS (é conta de suporte da própria terceirizada, não FORESEA). `HELPDESK` confirmado como já correto (Base Concurrent — "só visualiza, não faz nada").
+- 📄 Constantes `FIXED_PREMIUM_AUTHORIZED_ACCOUNTS` e `SCOPE_OVERRIDES` em `license_reconciliation.py` — outras contas de padrão semelhante (ex.: `HELPDESK`, `ITEAM` antes da correção) não entram em regras automáticas sem confirmação explícita do usuário.
+
+### v2.6.2 (2026-07-11 — Auditoria completa da aba Peak Contributors: gráfico e tabela reconstruídos sobre o Cenário Conciliado)
+- 🐛 **[CRÍTICO] O gráfico "Peak Hours" mostrava uma série horária completamente desconectada dos cards acima dele**: os cards de P100/P95/contribuidores já vinham do Cenário Conciliado (reconciliado), mas o gráfico (`concurrency_hourly`/`concurrency_hourly_app_points`/`concurrency_hourly_app_points_nem`) ainda lia `true_capacity_metrics.json` — a série antiga, não reconciliada (chegava a mostrar 200-228 "usuários simultâneos" numa hora em que o card dizia "152 contribuidores no pico"). Corrigido: `license_reconciliation.py` agora expõe a série horária completa (`hourly_series`, escopo TODOS) e `html_data_processor.py` usa exclusivamente essa série no gráfico — o pico do gráfico agora bate exato com os cards (152 usuários, 2.600 AppPoints, mesma hora).
+- 🐛 **Tabela "Top Contribuidores do Pico" removida por não fazer sentido** (avaliação do usuário confirmada): listava até 20 pessoas individualmente, mas todo Premium Concurrent vale sempre 15 pts e todo Base Concurrent vale sempre 10 — um "ranking" onde todo mundo empata no mesmo valor não ordena nada de real. Substituída por **"Composição do Pico por Categoria"**: quebra por escopo × tipo de licença com contagem de pessoas e AppPoints por categoria (ex.: 75 Premium Concurrent FORESEA = 1.125 pts, 60 Base Concurrent Sem Domínio = 600 pts) — a informação que de fato importa para dimensionar o pool.
+- 📄 Lista individual completa das pessoas no pico continua disponível na aba Excel `8_PeakContributors` (não removida, só não mais duplicada como tabela "top 20" na tela).
+
+### v2.6.1 (2026-07-11 — Card do Cenário Conciliado agora reativo ao escopo + remoção da aba Eventos Críticos)
+- 🐛 **Card "Cenário Conciliado" mostrava 2 números fixos (P95 só-conciliados / P95 realista) que competiam com o P95 do simulador logo abaixo** — 3 números de "P95" na mesma tela (usuário reportou: card 1.715/2.235, simulador 1.712 no escopo FORESEA). Corrigido: o card agora tem UM headline reativo, ligado ao MESMO seletor de escopo do simulador (`updateScopeFilter()` atualiza `cardScopedP95`/`cardScopedP100` via JS) — trocar o escopo move os dois juntos, sempre com o mesmo número.
+- 🗑️ **Aba "Eventos Críticos" removida** (era a 8ª aba) — avaliação do usuário confirmada: os 4 gatilhos de cenário (P50/P95/P100/Blackout) já eram exatamente os mesmos números do simulador da aba Cenários de AppPoints, sem nenhuma informação adicional. Módulo `ab4_eventos.py` deletado (código morto). Abas renumeradas: Peak Contributors 9→8, Plano de Ação 10→9. Dashboard agora com **9 abas**.
+
+### v2.6.0 (2026-07-11 — Presença ajustada por rotação offshore + fonte única de P50/P95/P100)
+- 🔬 **Presença ajustada pelo próprio padrão de rotação offshore** (`license_reconciliation.py`): medir presença dividindo horas logadas por 90 dias corridos subestima quem está plenamente ativo durante o embarque, já que a operação trabalha em regime de turmas (embarque/folga). Detectamos o padrão diretamente nos dados: agrupando os dias de login de cada pessoa em blocos (gap ≤3 dias ainda conta como o mesmo bloco), os blocos se concentram fortemente em **13-15 dias** e as lacunas entre blocos em **14-15 dias** — a assinatura de um rodízio 14x14. Presença agora = horas logadas ÷ horas do(s) bloco(s) da própria pessoa (`HORAS_ELEGIVEIS_ROTACAO`), não os 2.160h do calendário (`PRESENCA_CALENDARIO_PCT`, mantida para comparação). Resultado: 71 → **150 Authorized** (reserva 339 → 700 pts) — mais gente estava, na prática, plenamente ativa durante o embarque do que o cálculo por calendário sugeria.
+- 🐛 **Corrigida divergência de P50/P95/P100 entre as abas Cenários de AppPoints, Eventos Críticos e Peak Contributors**: existiam 2 cálculos concorrentes — o antigo `true_capacity_calculator.py` (população e regra de licença do `license_optimizer.py`, sem reconciliação com AD) e o novo Cenário Conciliado — cada um usado por abas diferentes, gerando 3 números diferentes de "P95" na mesma tela. Unificado: `license_reconciliation.py` agora calcula P50/P95/P100 **por escopo** (foresea/terceiros/integração/todos) e essa é a ÚNICA fonte usada em `html_data_processor.py` para as 3 abas. Verificado: mesmo escopo agora mostra o mesmo número nas 3 abas (P95=2.235, P100=2.600, 152 contribuidores, todos batendo exatamente).
+- 📊 Números oficiais vigentes (escopo TODOS, presença ajustada por rotação): **P50=1.475, P95=2.235, P100=2.600** contra teto de 1.200.
+- 🐛 Corrigido bug residual: `_eligible_hours()` retornava `int` em vez de tupla para usuários sem login algum (TypeError na desestruturação).
+
+### v2.5.1 (2026-07-11 — Consolidação do bloco AD + correção das abas de pico)
+- 🐛 **Bug confirmado e corrigido na antiga aba 9_PeakContributors**: o motor NEM truncava a lista de contribuintes do pico em 50 (soma de apenas 750 pts) e reportava `peak_contributors_count=50` como se fosse o total — a soma nunca fechava com o P100. Agora a lista é COMPLETA (174 contribuintes) e a matemática fecha exata: reserva Authorized (1.001) + concurrent dos logados no pico (1.770) = **P100 = 2.771**. Aba renumerada para `8_PeakContributors`.
+- 🗑️ **Aba 8_ConcurrentPeak removida** (série horária bruta de 2.158 linhas) — redundante com os Cenários de AppPoints do dashboard, conforme avaliação do usuário.
+- ✅ **Bloco de saneamento AD consolidado**: 7 abas de achados (11-17: AD desativado×ativo, divergências de nome, múltiplos USERIDs, match por prefixo, sem match, Maximo sem email, divergência de domínio) fundidas em `10_Saneamento_AD_Achados` com coluna ACHADO filtrável (2.871 linhas; o achado crítico AD_DESATIVADO_MAS_ATIVO destacado em vermelho).
+- ✅ **Renumeração completa sem buracos**: workbook final com **25 abas** (0_Indice a 24_Cenario_Conciliado_Usuarios), sequência contínua — era 40+ abas há dois ciclos. Referências cruzadas (índice, resumo consolidado, notas de truncamento no HTML) atualizadas.
+
+### v2.5.0 (2026-07-11 — Cenário Conciliado de licenciamento + consolidação do workbook)
+- ✅ **Novo módulo `scripts/domain/license_reconciliation.py` — Cenário Conciliado (dimensionamento oficial MAS 9)**, metodologia aprovada pelo usuário: população licenciável = ativos no Maximo conciliados com conta ATIVA no AD (cascata e-mail → prefixo=USERID → nome completo normalizado); licença definida por **break-even econômico de presença** (Authorized só compensa com presença >30-33% das horas; presença real mediana medida: 6,7%, máx 28% — padrão offshore 14x14), com exceção de negócio para títulos críticos que aprovam; **terceiros de bordo ativos** (não conciliados mas com uso real em 90d) mantidos como Concurrent por decisão de negócio.
+- 📊 Números vigentes: 1.630 ativos → 816 conciliados (email 317/prefixo 447/nome 52) + 718 terceiros ativos + 96 sem uso (limpeza). Licença estatística: 71 Authorized (reserva 339 pts) + 745 Concurrent. **NEM só-conciliados P95=1.534 | realista (+terceiros) P95=2.064 | teto 1.200.** Diagnóstico-chave: dos 569 "SEM DOMINIO", 259 são funcionários FORESEA reais sem e-mail no Maximo.
+- ✅ Card do cenário na aba "Cenários de AppPoints", detalhe por usuário em `cenario_conciliado_licencas.csv` e no Excel.
+- ✅ **Workbook consolidado a pedido do usuário** (menos abas, análise mais fácil): bloco de 17 abas → 9. Fusões: resumos de Migração+SoD+Conciliado → `25_Resumo_Consolidado`; recortes de PO (31/32, subconjuntos filtráveis por APP) eliminados; MAXADMIN fundido em `27_SoD_Pessoas` (coluna TIPO); 3 camadas de evidência → `28_SoD_Evidencias` (coluna CAMADA); baseline por cargo/unidade + padrão global MAS 9 → `29_Cargo_x_Grupos` (coluna UNIDADE). Workbook total: 31 abas.
+
+### v2.4.0 (2026-07-11 — Auditoria independente completa do sistema + correções)
+Auditoria formal (matemática, ciência de dados, pipeline e entregável de migração), com agentes de auditoria independentes + verificação empírica direto no banco. Achados e correções:
+- 🔴 **[CRÍTICO] Moeda errada em todos os valores de compras**: 100% das 16.912 PRs dos últimos 365 dias têm `CURRENCYCODE='USD'` (verificado no banco), mas o dashboard/Excel rotulava tudo como "R$" — a gravidade dos achados de SoD estava subestimada ~5x (ex.: "R$ 15,7M" é na verdade USD 15,7M). Corrigido em todas as telas/planilhas, com nota metodológica.
+- 🔴 **[CRÍTICO] Motor NEM excluía 569 usuários CONCURRENT do cálculo de capacidade**: usuários "SEM DOMINIO" (sem email classificável) eram descartados no filtro de escopo do `true_capacity_calculator.py` — mas licença é consumida por login, com ou sem email. Pico real recalculado: P95 = 2.467 e P100 = 2.771 AppPoints (antes: 1.891/2.166) — o estouro do teto de 1.200 é ~30% pior que o reportado. Correção validada por recalculação independente (bateu exato).
+- 🔴 **[CRÍTICO] Entregável de migração não respondia 2 das 3 perguntas do negócio**: `migration_advisor.py` não emitia nenhum campo de grupo/acesso (o CSV de acessos era carregado e descartado). Reescrito: agora cada recomendação traz cargo, grupos Maximo atuais por ambiente e grupo recomendado MAS 9 (via padronização por cargo).
+- 🔴 **[CRÍTICO] ~39% da categoria CRIAR_NO_MAXIMO era falsa**: o match AD↔Maximo era só por email, mas 92,7% dos USERIDs não têm e-mail cadastrado — 782 usuários AD com USERID = prefixo do email (convenção da empresa) "não existiam" no Maximo, 449 deles ATIVOS. Corrigido com cascata email → prefixo (1.206 matches recuperados); a população real de migração (ativos em ambos) dobrou de 317 para 766.
+- 🟠 **[ALTO] Caso de segurança invisível**: o arquivo de AD desabilitados nunca era carregado pelo advisor — o cruzamento "DESLIGADO no AD porém ATIVO no Maximo" resultava sempre 0. Agora: **50 casos reais** detectados (prioridade ALTA, não migrar, desativar antes do MAS 9).
+- 🟠 **[ALTO] VERIFICAR_AD era 91% ruído** (268/294 contas 100% inativas) e MAXADMIN aparecia como "criar no AD". Corrigido: inativos sem AD viram limpeza; contas de serviço (MAXADMIN, MAXREG, HELPDESK, padrão rig `ODN1001`) têm categoria própria CONTA_SERVICO.
+- 🟡 **[MÉDIO] Pareamento ambiente×status fabricado**: a aba 8 zipava dois sets independentes por posição (228 recomendações com pares errados medidos). O advisor agora emite pares reais `env:status`.
+- 🟡 **[MÉDIO] Status não mapeados sumiam sem recomendação** (ex.: NEWREG): novo tipo REVISAR_STATUS (190 casos).
+- 🟡 **[MÉDIO] Valores de SoD somados por caso, não por PR única**: PR resubmetida N vezes somava o valor N vezes (~0,1% de inflação; 23 casos críticos = 22 PRs). Corrigido.
+- 🟡 **[MÉDIO] Guarda de extração podre**: `consolidate_outputs.py` agora detecta arquivo raw com erro de conexão DB2 (`SQL30081N`) e imprime alerta com o comando exato de reprocessamento — antes o ambiente sumia silenciosamente (causa-raiz da subcontagem de ODN2).
+- 🟡 **[MÉDIO] Reenquadramento de CREATEDR**: os ~600 "conflitos" de Requisição Simplificada são UM problema de desenho (todos os 9 grupos com acesso têm o pacote criar+aprovar completo), não centenas de anomalias individuais — documentado na metodologia da Aba 3.
+- 🟡 **[MÉDIO] Alertas de fusão de grupos**: cluster `OOG_ASSET_COORDINATOR`≈`OOG_ENGINEER_COORDINATOR` (97% similares mas papéis nominalmente distintos, com delta real de MOC) agora recebe alerta "confirmar com a área antes de fundir"; e `OOG_COGNOS_LEITURA` é 100% idêntico ao `OOG_COGNOS_ADM` (o "read-only" tem as mesmas permissões do ADM) — alerta de privilégio.
+- ✅ **Validado como correto** na auditoria: matemática de dedup do NEM (mesma pessoa N logins/hora = 1; multi-ambiente = 1, correto para licença por usuário; sem dupla contagem Authorized+Concurrent; custo por usuário multi-env usa o maior), dedup 7x da evidência de SoD, confronto por site, e clusterização Jaccard (coesão par-a-par verificada em todos os 6 clusters).
+
+### v2.3.0 (2026-07-11 — Auditoria de Segregação de Funções em Compras, nova Aba 3)
+- ✅ **Nova aba dedicada "🔐 Segregação de Funções"** (posição 3, ver seção 4.7): audita conflito Emissor x Aprovador em Compras (PR/PO/Requisição Simplificada) em 3 camadas crescentes de rigor — estrutural (grupo), pessoa real (cruzando `GROUPUSER`), e evidência documentada (`WFTRANSACTION`+`PR`, quem de fato submeteu e aprovou o mesmo documento).
+- ✅ **Autoaprovação direta**: novo campo `PR.OOG_REQUESTEDBY` (solicitante real, diferente da conta genérica do rig) cruzado com quem aprovou — 55 casos confirmados, R$ 441 mil, extraído de BASE (~97% de cobertura real).
+- ✅ **Severidade por evidência oficial**: `WFTRANSACTION.ACTIONPERFORMED='OOG_PRWENG'` (roteamento para Engenheiro de Ativos, conforme procedimento oficial de aprovação de PR) usado para distinguir violação confirmada (`CRITICO`) de caso a revisar (`REVISAR_REGRA`).
+- ✅ **Confronto por site**: conflitos "grupos diferentes" só contam se os grupos emissor/aprovador realmente se sobrepõem no mesmo site (`SITEAUTH`/`MAXGROUP.AUTHALLSITES`) — evita falso positivo de alguém com grupo emissor numa unidade e aprovador em outra (embarque).
+- ✅ **PO (Ordem de Compra)**: recorte dedicado do Nível 1/2; confirmado e documentado que a camada de evidência real da PR não é replicável (`WFTRANSACTION` não loga workflow de PO nesta instalação; teste alternativo via `PURCHASEAGENT`/`CHANGEBY` deu 100% ruído de automação/`MAXADMIN`).
+- ✅ **Cadeia PR → PO**: novo teste via `PRLINE.PONUM` + `OOG_CREAPOGRP` — mesma pessoa aprovou a PR e gerou a PO dela; 0 casos em 2.670 conversões históricas (controle limpo, camada ativa para acusar automaticamente se mudar).
+- ✅ **Perfil de Acesso por Cargo** e **Padronização de Acesso** (material para terceirizada): ver seção 4.7, itens 7-8 — descreve desvio por unidade e prescreve um grupo padrão único por cargo para toda a empresa, com detecção de grupos duplicados por permissão real (não nome).
+- 🐛 **Bug corrigido (subcontagem silenciosa)**: `security_audit.py`, `group_baseline.py` e `role_standardization.py` cruzavam `consolidated_user_identity.csv` (`ENV_DB` com nomes longos `NORBE06/08/09`) contra `consolidated_groupuser.csv`/`consolidated_maxgroup.csv` (códigos curtos `N06/N08/N09`) sem normalizar — o mesmo padrão já corrigido em `migration_advisor.py`/`allocation_analyzer.py`, mas ausente na auditoria de SoD desde sua criação. Combinado com extrações de `groupuser`/`maxgroup`/`persongroupview` de ODN2 que haviam falhado por timeout e nunca foram reprocessadas, os números de pessoas ativas com conflito estavam subcontados (144 → 619 após a correção). Ver detalhe completo na seção 4.7.
 
 ### v2.2.0 (2026-07-09, continuação — auditoria completa + UX/UI + limpeza)
 - ✅ **Correção crítica no fluxo AD × Maximo**: `scripts/extract_ad_users.py` tinha toda a lógica dentro do `else` de um `if __name__ == '__main__':` — quando executado pelo pipeline (como sempre é), não fazia absolutamente nada. `consolidated_ad_users.csv` estava desatualizado sem que ninguém percebesse.

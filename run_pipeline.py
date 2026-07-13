@@ -87,12 +87,7 @@ PIPELINE_STEPS = [
         "features": "✓ LicenseOptimizer ✓ 6 estratégias ✓ Batch processing ✓ Summary stats"
     },
     {
-        "name": "14. Gerando Uso Real (true_capacity_calculator.py)",
-        "cmd": [sys.executable, str(ROOT / "src" / "true_capacity_calculator.py")],
-        "skippable": False
-    },
-    {
-        "name": "15. Gerando Dashboards e Excel de Risco (generate_risk_report.py)",
+        "name": "14. Gerando Dashboards e Excel de Risco (generate_risk_report.py)",
         "cmd": [sys.executable, str(ROOT / "scripts" / "generate_risk_report.py")],
         "skippable": False
     }

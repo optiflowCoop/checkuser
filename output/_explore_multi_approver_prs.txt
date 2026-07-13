@@ -1,0 +1,21 @@
+IBM Db2 Interactive CLI Sample Program
+(C) COPYRIGHT International Business Machines Corp. 1993,1996
+All Rights Reserved
+Licensed Materials - Property of IBM
+US Government Users Restricted Rights - Use, duplication or
+disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+> SELECT OWNERID, COUNT(DISTINCT PERSONID) AS QTD_APROVADORES_DISTINTOS FROM WFTRANSACTION WHERE OWNERTABLE = 'PR' AND ACTIONPERFORMED = 'PR APPR' GROUP BY OWNERID HAVING COUNT(DISTINCT PERSONID) > 1 FETCH FIRST 10 ROWS ONLY;
+FetchAll:  Columns: 2
+  OWNERID QTD_APROVADORES_DISTINTOS 
+  460, 2
+  5454, 2
+  5876, 2
+  5885, 2
+  5903, 2
+  5990, 2
+  6214, 2
+  6225, 2
+  6267, 2
+  6318, 2
+FetchAll: 10 rows fetched.
+> 

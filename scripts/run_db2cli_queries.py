@@ -74,7 +74,27 @@ if '--data-fim' in sys.argv:
 queries_to_run = only_query if only_query else cfg.get('queries', [])
 # -----------------------------------------
 
+# Suporte para restringir a extração a um único ambiente (via --only-env).
+# Útil para consultas sobre dados que os 7 bancos replicam entre si (ex.:
+# PR/WFTRANSACTION de compras) — extrair dos 7 é ~7x mais lento sem ganhar
+# cobertura real. BASE sozinha já reflete ~97% das informações das unidades.
+only_env = None
+if '--only-env' in sys.argv:
+    try:
+        idx = sys.argv.index('--only-env') + 1
+        if idx < len(sys.argv):
+            only_env = sys.argv[idx].strip().upper()
+            print(f"🎯 Foco: Rodando apenas no ambiente: {only_env}")
+    except (ValueError, IndexError):
+        print("❌ Erro: --only-env precisa de um nome de ambiente. Ex: --only-env BASE")
+        sys.exit(1)
+
 connections = cfg.get('connections') or []
+if only_env:
+    connections = [c for c in connections if (c.get('env_db') or c.get('name', '')).upper() == only_env]
+    if not connections:
+        print(f"❌ Erro: nenhum ambiente '{only_env}' encontrado em config.json")
+        sys.exit(1)
 
 MAX_RETRIES = 3
 RETRY_DELAY = 5  # seconds
@@ -114,18 +134,26 @@ for conn_idx, conn in enumerate(connections, 1):
         tf.close()
         
         outpath = OUTDIR / f"{env}_{qname}.txt"
-        cmd = [str(DB2CLI), 'execsql', '-connstring', connstr, '-inputsql', tf.name, '-outfile', str(outpath)]
-        
+        # NÃO usar '-outfile' do db2cli.exe: para tabelas largas (muitas colunas,
+        # ex. PERSONGROUPVIEW e PERSON) a escrita direto em arquivo do driver
+        # trunca o resultado silenciosamente (rc=0, sem erro) — confirmado em
+        # auditoria 2026-07-13: PERSONGROUPVIEW perdia ~85% das linhas (12402 ->
+        # ~1850) e PERSON ~87% (9942 -> ~1325), enquanto capturar via stdout e
+        # escrever o arquivo nós mesmos traz o resultado completo, sem mudar a
+        # query nem o formato do arquivo de saída.
+        cmd = [str(DB2CLI), 'execsql', '-connstring', connstr, '-inputsql', tf.name]
+
         # RETRY LOGIC
         attempt = 1
         success = False
         last_error = ""
-        
+
         while attempt <= MAX_RETRIES and not success:
             try:
                 proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
                 rc = proc.returncode
                 if rc == 0:
+                    outpath.write_text(proc.stdout, encoding='utf-8', errors='replace')
                     success = True
                     summary.append({'env': env, 'query': qname, 'rc': rc, 'outfile': str(outpath)})
                     print(f"  ✓ Sucesso! Arquivo: {outpath.name}")

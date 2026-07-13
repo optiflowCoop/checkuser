@@ -33,93 +33,89 @@ def render_tab_saneamento(sanity_data):
         return """
     <div id="tab-saneamento" class="container tab-content">
         <div class="card">
-            <h2>🧹 Saneamento de Identidades - AD vs Maximo</h2>
+            <h2>Saneamento de Identidades - AD vs Maximo</h2>
             <p>Nenhum dado de saneamento disponível.</p>
         </div>
     </div>
     """
-    
+
     stats = sanity_data['stats']
     analises = sanity_data['analises']
-    
+
     return f"""
     <div id="tab-saneamento" class="container tab-content">
-        <div class="card" style="border-left: 4px solid var(--warning); background-image: linear-gradient(to right, #ffffff, #f8fafc);">
-            <div class="card-header" style="border:none; margin-bottom:0.5rem;">
-                <div>
-                    <h2 style="margin:0; color:var(--warning);">🧹 Saneamento de Identidades - AD vs Maximo</h2>
-                    <p style="font-size: 0.9rem; color: #64748b; font-weight: normal; margin-top: 4px;">Comparação entre usuários do Active Directory e Maximo para identificação de inconsistências.</p>
-                </div>
-            </div>
-            
+        <div class="card">
+            <h2 class="card-header">Saneamento de Identidades - AD vs Maximo</h2>
+            <p class="card-desc">Comparação entre usuários do Active Directory e Maximo para identificação de inconsistências.</p>
+
             <div class="stats-grid" style="margin-bottom: 1rem;">
-                <div class="stat-card" style="border-bottom: 4px solid var(--accent); cursor: pointer;" onclick="filterByType('all')" id="card-all">
+                <div class="stat-card border-accent" onclick="filterByType('all')" id="card-all" style="cursor: pointer;">
                     <div class="stat-value">{_br_number(stats['total_ad'])}</div>
                     <div class="stat-title">Usuários no AD</div>
                     <div class="stat-subtitle">Fonte da verdade</div>
                 </div>
-                <div class="stat-card" style="border-bottom: 4px solid var(--success); cursor: pointer;" onclick="filterByType('match')" id="card-match">
+                <div class="stat-card border-success" onclick="filterByType('match')" id="card-match" style="cursor: pointer;">
                     <div class="stat-value">{_br_number(stats['match_email'])}</div>
                     <div class="stat-title">Match por Email</div>
                     <div class="stat-subtitle">Mesmo email em ambos</div>
                 </div>
-                <div class="stat-card" style="border-bottom: 4px solid var(--danger); cursor: pointer;" onclick="filterByType('ad_only')" id="card-ad_only">
+                <div class="stat-card border-danger" onclick="filterByType('ad_only')" id="card-ad_only" style="cursor: pointer;">
                     <div class="stat-value">{_br_number(stats['only_ad'])}</div>
                     <div class="stat-title">Apenas no AD</div>
                     <div class="stat-subtitle">Sem correspondência no Maximo</div>
                 </div>
-                <div class="stat-card" style="border-bottom: 4px solid var(--warning); cursor: pointer;" onclick="filterByType('maximo_only')" id="card-maximo_only">
+                <div class="stat-card border-warning" onclick="filterByType('maximo_only')" id="card-maximo_only" style="cursor: pointer;">
                     <div class="stat-value">{_br_number(stats['only_maximo'])}</div>
                     <div class="stat-title">Apenas no Maximo</div>
                     <div class="stat-subtitle">Sem correspondência no AD</div>
                 </div>
-                <div class="stat-card" style="border-bottom: 4px solid #7c3aed; cursor: pointer;" onclick="filterByType('name_divergence')" id="card-name_divergence">
+                <div class="stat-card border-secondary" onclick="filterByType('name_divergence')" id="card-name_divergence" style="cursor: pointer;">
                     <div class="stat-value">{_br_number(stats['name_divergences'])}</div>
                     <div class="stat-title">Divergências de Nome</div>
                     <div class="stat-subtitle">Mesmo email, nomes diferentes</div>
                 </div>
-                <div class="stat-card" style="border-bottom: 4px solid #ec4899; cursor: pointer;" onclick="filterByType('multi_userid')" id="card-multi_userid">
+                <div class="stat-card border-neutral" onclick="filterByType('multi_userid')" id="card-multi_userid" style="cursor: pointer;">
                     <div class="stat-value">{_br_number(stats['multi_userid'])}</div>
                     <div class="stat-title">Múltiplos USERIDs</div>
                     <div class="stat-subtitle">Mesmo email, IDs diferentes</div>
                 </div>
-                <div class="stat-card" style="border-bottom: 4px solid #f97316; cursor: pointer;" onclick="filterByType('prefix_match')" id="card-prefix_match">
+                <div class="stat-card border-primary" onclick="filterByType('prefix_match')" id="card-prefix_match" style="cursor: pointer;">
                     <div class="stat-value">{_br_number(stats['prefix_match'])}</div>
                     <div class="stat-title">Match por USERID</div>
                     <div class="stat-subtitle">Prefixos correspondem</div>
                 </div>
-                <div class="stat-card" style="border-bottom: 4px solid #06b6d4; cursor: pointer;" onclick="filterByType('no_match')" id="card-no_match">
+                <div class="stat-card border-accent" onclick="filterByType('no_match')" id="card-no_match" style="cursor: pointer;">
                     <div class="stat-value">{_br_number(stats['no_match'])}</div>
                     <div class="stat-title">Sem Match</div>
                     <div class="stat-subtitle">No Maximo</div>
                 </div>
-                <div class="stat-card" style="border-bottom: 4px solid #64748b;" title="Usuários do Maximo sem email cadastrado, mas cujo USERID bate com o prefixo de um email do AD. Detalhamento completo na aba Excel 14_Maximo_Sem_Email_Match (não replicado nesta tabela por volume).">
-                    <div class="stat-value" style="color: #64748b;">{_br_number(stats.get('maximo_sem_email_match', 0))}</div>
+                <div class="stat-card border-neutral" title="Usuários do Maximo sem email cadastrado, mas cujo USERID bate com o prefixo de um email do AD. Detalhamento completo na aba Excel 14_Maximo_Sem_Email_Match (não replicado nesta tabela por volume).">
+                    <div class="stat-value">{_br_number(stats.get('maximo_sem_email_match', 0))}</div>
                     <div class="stat-title">Maximo Sem Email, c/ Match no AD</div>
                     <div class="stat-subtitle">Ver aba Excel 14</div>
                 </div>
-                <div class="stat-card" style="border-bottom: 4px solid #dc2626; cursor: pointer; animation: pulse 2s infinite;" onclick="filterByType('ad_disabled_ativo')" id="card-ad_disabled_ativo">
-                    <div class="stat-value" style="color: #dc2626;">{_br_number(stats.get('ad_disabled_ativos_maximo', 0))}</div>
-                    <div class="stat-title">🚨 AD Desabilitado + Maximo Ativo</div>
+                <div class="stat-card stat-card-danger" onclick="filterByType('ad_disabled_ativo')" id="card-ad_disabled_ativo" style="cursor: pointer;">
+                    <div class="stat-value" style="color: var(--danger);">{_br_number(stats.get('ad_disabled_ativos_maximo', 0))}</div>
+                    <div class="stat-title">AD Desabilitado + Maximo Ativo</div>
                     <div class="stat-subtitle">Risco de auditoria</div>
                 </div>
             </div>
-            
+
             <div class="search-container">
-                <input type="text" id="searchSaneamento" class="search-bar" placeholder="🔍 Buscar por nome ou e-mail..." onkeyup="filterSaneamentoTable()">
+                <input type="text" id="searchSaneamento" class="search-bar" placeholder="Buscar por nome ou e-mail..." onkeyup="filterSaneamentoTable()">
                 <select id="filterTipo" class="filter-select" onchange="filterSaneamentoTable()">
                     <option value="">Todos os Tipos</option>
                     <option value="ad_only">Apenas no AD</option>
                     <option value="maximo_only">Apenas no Maximo</option>
                     <option value="match">Match Perfeito</option>
-                    <option value="ad_disabled_ativo">🚨 AD Desabilitado + Maximo Ativo</option>
+                    <option value="ad_disabled_ativo">AD Desabilitado + Maximo Ativo</option>
                 </select>
-                <button class="btn-export" onclick="filterByType('all')" style="background-color: #64748b;">🔄 Limpar Filtro</button>
-                <button class="btn-export" onclick="exportSaneamentoCSV()">📥 Exportar CSV</button>
+                <button class="btn-export" onclick="filterByType('all')">Limpar Filtro</button>
+                <button class="btn-export" onclick="exportSaneamentoCSV()">Exportar CSV</button>
             </div>
 
-            <p style="font-size: 0.85rem; color: #b45309; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 0.5rem 0.75rem; margin: 0 0 1rem 0;">
-                ⚠️ Cada categoria abaixo mostra até 100–200 registros de amostra (os totais reais estão nos cartões acima). Para a lista completa de qualquer categoria, use o relatório Excel (abas 10 a 14).
+            <p class="card-footnote">
+                Cada categoria abaixo mostra até 100–200 registros de amostra (os totais reais estão nos cartões acima). Para a lista completa de qualquer categoria, use o relatório Excel (abas 10 a 14).
             </p>
 
             <div class="table-responsive">
@@ -144,11 +140,11 @@ def render_tab_saneamento(sanity_data):
         <!-- Seção de Auditoria: AD Desabilitado + Maximo Ativo -->
         {_render_auditoria_desabilitados(analises.get('ad_disabled_ativos_maximo', []))}
         
-        <div class="card" style="border-top: 4px solid var(--accent);">
-            <h2 class="card-header" style="border:none; margin-bottom:0.5rem;">📋 Regras de Saneamento</h2>
+        <div class="card">
+            <h2 class="card-header">Regras de Saneamento</h2>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
-                <div class="legend-box" style="border-left: 3px solid var(--danger);">
-                    <h3>❌ Remover do AD</h3>
+                <div class="legend-box">
+                    <h3>Remover do AD</h3>
                     <ul class="legend-list">
                         <li>Usuário inativo há mais de 90 dias</li>
                         <li>Conta desabilitada (Enabled = False)</li>
@@ -156,8 +152,8 @@ def render_tab_saneamento(sanity_data):
                         <li>Grupos apenas de acesso genérico</li>
                     </ul>
                 </div>
-                <div class="legend-box" style="border-left: 3px solid var(--warning);">
-                    <h3>⚠️ Revisar</h3>
+                <div class="legend-box">
+                    <h3>Revisar</h3>
                     <ul class="legend-list">
                         <li>Usuário com múltiplos grupos</li>
                         <li>Licenças Office 365 E3/E1</li>
@@ -165,8 +161,8 @@ def render_tab_saneamento(sanity_data):
                         <li>Contas de parceiros/terceiros</li>
                     </ul>
                 </div>
-                <div class="legend-box" style="border-left: 3px solid #10b981;">
-                    <h3>✅ Manter</h3>
+                <div class="legend-box">
+                    <h3>Manter</h3>
                     <ul class="legend-list">
                         <li>Usuários ativos com login recente</li>
                         <li>Acesso a sistemas críticos (Maximo, PTW)</li>
@@ -330,9 +326,9 @@ def _render_ambientes_com_status(envs_ativos_text, envs_total_text):
     detalhes = []
     for env in total_list:
         if env in ativos_set:
-            badge = '<span class="badge badge-success" style="margin: 2px;">✅ Ativo</span>'
+            badge = '<span class="badge badge-success" style="margin: 2px;">Ativo</span>'
         else:
-            badge = '<span class="badge badge-danger" style="margin: 2px;">❌ Inativo</span>'
+            badge = '<span class="badge badge-danger" style="margin: 2px;">Inativo</span>'
         detalhes.append(f"{env} {badge}")
 
     return '<div style="line-height: 1.8;">' + '<br>'.join(detalhes) + '</div>'
@@ -370,46 +366,42 @@ def _render_auditoria_desabilitados(ad_disabled_ativos_maximo):
                 <td>{d['ad_groups_count']} grupos</td>
                 <td>
                     {match_badge}<br>
-                    <span class="badge badge-critical">🚨 Ação Requerida</span><br>
+                    <span class="badge badge-critical">Ação Requerida</span><br>
                     <small><strong>USERIDs:</strong> {d['maximo_userids'][:60]}</small><br>
                     <small><strong>Ambientes ({d.get('qtd_envs_ativos_de_total', '?')} ativos):</strong></small>
                     {_render_ambientes_com_status(d['maximo_envs'], d.get('maximo_envs_total', d['maximo_envs']))}
                 </td>
             </tr>
         """)
-    
-    return f"""
-    <div id="card-auditoria" class="card" style="border-top: 4px solid #dc2626; margin-top: 2rem; background: linear-gradient(to bottom, #ffffff, #fff5f5);">
-        <h2 class="card-header" style="border:none; margin-bottom:0.5rem; color: #dc2626; font-size: 1.5rem;">
-            🚨 Auditoria: Usuários Desativados no AD mas com Acesso no Maximo
-        </h2>
-        <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 1.2rem; margin-bottom: 1.2rem; border-radius: 6px; border-right: 4px solid #dc2626;">
-            <p style="margin: 0; color: #991b1b; font-weight: 600; font-size: 1rem;">
-                ⚠️ <strong>ATENÇÃO CRÍTICA:</strong> Foram identificados <strong style="color: #dc2626;">{len(ad_disabled_ativos_maximo)} usuários</strong> com contas desativadas no Active Directory
-                mas que ainda possuem acesso ativo no Maximo. Estes usuários representam <strong>risco de auditoria</strong> e devem ser removidos do Maximo imediatamente.
-            </p>
-        </div>
 
-        <div style="background: #f8fafc; border: 1px dashed #94a3b8; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1.2rem; font-size: 0.85rem; color: #475569;">
+    return f"""
+    <div id="card-auditoria" class="card stat-card-danger" style="margin-top: 2rem;">
+        <h2 class="card-header">Auditoria: Usuários Desativados no AD mas com Acesso no Maximo</h2>
+        <p class="card-desc">
+            Foram identificados <strong>{len(ad_disabled_ativos_maximo)} usuários</strong> com contas desativadas no
+            Active Directory mas que ainda possuem acesso ativo no Maximo. Representam risco de auditoria e devem
+            ser removidos do Maximo.
+        </p>
+
+        <p class="card-footnote">
             <strong>Legenda — Tipo Match (confiança do vínculo AD ↔ Maximo):</strong><br>
             <span class="badge badge-success">E-mail</span> confirmado pelo mesmo e-mail cadastrado nos dois sistemas (alta confiança) &nbsp;|&nbsp;
-            <span class="badge badge-warning">USERID</span> prefixo do e-mail do AD bate exatamente com um USERID do Maximo, com nome consistente (confiança média — pode haver coincidência entre pessoas com nomes parecidos) &nbsp;|&nbsp;
-            <span class="badge badge-neutral">Nome (Score)</span> nenhum e-mail/USERID em comum; vínculo por similaridade de nome (confiança mais baixa — <strong>sempre revisar manualmente antes de agir</strong>).
-            A coluna "Ambientes" mostra em quantos dos ambientes onde a pessoa tem conta ela ainda está ativa (ex.: pode estar corretamente desativada em 6 de 7 ambientes e ativa só em 1).
-        </div>
+            <span class="badge badge-warning">USERID</span> prefixo do e-mail do AD bate exatamente com um USERID do Maximo, com nome consistente (confiança média) &nbsp;|&nbsp;
+            <span class="badge badge-neutral">Nome (Score)</span> vínculo por similaridade de nome, sem e-mail/USERID em comum (confiança mais baixa — revisar manualmente antes de agir).
+            A coluna "Ambientes" mostra em quantos dos ambientes onde a pessoa tem conta ela ainda está ativa.
+        </p>
 
-
-        <div class="table-responsive" style="border: 2px solid #dc2626; border-radius: 8px;">
+        <div class="table-responsive">
             <table id="table-auditoria" style="width: 100%;">
                 <thead>
-                    <tr style="background-color: #fee2e2;">
-                        <th style="color: #7f1d1d; border-bottom: 2px solid #dc2626;">Nome Completo</th>
-                        <th style="color: #7f1d1d; border-bottom: 2px solid #dc2626;">E-mail</th>
-                        <th style="color: #7f1d1d; border-bottom: 2px solid #dc2626;">Status AD</th>
-                        <th style="color: #7f1d1d; border-bottom: 2px solid #dc2626;">Status Maximo</th>
-                        <th style="color: #7f1d1d; border-bottom: 2px solid #dc2626;">Grupos AD</th>
-                        <th style="color: #7f1d1d; border-bottom: 2px solid #dc2626;">Tipo Match</th>
-                        <th style="color: #7f1d1d; border-bottom: 2px solid #dc2626;">Detalhes Maximo</th>
+                    <tr>
+                        <th>Nome Completo</th>
+                        <th>E-mail</th>
+                        <th>Status AD</th>
+                        <th>Status Maximo</th>
+                        <th>Grupos AD</th>
+                        <th>Tipo Match</th>
+                        <th>Detalhes Maximo</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -417,13 +409,11 @@ def _render_auditoria_desabilitados(ad_disabled_ativos_maximo):
                 </tbody>
             </table>
         </div>
-        
-        <div style="margin-top: 1rem; padding: 1rem; background: #fef2f2; border-radius: 6px; border: 1px dashed #dc2626;">
-            <p style="margin: 0; color: #7f1d1d; font-size: 0.9rem;">
-                <strong>📋 Recomendação de Auditoria:</strong> Verificar imediatamente os {len(ad_disabled_ativos_maximo)} usuários listados acima. 
-                Ações necessárias: 1) Desativar contas no Maximo; 2) Remover grupos de acesso; 3) Documentar a remoção para compliance.
-            </p>
-        </div>
+
+        <p class="card-footnote">
+            <strong>Recomendação:</strong> verificar imediatamente os {len(ad_disabled_ativos_maximo)} usuários listados acima.
+            Ações: 1) desativar contas no Maximo; 2) remover grupos de acesso; 3) documentar a remoção para compliance.
+        </p>
     </div>
     """
 

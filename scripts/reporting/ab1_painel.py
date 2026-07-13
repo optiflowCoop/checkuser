@@ -12,7 +12,7 @@ def render_tab_painel(analytics, identity_analytics):
 <div id="tab-painel" class="container tab-content active">
 
 <div class="card">
-<h2 class="card-header">📊 Visão Executiva - Resumo de Identidades</h2>
+<h2 class="card-header">Visão Executiva — Resumo de Identidades</h2>
 <div class="stats-grid">
 
 <div class="stat-card border-success">
@@ -49,7 +49,8 @@ def render_tab_painel(analytics, identity_analytics):
 </div>
 
 <div class="card">
-<h2 class="card-header">🏢 Distribuição por Domínio</h2>
+<h2 class="card-header">Distribuição por Domínio</h2>
+<p class="card-desc">Classificação por domínio de e-mail. "Sem Domínio" indica ausência de e-mail cadastrado e requer revisão manual.</p>
 <div class="stats-grid">
 
 <div class="stat-card" style="border-bottom: 4px solid #2563eb;">
@@ -79,8 +80,9 @@ def render_tab_painel(analytics, identity_analytics):
 </div>
 </div>
 
-<div class="card" style="border-left: 4px solid var(--danger);">
-<h2 class="card-header">⚡ Capacidade NEM vs Contrato</h2>
+<div class="card">
+<h2 class="card-header">Capacidade NEM vs Contrato</h2>
+<p class="card-desc">Comparação entre o pico real de uso simultâneo (NEM) e a capacidade contratada de AppPoints.</p>
 <div class="stats-grid">
 
 <div class="stat-card">

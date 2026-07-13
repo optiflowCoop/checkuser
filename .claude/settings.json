@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "Bash(cat /tmp_snip1.txt)",
+      "Bash(cat /tmp_snip2.txt)",
+      "Bash(cat __TRACKED_VAR__/snip1.txt)",
+      "Bash(ls -la \"/c/Users/esilva/AppData/Local/Temp/claude/c--Users-esilva-OneDrive---FORESEA-Documentos-04---APPS-CHECKUSER/3ee18679-eda6-42b4-8d48-839e6b9486ea/\" 2>&1)",
+      "Read(//c/Users/esilva/AppData/Local/Temp/claude/c--Users-esilva-OneDrive---FORESEA-Documentos-04---APPS-CHECKUSER/3ee18679-eda6-42b4-8d48-839e6b9486ea//**)",
+      "Bash(python3)",
+      "Bash(python run_pipeline.py --skip-extract)",
+      "Bash(python scripts/consolidate_license_footprint.py)",
+      "Bash(python src/consolidate_license_footprint.py)",
+      "Bash(python3 -c ' *)",
+      "Bash(python scripts/_explore_po_feasibility.py)",
+      "Bash(python scripts/_explore_po_feasibility2.py)",
+      "Bash(python scripts/_explore_po_feasibility3.py)",
+      "Bash(python scripts/_explore_po_feasibility4.py)",
+      "Bash(python scripts/run_db2cli_queries.py --only-env BASE --only-query pr_po_same_approver)",
+      "Bash(python scripts/_explore_creapogrp.py)",
+      "Bash(python -m scripts.domain.security_audit)",
+      "Bash(python scripts/_check_full_appauth_size.py)",
+      "Bash(python scripts/run_db2cli_queries.py --only-env ODN2 --only-query groupuser)",
+      "Bash(python scripts/run_db2cli_queries.py --only-env ODN2 --only-query maxgroup)",
+      "Bash(python scripts/run_db2cli_queries.py --only-env ODN2 --only-query persongroupview)",
+      "Bash(python scripts/run_db2cli_queries.py --only-env BASE --only-query maxuser)",
+      "Bash(python scripts/run_db2cli_queries.py --only-env ODN2 --queries email,persongroup,persongroupteam,maxlicusage)",
+      "Bash(python3 -)",
+      "Bash(python \"C:\\\\Users\\\\esilva\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-esilva-OneDrive---FORESEA-Documentos-04---APPS-CHECKUSER\\\\3ee18679-eda6-42b4-8d48-839e6b9486ea\\\\scratchpad\\\\audit_capacity.py\")",
+      "Bash(python scripts/_audit_currency.py)",
+      "Bash(python \"C:\\\\Users\\\\esilva\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-esilva-OneDrive---FORESEA-Documentos-04---APPS-CHECKUSER\\\\3ee18679-eda6-42b4-8d48-839e6b9486ea\\\\scratchpad\\\\audit_counts.py\")",
+      "Bash(grep -n 'R\\\\$' scripts/domain/security_audit.py scripts/reporting/ab9_seguranca.py scripts/generate_risk_report.py)",
+      "Bash(python src/true_capacity_calculator.py)",
+      "Bash(rm -f scripts/_audit_currency.py output/raw/_audit_*.txt)",
+      "Bash(python \"C:\\\\Users\\\\esilva\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-esilva-OneDrive---FORESEA-Documentos-04---APPS-CHECKUSER\\\\3ee18679-eda6-42b4-8d48-839e6b9486ea\\\\scratchpad\\\\cenario_conciliado.py\")",
+      "Bash(python -m scripts.domain.license_reconciliation)"
+    ]
+  }
+}

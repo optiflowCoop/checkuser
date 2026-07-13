@@ -1,0 +1,14 @@
+IBM Db2 Interactive CLI Sample Program
+(C) COPYRIGHT International Business Machines Corp. 1993,1996
+All Rights Reserved
+Licensed Materials - Property of IBM
+US Government Users Restricted Rights - Use, duplication or
+disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+> SELECT COLNAME FROM SYSCAT.COLUMNS WHERE TABSCHEMA='MAXIMO' AND TABNAME='PR' AND COLNAME LIKE '%BY%' ORDER BY COLNO;
+FetchAll:  Columns: 1
+  COLNAME 
+  REQUESTEDBY
+  CHANGEBY
+  OOG_REQUESTEDBY
+FetchAll: 3 rows fetched.
+> 

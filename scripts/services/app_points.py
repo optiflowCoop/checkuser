@@ -358,7 +358,11 @@ def calculate_statistical_concurrency():
         track_df['LOGIN_DAY'] = track_df['_PARSED_ATTEMPTDATE'].dt.date
 
         access_df['USERID'] = access_df['USERID'].astype(str).str.upper().str.strip()
-        access_df['TITLE'] = access_df['TITLE'].fillna('').astype(str).str.strip()
+        # TITLE normalizado em caixa alta: o mesmo cargo aparece grafado de formas
+        # diferentes entre linhas ('Torrista'/'TORRISTA') — sem isso, o lookup em
+        # simulate_app_points() (que também compara em maiúsculas) falha
+        # silenciosamente e cai no fallback genérico em vez do percentil real.
+        access_df['TITLE'] = access_df['TITLE'].fillna('').astype(str).str.strip().str.upper()
         user_titles = (
             access_df[access_df['TITLE'] != '']
             .drop_duplicates(['USERID', 'TITLE'])
@@ -433,7 +437,7 @@ def simulate_app_points(profiles_to_simulate, user_real_env=None):
             if operational_presence == 'OFFSHORE'
             else {'p50': 0.55, 'p95': 0.75, 'p100': 1.0}
         )
-        cargo_stats = stat_map.get(cargo_principal, fallback_stats)
+        cargo_stats = stat_map.get(cargo_principal.upper(), fallback_stats)
 
         # Limita os fatores entre 10% (mínimo irreal) e 100% (absoluto)
         f_p50 = max(0.10, min(cargo_stats['p50'], 1.0))
@@ -450,6 +454,8 @@ def simulate_app_points(profiles_to_simulate, user_real_env=None):
             'DISPLAYNAME': '; '.join(display_names) if display_names else profile['USERID'],
             'EMAIL': profile.get('EMAIL', ''),
             'DOMAIN_CATEGORY': profile.get('DOMAIN_CATEGORY', 'SEM DOMINIO'),
+            'TYPE': '; '.join(sorted(t for t in profile.get('TYPE', []) if t)),
+            'GROUPS': '; '.join(sorted(g for g in profile.get('GROUPS', []) if g)),
             'MIGRATION_SCOPE': _migration_scope(profile),
             'ENTITLEMENT': entitlement,
             'LICENSE_MODEL': license_model,

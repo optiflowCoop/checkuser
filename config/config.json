@@ -14,7 +14,10 @@
     "maxlicuserasc",
     "maxlicappaccess",
     "maxlicapps",
-    "maxrelationship"
+    "maxrelationship",
+    "applicationauth",
+    "pr_sod_evidence",
+    "siteauth"
   ],
   "connections": [
     {

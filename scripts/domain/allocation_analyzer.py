@@ -201,14 +201,24 @@ def analyze_allocation():
 
     analises = []
     for userid, r in user_rows.items():
-        status = (r.get('STATUS') or '').strip().upper() or 'ACTIVE'
+        # STATUS em branco (extração incompleta) NÃO é assumido como ACTIVE —
+        # marcado explicitamente para revisão manual, mesmo tratamento já usado
+        # em migration_advisor.py. Antes disso, ~32,6% da população (3223/9892)
+        # era contada como ativa só pelo fallback, inflando as estatísticas.
+        status_raw = (r.get('STATUS') or '').strip().upper()
+        status = status_raw or 'REVISAR_STATUS'
         displayname = (r.get('DISPLAYNAME') or '').strip()
         email = (r.get('PRIMARYEMAIL') or '').strip().lower()
         defsite = normalize_env((r.get('DEFSITE') or '').strip().upper())
         env_db = normalize_env((r.get('ENV_DB') or '').strip().upper())
 
         # Alocação real: locationsite (pgv) > DEFSITE > ENV_DB
-        locs = pgv_locations.get(userid, set())
+        # pgv_locations é indexado por PERSONID (chave real do PERSONGROUPVIEW);
+        # usar USERID como proxy só funciona quando os dois coincidem (99,9% dos
+        # casos aqui) — usar o PERSONID da própria identidade quando disponível
+        # evita perder o dado nos poucos casos em que USERID != PERSONID.
+        personid = (r.get('PERSONID') or '').strip().upper()
+        locs = pgv_locations.get(personid) or pgv_locations.get(userid, set())
         allocation_primary = ''
         if locs:
             allocation_primary = sorted(locs)[0]
@@ -282,13 +292,15 @@ def analyze_allocation():
         })
 
     def _sort_key(a):
-        return (0 if a['status'] == 'ACTIVE' else 1, -a['total_logins_90d'])
+        order = {'ACTIVE': 0, 'REVISAR_STATUS': 1}.get(a['status'], 2)
+        return (order, -a['total_logins_90d'])
     analises.sort(key=_sort_key)
 
     # ---- 5. Estatísticas ----
     total_users = len(analises)
     with_logins = sum(1 for a in analises if a['total_logins_90d'] > 0)
-    inactive = sum(1 for a in analises if a['status'] != 'ACTIVE')
+    inactive = sum(1 for a in analises if a['status'] not in ('ACTIVE', 'REVISAR_STATUS'))
+    status_desconhecido = sum(1 for a in analises if a['status'] == 'REVISAR_STATUS')
     multi = sum(1 for a in analises if len(a['suggested_accounts']) > 1)
     total_suggested = sum(len(a['suggested_accounts']) for a in analises)
 
@@ -296,6 +308,7 @@ def analyze_allocation():
         'total_users': total_users,
         'users_with_logins_90d': with_logins,
         'users_inactive': inactive,
+        'users_status_desconhecido': status_desconhecido,
         'users_multi_env': multi,
         'total_suggested_accounts': total_suggested,
         'min_secundario': MIN_SECUNDARIO,
@@ -303,7 +316,8 @@ def analyze_allocation():
         'window_end': max_dt.strftime('%Y-%m-%d'),
     }
 
-    print(f"[ALOCACAO] users={total_users} com_logins={with_logins} inativos={inactive} multi_env={multi}")
+    print(f"[ALOCACAO] users={total_users} com_logins={with_logins} inativos={inactive} "
+          f"status_desconhecido={status_desconhecido} multi_env={multi}")
     return {'stats': stats, 'analises': analises}
 
 

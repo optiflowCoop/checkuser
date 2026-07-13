@@ -16,7 +16,7 @@ def render_tab_migracao(migration_data, allocation_data=None):
         return """
     <div id="tab-migracao" class="container tab-content">
         <div class="card">
-            <h2>🚀 Recomendações de Migração</h2>
+            <h2>Recomendações de Migração</h2>
             <p>Nenhuma recomendação de migração disponível.</p>
         </div>
     </div>
@@ -36,41 +36,37 @@ def render_tab_migracao(migration_data, allocation_data=None):
 
     return f"""
     <div id="tab-migracao" class="container tab-content">
-        <div class="card" style="border-left: 4px solid var(--success); background-image: linear-gradient(to right, #ffffff, #f8fafc);">
-            <div class="card-header" style="border:none; margin-bottom:0.5rem;">
-                <div>
-                    <h2 style="margin:0; color:var(--success);">🚀 Recomendações de Migração</h2>
-                    <p style="font-size: 0.9rem; color: #64748b; font-weight: normal; margin-top: 4px;">Análise consolidada de ações necessárias para sincronizar AD e Maximo.</p>
-                </div>
-            </div>
+        <div class="card">
+            <h2 class="card-header">Recomendações de Migração</h2>
+            <p class="card-desc">Análise consolidada de ações necessárias para sincronizar AD e Maximo.</p>
 
             <div class="stats-grid" style="margin-bottom: 1rem;">
-                <div class="stat-card" style="border-bottom: 4px solid var(--accent); cursor: pointer;" onclick="filterByTypeMigracao('all')" id="card-migracao-all">
+                <div class="stat-card border-accent" onclick="filterByTypeMigracao('all')" id="card-migracao-all" style="cursor: pointer;">
                     <div class="stat-value">{_br_number(sum(tipo_counts.values()))}</div>
                     <div class="stat-title">Total</div>
                     <div class="stat-subtitle">Todas as recomendações</div>
                 </div>
-                <div class="stat-card" style="border-bottom: 4px solid var(--danger); cursor: pointer;" onclick="filterByTypeMigracao('remover')" id="card-remover">
+                <div class="stat-card border-danger" onclick="filterByTypeMigracao('remover')" id="card-remover" style="cursor: pointer;">
                     <div class="stat-value">{_br_number(tipo_counts.get('REMOVER', 0))}</div>
                     <div class="stat-title">Remover</div>
                     <div class="stat-subtitle">Usuários inativos em ambos</div>
                 </div>
-                <div class="stat-card" style="border-bottom: 4px solid var(--warning); cursor: pointer;" onclick="filterByTypeMigracao('migrar')" id="card-migrar">
+                <div class="stat-card border-warning" onclick="filterByTypeMigracao('migrar')" id="card-migrar" style="cursor: pointer;">
                     <div class="stat-value">{_br_number(tipo_counts.get('MIGRAR', 0))}</div>
                     <div class="stat-title">Migrar/Reativar</div>
                     <div class="stat-subtitle">Ativos no AD, inativos no Maximo</div>
                 </div>
-                <div class="stat-card" style="border-bottom: 4px solid var(--success); cursor: pointer;" onclick="filterByTypeMigracao('manter')" id="card-manter">
+                <div class="stat-card border-success" onclick="filterByTypeMigracao('manter')" id="card-manter" style="cursor: pointer;">
                     <div class="stat-value">{_br_number(tipo_counts.get('MANTER', 0))}</div>
                     <div class="stat-title">Manter</div>
                     <div class="stat-subtitle">Ativos em ambos sistemas</div>
                 </div>
-                <div class="stat-card" style="border-bottom: 4px solid #2563eb; cursor: pointer;" onclick="filterByTypeMigracao('criar_no_maximo')" id="card-criar_no_maximo">
+                <div class="stat-card border-primary" onclick="filterByTypeMigracao('criar_no_maximo')" id="card-criar_no_maximo" style="cursor: pointer;">
                     <div class="stat-value">{_br_number(tipo_counts.get('CRIAR_NO_MAXIMO', 0))}</div>
                     <div class="stat-title">Criar no Maximo</div>
                     <div class="stat-subtitle">Ativos no AD, não existem no Maximo</div>
                 </div>
-                <div class="stat-card" style="border-bottom: 4px solid #7c3aed; cursor: pointer;" onclick="filterByTypeMigracao('verificar_ad')" id="card-verificar_ad">
+                <div class="stat-card border-secondary" onclick="filterByTypeMigracao('verificar_ad')" id="card-verificar_ad" style="cursor: pointer;">
                     <div class="stat-value">{_br_number(tipo_counts.get('VERIFICAR_AD', 0))}</div>
                     <div class="stat-title">Verificar AD</div>
                     <div class="stat-subtitle">Existem no Maximo, não no AD</div>
@@ -78,17 +74,19 @@ def render_tab_migracao(migration_data, allocation_data=None):
             </div>
 
             <div class="search-container">
-                <input type="text" id="searchMigracao" class="search-bar" placeholder="🔍 Buscar por nome, e-mail ou USERID..." onkeyup="filterMigracaoTable()">
+                <input type="text" id="searchMigracao" class="search-bar" placeholder="Buscar por nome, e-mail ou USERID..." onkeyup="filterMigracaoTable()">
                 <select id="filterTipoMigracao" class="filter-select" onchange="filterMigracaoTable()">
                     <option value="">Todos os Tipos</option>
                     <option value="REMOVER">Remover</option>
                     <option value="MIGRAR">Migrar/Reativar</option>
-                    <option value="MANTER">Manter</option>
+                    <option value="MANTER">Migrar p/ MAS 9</option>
                     <option value="CRIAR_NO_MAXIMO">Criar no Maximo</option>
                     <option value="VERIFICAR_AD">Verificar AD</option>
+                    <option value="CONTA_SERVICO">Conta de Serviço</option>
+                    <option value="REVISAR_STATUS">Revisar Status</option>
                 </select>
-                <button class="btn-export" onclick="filterByTypeMigracao('all')" style="background-color: #64748b;">🔄 Limpar Filtro</button>
-                <button class="btn-export" onclick="exportMigracaoCSV()">📥 Exportar CSV</button>
+                <button class="btn-export" onclick="filterByTypeMigracao('all')">Limpar Filtro</button>
+                <button class="btn-export" onclick="exportMigracaoCSV()">Exportar CSV</button>
             </div>
 
             <div class="table-responsive">
@@ -104,6 +102,9 @@ def render_tab_migracao(migration_data, allocation_data=None):
                             <th>Status AD</th>
                             <th>Status Maximo</th>
                             <th>Ambientes</th>
+                            <th>Cargo</th>
+                            <th>Grupos Maximo Atuais</th>
+                            <th>Grupo Recomendado (MAS 9)</th>
                             <th>Grupos AD</th>
                             <th>Motivo</th>
                             <th>Ação Recomendada</th>
@@ -116,11 +117,11 @@ def render_tab_migracao(migration_data, allocation_data=None):
             </div>
         </div>
 
-        <div class="card" style="border-top: 4px solid var(--accent);">
-            <h2 class="card-header" style="border:none; margin-bottom:0.5rem;">📋 Regras de Migração</h2>
+        <div class="card">
+            <h2 class="card-header">Regras de Migração</h2>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
-                <div class="legend-box" style="border-left: 3px solid var(--danger);">
-                    <h3>❌ Remover</h3>
+                <div class="legend-box">
+                    <h3>Remover</h3>
                     <ul class="legend-list">
                         <li>Usuário inativo no AD e no Maximo</li>
                         <li>Conta desabilitada há mais de 90 dias</li>
@@ -128,8 +129,8 @@ def render_tab_migracao(migration_data, allocation_data=None):
                         <li>Grupos apenas de acesso genérico</li>
                     </ul>
                 </div>
-                <div class="legend-box" style="border-left: 3px solid var(--warning);">
-                    <h3>⚠️ Migrar/Reativar</h3>
+                <div class="legend-box">
+                    <h3>Migrar/Reativar</h3>
                     <ul class="legend-list">
                         <li>Ativo no AD mas inativo no Maximo</li>
                         <li>Usuário com múltiplos USERIDs no Maximo</li>
@@ -137,8 +138,8 @@ def render_tab_migracao(migration_data, allocation_data=None):
                         <li>Verificar necessidade de acesso</li>
                     </ul>
                 </div>
-                <div class="legend-box" style="border-left: 3px solid #10b981;">
-                    <h3>✅ Manter</h3>
+                <div class="legend-box">
+                    <h3>Manter</h3>
                     <ul class="legend-list">
                         <li>Ativo em ambos os sistemas</li>
                         <li>Nomes e emails consistentes</li>
@@ -146,8 +147,8 @@ def render_tab_migracao(migration_data, allocation_data=None):
                         <li>Grupos de segurança válidos</li>
                     </ul>
                 </div>
-                <div class="legend-box" style="border-left: 3px solid var(--accent);">
-                    <h3>🆕 Criar no Maximo</h3>
+                <div class="legend-box">
+                    <h3>Criar no Maximo</h3>
                     <ul class="legend-list">
                         <li>Usuário ativo no AD mas não existe no Maximo</li>
                         <li>Avaliar necessidade de acesso</li>
@@ -169,9 +170,11 @@ def _render_migracao_rows(migration_data):
         tipo_badge = {
             'REMOVER': '<span class="badge badge-danger">Remover</span>',
             'MIGRAR': '<span class="badge badge-warning">Migrar</span>',
-            'MANTER': '<span class="badge badge-success">Manter</span>',
+            'MANTER': '<span class="badge badge-success">Migrar p/ MAS 9</span>',
             'CRIAR_NO_MAXIMO': '<span class="badge badge-medium">Criar no Maximo</span>',
             'VERIFICAR_AD': '<span class="badge badge-neutral">Verificar AD</span>',
+            'CONTA_SERVICO': '<span class="badge badge-warning">Conta de Serviço</span>',
+            'REVISAR_STATUS': '<span class="badge badge-neutral">Revisar Status</span>',
         }.get(r['tipo'], '<span class="badge badge-neutral">N/A</span>')
 
         prioridade_badge = {
@@ -196,24 +199,30 @@ def _render_migracao_rows(migration_data):
         else:
             status_maximo = '<span class="badge badge-neutral">N/A</span>'
 
-        # Construir detalhe de ambientes com status
-        envs_text = r.get('envs') or ''
-        status_text = r.get('status_maximo_detalhe') or ''  # ex: "ACTIVE | INACTIVE"
+        # Detalhe de ambientes com status: usa os pares REAIS env:status que o
+        # advisor agora emite (envs_detalhe, ex. "BASE:ACTIVE | N09:INACTIVE").
+        # O código antigo zipava dois sets independentes por posição — a
+        # auditoria mediu 228 recomendações com pares fabricados errados.
         ambientes_detalhe = 'N/A'
-        if envs_text:
-            env_list = [e.strip() for e in str(envs_text).split('|') if e.strip()]
-            status_list = [s.strip().upper() for s in str(status_text).split('|')] if status_text else []
+        envs_detalhe = r.get('envs_detalhe') or ''
+        if envs_detalhe:
             detalhes = []
-            for idx, env in enumerate(env_list):
-                st = status_list[idx] if idx < len(status_list) else ''
-                if st in ('ATIVO', 'ACTIVE', 'ENABLED'):
+            for pair in envs_detalhe.split('|'):
+                pair = pair.strip()
+                if not pair:
+                    continue
+                env, _, st = pair.partition(':')
+                st = st.strip().upper()
+                if any(x in st for x in ('ATIVO', 'ACTIVE', 'ENABLED')) and not any(x in st for x in ('INATIVO', 'INACTIVE', 'DISABLED')):
                     badge = '<span class="badge badge-success">Ativo</span>'
-                elif st in ('INATIVO', 'INACTIVE', 'DISABLED'):
-                    badge = '<span class="badge badge-danger">Inativo</span>'
+                elif any(x in st for x in ('INATIVO', 'INACTIVE', 'DISABLED')):
+                    badge = f'<span class="badge badge-danger">{st if "/" in st else "Inativo"}</span>'
                 else:
-                    badge = '<span class="badge badge-neutral">N/A</span>'
-                detalhes.append(f"{env} {badge}")
+                    badge = f'<span class="badge badge-neutral">{st or "N/A"}</span>'
+                detalhes.append(f"{env.strip()} {badge}")
             ambientes_detalhe = '<br>'.join(detalhes)
+        elif r.get('envs'):
+            ambientes_detalhe = str(r['envs'])
 
         rows.append(f"""
             <tr data-tipo="{r['tipo'].lower()}" data-prioridade="{r['prioridade']}" data-email="{r['email'].lower()}">
@@ -226,6 +235,9 @@ def _render_migracao_rows(migration_data):
                 <td>{status_ad}</td>
                 <td>{status_maximo}</td>
                 <td>{ambientes_detalhe}</td>
+                <td>{(r.get('cargo') or '')[:40]}</td>
+                <td title="{(r.get('grupos_maximo') or '').replace('"', '&quot;')}">{(r.get('grupos_maximo') or '')[:80]}</td>
+                <td><strong>{r.get('grupo_recomendado_mas9') or ''}</strong></td>
                 <td>{r['grupos_ad']}</td>
                 <td>{r['motivo'][:80]}</td>
                 <td>{r['acao']}</td>
@@ -277,19 +289,15 @@ def render_allocation_detail(allocation_data):
 
     return f"""
     <div id="tab-alloc-detail" class="container tab-content">
-        <div class="card" style="border-top: 4px solid #7c3aed;">
-            <div class="card-header" style="border:none; margin-bottom:0.5rem;">
-                <div>
-                    <h2 style="margin:0; color:#7c3aed;">🧭 Saneamento de Alocacao (Maximo 9) — Detalhamento</h2>
-                    <p style="font-size: 0.9rem; color: #64748b; font-weight: normal; margin-top: 4px;">
-                        Historicos de logins dos ultimos 90 dias por ambiente e sugestao de criacao de conta.
-                        Janela: {stats['window_start']} a {stats['window_end']} | {len(analises)} usuarios.
-                    </p>
-                </div>
-            </div>
+        <div class="card">
+            <h2 class="card-header">Saneamento de Alocação (Maximo 9) — Detalhamento</h2>
+            <p class="card-desc">
+                Histórico de logins dos últimos 90 dias por ambiente e sugestão de criação de conta.
+                Janela: {stats['window_start']} a {stats['window_end']} | {len(analises)} usuários.
+            </p>
             <div class="search-container">
-                <input type="text" id="searchAlloc" class="search-bar" placeholder="🔍 Buscar por USERID ou nome..." onkeyup="filterAllocTable()">
-                <button class="btn-export" onclick="exportAllocCSV()">📥 Exportar CSV</button>
+                <input type="text" id="searchAlloc" class="search-bar" placeholder="Buscar por USERID ou nome..." onkeyup="filterAllocTable()">
+                <button class="btn-export" onclick="exportAllocCSV()">Exportar CSV</button>
             </div>
             <div class="table-responsive">
                 <table id="table-alloc-detail">
@@ -311,9 +319,9 @@ def render_allocation_detail(allocation_data):
                     </tbody>
                 </table>
             </div>
-            <p style="font-size: 0.85rem; color: #64748b; padding: 0.5rem 0;">
-                Sugestao baseada no local de alocacao (locationsite/DEFSITE) + ambientes com >= {stats['min_secundario']} acessos nos ultimos 90 dias.
-                <br><strong>Exemplo:</strong> "BASE 150 | ODN2 40 | N06 30" significa 150 logins no ambiente BASE, 40 no ODN2, 30 no N06.
+            <p class="card-footnote">
+                Sugestão baseada no local de alocação (locationsite/DEFSITE) + ambientes com &gt;= {stats['min_secundario']} acessos nos últimos 90 dias.
+                Exemplo: "BASE 150 | ODN2 40 | N06 30" significa 150 logins no ambiente BASE, 40 no ODN2, 30 no N06.
             </p>
         </div>
     </div>

@@ -1,0 +1,12 @@
+IBM Db2 Interactive CLI Sample Program
+(C) COPYRIGHT International Business Machines Corp. 1993,1996
+All Rights Reserved
+Licensed Materials - Property of IBM
+US Government Users Restricted Rights - Use, duplication or
+disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+> SELECT PRID, PRNUM, STATUS, REQUESTEDBY, CHANGEBY, CHANGEDATE, ISSUEDATE FROM PR WHERE PRID = 5000028549;
+FetchAll:  Columns: 7
+  PRID PRNUM STATUS REQUESTEDBY CHANGEBY CHANGEDATE ISSUEDATE 
+  5000028549, 26-1254, APPR, ODN1001, MAXADMIN, 2026-07-10 09:24:38.749000, 2026-07-10 07:10:48.795000
+FetchAll: 1 rows fetched.
+> 

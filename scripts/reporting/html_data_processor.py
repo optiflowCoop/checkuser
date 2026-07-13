@@ -23,19 +23,19 @@ def _parse_dt(s):
 
 
 class DataProcessor:
-    def __init__(self, summary, governance, app_points, domains, identity_analytics):
+    def __init__(self, summary, governance, app_points, domains, identity_analytics, reconciliation_data=None):
         self.summary = summary
         self.governance = governance
         self.app_points = app_points
         self.domains = domains
         self.identity_analytics = identity_analytics
+        self.reconciliation_data = reconciliation_data
 
     def process_app_points_analytics(self):
         inativos_count = 0
         downgrade_count = 0
         concurrent_count = 0
 
-        concurrency_summary = self.summary.get('concurrency', {}) or {}
         scenario_points = {'p50': 0, 'p95': 0, 'p100': 0, 'blackout': 0}
         scenario_points_by_scope = {
             'foresea': {'p50': 0, 'p95': 0, 'p100': 0, 'blackout': 0},
@@ -105,42 +105,30 @@ class DataProcessor:
                     + scenarios_by_scope['integracao'][scenario][key]
                 )
 
-        hourly_nem_raw = concurrency_summary.get('hourly_app_points_nem', {}) or {}
-        hourly_nem = {}
-        for date_str, value in hourly_nem_raw.items():
-            dt = _parse_dt(date_str)
-            if dt:
-                hourly_nem[dt.strftime('%Y-%m-%d %H:00')] = value
-
-        if hourly_nem:
-            values = list(hourly_nem.values())
-            scenario_points = {
-                'p50': int(np.percentile(values, 50)),
-                'p95': int(np.percentile(values, 95)),
-                'p100': int(max(values)),
-                'blackout': int(max(values)),
-            }
-
-        hourly_nem_by_scope_raw = concurrency_summary.get('hourly_app_points_nem_by_scope', {}) or {}
-        for scope_key, scope_series in hourly_nem_by_scope_raw.items():
-            normalized_series = {}
-            for date_str, value in (scope_series or {}).items():
-                dt = _parse_dt(date_str)
-                if dt:
-                    normalized_series[dt.strftime('%Y-%m-%d %H:00')] = value
-            values = list(normalized_series.values())
-            if values:
+        # FONTE ÚNICA de P50/P95/P100 (unificação 2026-07-11): antes esta
+        # série vinha de `true_capacity_metrics.json` — uma população e
+        # lógica de licença DIFERENTES das usadas no Cenário Conciliado —
+        # e cada aba (Cenários de AppPoints, Eventos Críticos, Peak
+        # Contributors) acabava mostrando um número diferente para "P95".
+        # Agora todas as três leem `reconciliation_data['stats']['nem_by_scope']`
+        # (população conciliada AD×Maximo + licença estatística com presença
+        # ajustada por rotação offshore — ver license_reconciliation.py).
+        reconciliation_stats = (self.reconciliation_data or {}).get('stats', {})
+        nem_by_scope = reconciliation_stats.get('nem_by_scope', {})
+        for scope_key in ('foresea', 'terceiros', 'integracao', 'todos'):
+            v = nem_by_scope.get(scope_key)
+            if v:
                 scenario_points_by_scope[scope_key] = {
-                    'p50': int(np.percentile(values, 50)),
-                    'p95': int(np.percentile(values, 95)),
-                    'p100': int(max(values)),
-                    'blackout': int(max(values)),
+                    'p50': v['p50'], 'p95': v['p95'], 'p100': v['p100'], 'blackout': v['p100'],
+                    'conciliados': v.get('conciliados', 0), 'terceiros_ativos': v.get('terceiros_ativos', 0),
+                    'authorized': v.get('authorized', 0), 'concurrent': v.get('concurrent', 0),
+                    'reserva_authorized': v.get('reserva_authorized', 0),
                 }
+        if nem_by_scope.get('todos'):
+            scenario_points = dict(scenario_points_by_scope['todos'])
 
-                scenario_points_by_scope['todos'] = dict(scenario_points)
-
-        # Fallback defensivo: se um escopo não tiver série NEM própria, mantém ao menos
-        # a composição física corretamente preenchida para a Aba 3.
+        # Fallback defensivo: se o Cenário Conciliado ainda não rodou para um
+        # escopo, usa a composição física do simulador de otimização.
         for scope_key in ('foresea', 'terceiros', 'integracao', 'todos'):
             if scenario_points_by_scope[scope_key] == {'p50': 0, 'p95': 0, 'p100': 0, 'blackout': 0}:
                 otimizado = scenarios_by_scope[scope_key]['otimizado']
@@ -162,7 +150,8 @@ class DataProcessor:
 
         app_points_summary = self.summary.get('app_points_summary', {}) or {}
         contracted = self.summary.get('ceiling_limit', 1200)
-        true_peak = concurrency_summary.get('true_total_app_points', 0)
+        # P100/P95 do Painel também vêm do Cenário Conciliado (fonte única).
+        true_peak = scenario_points['p100']
         p95 = scenario_points['p95']
 
         authorized = len(app_points_summary.get('auth_users', []))
@@ -210,14 +199,11 @@ class DataProcessor:
             'scenario_points': scenario_points,
             'scenario_points_by_scope': scenario_points_by_scope,
             'concurrency_peak_count': true_peak,
-            'concurrency_peak_hours': concurrency_summary.get('peak_hours', []),
-            'concurrency_peak_users_hours': concurrency_summary.get('peak_hours_users', []),
-            'concurrency_peak_contributors': concurrency_summary.get('peak_contributors', []),
-            'concurrency_peak_contributors_count': concurrency_summary.get('peak_contributors_count', 0),
-            'concurrency_hourly': concurrency_summary.get('hourly_counts', {}),
-            'concurrency_hourly_app_points': concurrency_summary.get('hourly_app_points', {}),
-            'concurrency_hourly_concurrent_app_points': concurrency_summary.get('hourly_concurrent_app_points', {}),
-            'concurrency_hourly_app_points_nem': hourly_nem,
+            # Todos os 4 escopos (com série horária, pico e composição
+            # próprios) — permite a aba Peak ter o MESMO seletor de escopo
+            # da aba Cenários de AppPoints, com a curva de uso recalculada
+            # de verdade por escopo (não só um filtro visual de tabela).
+            'nem_by_scope': nem_by_scope,
             'painel_data': painel_data,
             'identity_status': self.identity_analytics.get('status_counts', {}),
             'identity_domains': self.identity_analytics.get('domain_counts', {}),
@@ -282,9 +268,9 @@ class DataProcessor:
             title_divergence_html.append(f'<div class="type-card"><h4>{title} {" ".join(alerts)}</h4>')
 
             if len(all_types) > 1:
-                title_divergence_html.append('<div class="env-divergence"><div class="env-header">⚠️ Inconsistência de TYPE</div>')
+                title_divergence_html.append('<div class="env-divergence"><div class="env-header">Inconsistência de TYPE</div>')
                 for env, types in sorted(data.get('types', {}).items()):
-                    title_divergence_html.append(f'<div>📍 {env}: {", ".join(sorted(t for t in types if t))}</div>')
+                    title_divergence_html.append(f'<div>{env}: {", ".join(sorted(t for t in types if t))}</div>')
                 title_divergence_html.append('</div>')
 
             title_divergence_html.append('</div>')
