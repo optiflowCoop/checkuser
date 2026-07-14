@@ -1,0 +1,5 @@
+IBM Db2 Interactive CLI Sample Program (extração paginada)
+> SELECT COALESCE(userid, '') || ',' || COALESCE(CHAR(status), '') || ',' || COALESCE(CHAR(changedate), '') || ',' || COALESCE(REPLACE(memo, ',', ';'), '') || ',' || COALESCE(changeby, '') as CSV_ROW FROM MAXUSERSTATUS;
+FetchAll:  Columns: 1
+  CSV_ROW 
+

@@ -2,6 +2,8 @@ import numpy as np
 from datetime import datetime
 
 from .html_helpers import get_recommendation_badge, get_identity_hypothesis_badge, get_login_conflict_badge
+from scripts.config import get_critical_titles, get_app_points_config
+from scripts.services.app_points import AUTHORIZED_MIN_LOGINS_60D, DOWNGRADE_MAX_LOGINS_60D
 
 
 def _parse_dt(s):
@@ -208,7 +210,54 @@ class DataProcessor:
             'identity_status': self.identity_analytics.get('status_counts', {}),
             'identity_domains': self.identity_analytics.get('domain_counts', {}),
             'ceiling_limit': contracted,
+            # Simulador de Cenarios (Aba 7): payload por usuario + os MESMOS
+            # parametros/pontuacao usados pela regra real (scripts/config.py e
+            # scripts/services/app_points.py) — fonte unica, o simulador so
+            # reclassifica no navegador com esses valores como ponto de partida.
+            'simulator_users': self.prepare_simulator_users(),
+            'simulator_defaults': {
+                'onshoreFloor': AUTHORIZED_MIN_LOGINS_60D,
+                'offshoreFloor': DOWNGRADE_MAX_LOGINS_60D,
+                'criticalTitles': get_critical_titles(),
+            },
+            'simulator_points_config': get_app_points_config(),
         }
+
+    def prepare_simulator_users(self):
+        """Payload minimo por usuario para o simulador de cenarios (Aba 7) reclassificar
+        Authorized/Concurrent no navegador. Mesmo escopo (foresea/terceiros/integracao/
+        todos) usado em process_app_points_analytics() — usuarios SEM DOMINIO ficam fora
+        de qualquer cenario, como no resto do dashboard.
+
+        O lado Authorized e 1:1 (reserva fixa, nao depende de concorrencia) e pode ser
+        recalculado aqui direto por usuario. O lado Concurrent NAO usa headcount bruto
+        nem um fator por cargo inventado aqui — o simulador ancora no P50/P95/P100 real
+        (license_reconciliation.py, MESMA fonte da Aba 8/Cenario Conciliado, unificada em
+        2026-07-11 justamente para nao ter um 2o calculo de pico divergente) e escala pelo
+        headcount Concurrent simulado (ver runSimulator() em html_template.py)."""
+        rows = []
+        for u in self.app_points:
+            domain_cat = str(u.get('DOMAIN_CATEGORY', '')).strip().upper()
+            if domain_cat in ('FORESEA', 'PARCEIRO'):
+                scope = 'foresea'
+            elif domain_cat == 'INTEGRACAO':
+                scope = 'integracao'
+            elif domain_cat and domain_cat != 'SEM DOMINIO':
+                scope = 'terceiros'
+            else:
+                continue
+
+            rows.append({
+                'e': str(u.get('ENTITLEMENT', 'BASE') or 'BASE').strip().upper(),
+                'o': str(u.get('OPERATIONAL_PRESENCE', 'ONSHORE') or 'ONSHORE').strip().upper(),
+                't': 1 if domain_cat == 'TERCEIRO' else 0,
+                'a': 1 if 'MAXADMIN' in str(u.get('GROUPS', '') or '').upper() else 0,
+                'l': u.get('LOGIN_COUNT_90D', 0) or 0,
+                'l6': u.get('LOGIN_COUNT_60D', 0) or 0,
+                'ti': str(u.get('TITLES', '') or '').upper(),
+                's': scope,
+            })
+        return rows
 
     def prepare_governance_tables(self):
         # cross_env_userid_reuse.csv não tem sua própria conclusão de risco (só um

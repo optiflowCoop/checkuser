@@ -1,7 +1,7 @@
 # scripts/services/app_points.py
 import csv
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -195,10 +195,19 @@ def _migration_scope(profile):
     return 'OUT_OF_SCOPE_THIRD_PARTY'
 
 
+AUTHORIZED_LOOKBACK_DAYS = 60
+AUTHORIZED_MIN_LOGINS_60D = 120
+# Metade do limiar de atribuição — mesma margem de 2:1 que já existia entre
+# o limiar de atribuição (60) e o de recomendação de downgrade (30) antes
+# desta regra (pedido de negócio 2026-07-14).
+DOWNGRADE_MAX_LOGINS_60D = AUTHORIZED_MIN_LOGINS_60D // 2
+
+
 def _load_login_usage():
     usage = defaultdict(
         lambda: {
             'login_count': 0,
+            'login_count_60d': 0,
             'last_login': None,
             'apps': set(),
             'active_days': set(),
@@ -234,6 +243,19 @@ def _load_login_usage():
             break
     attempt_has_login = 'LOGIN' in attempt_values
 
+    # Referência de "hoje" para a janela de 60 dias: a data mais recente
+    # encontrada no próprio extrato (não a data corrida do sistema, que não
+    # é confiável neste ambiente de execução — mesmo padrão já usado em
+    # allocation_analyzer.py). Exige duas passadas: a primeira só para achar
+    # essa data máxima antes de saber quem entra na janela dos 60 dias.
+    max_dt = None
+    for row in logintracking_rows:
+        dt_raw = row.get(date_col, '') if date_col else ''
+        dt = _parse_datetime(dt_raw)
+        if dt and (max_dt is None or dt > max_dt):
+            max_dt = dt
+    cutoff_60d = (max_dt - timedelta(days=AUTHORIZED_LOOKBACK_DAYS)) if max_dt else None
+
     for row in logintracking_rows:
         userid = str(row.get('USERID', '')).strip().upper()
         if not userid:
@@ -259,6 +281,8 @@ def _load_login_usage():
             data['active_hours'].add(dt.strftime('%Y-%m-%d %H:00'))
             if data['last_login'] is None or dt > data['last_login']:
                 data['last_login'] = dt
+            if cutoff_60d and dt >= cutoff_60d:
+                data['login_count_60d'] += 1
 
     return usage
 
@@ -271,28 +295,45 @@ def _days_since(dt):
     return max((datetime.now(timezone.utc) - dt.astimezone(timezone.utc)).days, 0)
 
 
-def _assign_license_model(profile, entitlement, login_count, operational_presence, titles):
+def _is_terceiro(profile):
+    return str(profile.get('DOMAIN_CATEGORY', '')).strip().upper() == 'TERCEIRO'
+
+
+def _assign_license_model(profile, entitlement, login_count, login_count_60d, operational_presence, titles):
+    # MAXADMIN é grupo de ACESSO (permissão de sistema), não critério de
+    # LICENÇA — pertencer a ele não implica precisar de disponibilidade
+    # garantida. A única função de _is_critical_access() aqui é "destravar"
+    # terceirizados da exclusão total abaixo, deixando-os serem avaliados
+    # pelos MESMOS critérios de cargo/uso que qualquer outra pessoa — não é
+    # mais um atalho automático para AUTHORIZED (pedido de negócio
+    # 2026-07-14, revisado após achado do caso WALLACECONCEICAO: MAXADMIN +
+    # sem cargo + 5 logins não deveria bastar sozinho).
+    if _is_terceiro(profile) and not _is_critical_access(profile):
+        return 'CONCURRENT'
+
     # Preservar AUTHORIZED para títulos críticos mesmo quando o login_count veio 0
     # (evita zerar Aba 1/3 e cards de Authorized-as-is).
     if login_count == 0:
-        if _is_critical_access(profile) or _is_critical_title(titles):
-            return 'AUTHORIZED'
-        return 'CONCURRENT'
+        return 'AUTHORIZED' if _is_critical_title(titles) else 'CONCURRENT'
 
     if entitlement == 'LIMITED':
         return 'CONCURRENT'
-    if _is_critical_access(profile):
-        return 'AUTHORIZED'
     if operational_presence == 'OFFSHORE':
-        return 'AUTHORIZED' if _is_critical_title(titles) else 'CONCURRENT'
-    return 'AUTHORIZED' if login_count > 60 or _is_critical_title(titles) else 'CONCURRENT'
+        # Cargo critico offshore (ENCARREGADO, SUPERVISOR etc.) nao bypassa mais
+        # o uso incondicionalmente (achado do caso GABRIELARCURI: 71 logins/60d
+        # e ODN1 bastava so pelo titulo). Exige piso reduzido (metade do limiar
+        # onshore) reconhecendo que rotacao (14x14 etc.) reduz a frequencia
+        # natural de acesso sem eliminar a necessidade de evidencia de uso real
+        # (pedido de negocio 2026-07-14).
+        return 'AUTHORIZED' if _is_critical_title(titles) and login_count_60d > DOWNGRADE_MAX_LOGINS_60D else 'CONCURRENT'
+    return 'AUTHORIZED' if login_count_60d > AUTHORIZED_MIN_LOGINS_60D or _is_critical_title(titles) else 'CONCURRENT'
 
 
-def _recommend(profile, entitlement, license_model, login_count, operational_presence):
+def _recommend(profile, entitlement, license_model, login_count, login_count_60d, operational_presence):
     if login_count == 0:
         return 'INATIVO (>90d)', 'Sem login no extrato consolidado de 90 dias.'
-    if _is_critical_access(profile):
-        return 'CONFIRMED_AUTHORIZED', 'Acesso administrativo critico confirmado por grupo MAXADMIN.'
+    if _is_terceiro(profile) and not _is_critical_access(profile):
+        return 'OK', 'Terceirizado — Concurrent por regra de negocio, independente de uso ou cargo.'
 
     groups_upper = {str(g).upper().strip() for g in (profile.get('GROUPS') or []) if str(g).strip()}
     og_keywords = [k.upper() for k in get_og_group_keywords()]
@@ -309,8 +350,10 @@ def _recommend(profile, entitlement, license_model, login_count, operational_pre
             return 'OK', 'Premium mantido: acesso O&G detectado via grupos.'
         return 'DOWNGRADE_CANDIDATE', 'Acesso Premium com uso muito baixo; validar necessidade O&G.'
 
-    # CANONICAL RULE: MOVE_TO_CONCURRENT applies when login_count < 30 (documented standard)
-    if license_model == 'AUTHORIZED' and login_count < 30:
+    # CANONICAL RULE: MOVE_TO_CONCURRENT abaixo da metade do limiar de
+    # atribuição (AUTHORIZED_MIN_LOGINS_60D), mesma margem 2:1 de antes
+    # (pedido de negocio 2026-07-14).
+    if license_model == 'AUTHORIZED' and login_count_60d < DOWNGRADE_MAX_LOGINS_60D:
         return 'MOVE_TO_CONCURRENT', 'Baixa frequencia para usuario dedicado; avaliar pool concorrente.'
     if license_model == 'AUTHORIZED':
         return 'CONFIRMED_AUTHORIZED', 'Uso/cargo justifica disponibilidade fixa.'
@@ -425,11 +468,12 @@ def simulate_app_points(profiles_to_simulate, user_real_env=None):
         operational_presence = _classify_operational_presence(profile)
         user_usage = login_usage.get(str(profile['USERID']).upper(), {})
         login_count = user_usage.get('login_count', 0)
+        login_count_60d = user_usage.get('login_count_60d', 0)
 
-        license_model = _assign_license_model(profile, entitlement, login_count, operational_presence, titles)
+        license_model = _assign_license_model(profile, entitlement, login_count, login_count_60d, operational_presence, titles)
         points = calculate_app_points(entitlement, license_model)
 
-        rec, reason = _recommend(profile, entitlement, license_model, login_count, operational_presence)
+        rec, reason = _recommend(profile, entitlement, license_model, login_count, login_count_60d, operational_presence)
 
         # Busca os fatores estatísticos reais do cargo. Se não existir, usa médias seguras de O&G.
         fallback_stats = (
@@ -467,6 +511,7 @@ def simulate_app_points(profiles_to_simulate, user_real_env=None):
             'OPTIMIZATION_REC': rec,
             'OPTIMIZATION_REASON': reason,
             'LOGIN_COUNT_90D': login_count,
+            'LOGIN_COUNT_60D': login_count_60d,
             'DAYS_SINCE_LAST': _days_since(user_usage.get('last_login')),
             'ACTIVE_DAYS': sorted(user_usage.get('active_days', set())),
             'ACTIVE_HOURS': sorted(user_usage.get('active_hours', set())),

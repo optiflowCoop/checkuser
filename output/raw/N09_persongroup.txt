@@ -9,7 +9,7 @@ FetchAll:  Columns: 6
   PERSONGROUP DESCRIPTION ISCREWWORKGROUP OOG_DEPARTMENT OOG_USEINMOC OOG_ISTOPSIDE 
   ET, ET, 0, 1, 0, -
   OOG_MACO, Materials Coordinators, 0, 0, 0, -
-  HSE, HSE - Safety, 0, 1, 0, -
+  HSE, HSEÂ -Â Safety, 0, 1, 0, -
   RADIO, Radio, 0, 1, 0, -
   SUBSEA, Subsea, 0, 1, 0, -
   ENGINEER, Engineering, 0, 1, 0, -
@@ -22,31 +22,31 @@ FetchAll:  Columns: 6
   DRILLING, DRILLING, 0, 1, 0, -
   HOSPITAL, Hospital, 0, 1, 0, -
   MCHNIC, Mechanical, 0, 1, 0, -
-  TDION, Tecnologia da Informação / Information Tecnology Onshore, 0, 0, 1, -
+  TDION, Tecnologia da InformaÃ§Ã£o / Information Tecnology Onshore, 0, 0, 1, -
   ROV, ROV, 0, 1, 0, -
-  ATVON, Gestão de Ativos / Asset Management, 0, 0, 1, -
-  ELEOFF, Eletroeletrônica / Electro Electronic, 0, 0, 1, -
-  MAQOFF, Máquinas / Engineering, 0, 0, 1, 1
+  ATVON, GestÃ£o de Ativos / Asset Management, 0, 0, 1, -
+  ELEOFF, EletroeletrÃ´nica / Electro Electronic, 0, 0, 1, -
+  MAQOFF, MÃ¡quinas / Engineering, 0, 0, 1, 1
   NAUOFF, Marinha / Marine, 0, 0, 1, -
-  DRLOFF, Perfuração / Drilling, 0, 0, 1, -
+  DRLOFF, PerfuraÃ§Ã£o / Drilling, 0, 0, 1, -
   QUAON, Garantia da Qualidade / Quality Assurance  Onshore, 0, 0, 1, -
-  OPRON, Operação / Operation Onshore, 0, 0, 1, -
-  MANOFF, Manutenção / Maintenance, 0, 0, 1, 1
+  OPRON, OperaÃ§Ã£o / Operation Onshore, 0, 0, 1, -
+  MANOFF, ManutenÃ§Ã£o / Maintenance, 0, 0, 1, 1
   MATOFF, Materiais / Materials, 0, 0, 1, 1
-  JURON, Jurídico / Legal Onshore, 0, 0, 1, -
-  SCPON, Subsea e Construção de Poços / Subsea and Construction of Wells, 0, 0, 1, -
+  JURON, JurÃ­dico / Legal Onshore, 0, 0, 1, -
+  SCPON, Subsea e ConstruÃ§Ã£o de PoÃ§os / Subsea and Construction of Wells, 0, 0, 1, -
   SSTON, Sustentabilidade / Sustainabitity Onshore, 0, 0, 1, -
-  ETCOFF, Eletroeletrônica / Electroelectronical, 0, 0, 1, 1
-  ACOON, Administração Contratual / Contractual Administration Onshore, 0, 0, 1, -
-  COMON, Comunicação / Comunication Onshore, 0, 0, 1, -
-  NAUON, Gestão Marítima / Maritime Management, 0, 0, 1, -
+  ETCOFF, EletroeletrÃ´nica / Electroelectronical, 0, 0, 1, 1
+  ACOON, AdministraÃ§Ã£o Contratual / Contractual Administration Onshore, 0, 0, 1, -
+  COMON, ComunicaÃ§Ã£o / Comunication Onshore, 0, 0, 1, -
+  NAUON, GestÃ£o MarÃ­tima / Maritime Management, 0, 0, 1, -
   PRJON, Projetos (Engenharia) / Projects (Engineering), 0, 0, 1, -
   SBSOFF, Subsea / Subsea, 0, 0, 1, 1
-  SUPON, Suprimentos e Logística de Materiais / Supply and Materials Logistics Onshore, 0, 0, 1, -
-  FINON, Finanças / Finance Onshore, 0, 0, 1, -
-  PEOON, Pessoas & Organização / People & Organization Onshore, 0, 0, 1, -
-  SEVON, Serviços / Services Onshore, 0, 0, 1, -
-  MCHOFF, Mecânica / Mechanical, 0, 0, 1, 1
+  SUPON, Suprimentos e LogÃ­stica de Materiais / Supply and Materials Logistics Onshore, 0, 0, 1, -
+  FINON, FinanÃ§as / Finance Onshore, 0, 0, 1, -
+  PEOON, Pessoas & OrganizaÃ§Ã£o / People & Organization Onshore, 0, 0, 1, -
+  SEVON, ServiÃ§os / Services Onshore, 0, 0, 1, -
+  MCHOFF, MecÃ¢nica / Mechanical, 0, 0, 1, 1
   SSTOFF, Sustentabilidade / Sustainabitity Offshore, 0, 0, 1, -
   OOG_MOCO, Person group contaning people that can create MOC O&F records, 0, 0, 0, -
   OOG_PRWF, Group of people notified when cancelling some PR, 0, 0, 0, -
@@ -54,10 +54,10 @@ FetchAll:  Columns: 6
   OOG_AC, Asset Coordinator Person Group, 0, 0, 0, -
   OOG_EC, Engineering Coordinator person group, 0, 0, 0, -
   OOG_PJEN, Person group for all the project engineers, 0, 0, 0, -
-  TUBOFF, Tubulação/Piping, 0, 0, 1, -
+  TUBOFF, TubulaÃ§Ã£o/Piping, 0, 0, 1, -
   PROOFF, Processo / Process, 0, 0, 1, 1
   ESTOFF, Estrutura / Structure, 0, 0, 1, 1
-  VACOFF, HVAC (Condicionador de Ar de Ventilação de Aquecimento - Heating Ventilation Air Conditioner), 0, 0, 1, 1
+  VACOFF, HVAC (Condicionador de Ar de VentilaÃ§Ã£o de Aquecimento - Heating Ventilation Air Conditioner), 0, 0, 1, 1
   NR-13, NR-13, 0, 0, 1, -
   HSEOFF, Sustentabilidade HSE / Sustainability HSE, 0, 0, 1, -
   HOSOFF, Sustentabilidade Hospital / Sustainability Hospital, 0, 0, 1, -
@@ -76,21 +76,21 @@ FetchAll:  Columns: 6
   OOG_RIGM, Rig Managers, 0, 0, 0, -
   OOG_COND, Contract Director, 0, 0, 0, -
   OOG_OIM, Department for OIM/Captain, 0, 0, 0, -
-  MOC_AAPR, Análise de risco e Aprovação da MOC, 0, 0, 0, -
-  SPIE, Serviço Próprio de Inspeção de Equipamentos, 0, 1, 0, -
+  MOC_AAPR, AnÃ¡lise de risco e AprovaÃ§Ã£o da MOC, 0, 0, 0, -
+  SPIE, ServiÃ§o PrÃ³prio de InspeÃ§Ã£o de Equipamentos, 0, 1, 0, -
   OOG_PD, Person Group Performance Director, 0, 0, 0, -
   OOG_AM, Asset Manager, 0, 0, 0, -
-  SAU, Saúde / Health, 0, 0, 1, -
-  SPI, SPIE – Serviço Próprio e Inspeção de Equipamentos / Own Service and Equipment Inspection, 0, 0, 1, -
+  SAU, SaÃºde / Health, 0, 0, 1, -
+  SPI, SPIE â€“ ServiÃ§o PrÃ³prio e InspeÃ§Ã£o de Equipamentos / Own Service and Equipment Inspection, 0, 0, 1, -
   OOG_QA, Quality Assurance, 0, 0, 0, -
   OOG_SUT, Sustainability, 0, 0, 0, -
   OOG_TI, Information Technology, 0, 0, 0, -
   OOG_MACR, Group people to macrostructre, 0, 0, 0, -
   QUAENG, Quality Engineer, 0, 0, 0, -
-  ADMON, Administração Contratual / Contractual Administration Onshore, 0, 0, 1, -
+  ADMON, AdministraÃ§Ã£o Contratual / Contractual Administration Onshore, 0, 0, 1, -
   CEION, Confiabilidade & Integridade /  Reliability and Integrity, 0, 0, 1, -
-  GMAON, Gestão Marítima / Maritime Management, 0, 0, 1, -
-  OOG_OIMP, Person Group for PTWs approval (OIM/Capitão), 0, 0, 0, -
+  GMAON, GestÃ£o MarÃ­tima / Maritime Management, 0, 0, 1, -
+  OOG_OIMP, Person Group for PTWs approval (OIM/CapitÃ£o), 0, 0, 0, -
   TERCEIRO, Grupo terceiros da PTW, 0, 1, 0, -
   OOG_HSE, Person Group for PTWs approval (Safety Technician), 0, 0, 0, -
   OOG_PTWA, PTW - Group for PT Administrator users, 0, 0, 0, -
@@ -98,7 +98,7 @@ FetchAll:  Columns: 6
   OOG_EP, Planning Engineering Coordinator (PR with AFE CAPEX), 0, 0, 0, -
   OOG_COOD, Person Group of Additional Service Coordinators, 0, 0, 0, -
   NAUTICAL, Nautical, 0, 1, 0, -
-  INTOFF, Internalização / Internalization, 0, 0, 1, -
+  INTOFF, InternalizaÃ§Ã£o / Internalization, 0, 0, 1, -
   R&R, Repair & Return, 0, 1, 0, -
   OOG_CM, CM Approval Group, 1, 0, 0, -
   OOG_CMML, CM Group Mail, 0, 0, 0, -
@@ -122,24 +122,24 @@ FetchAll:  Columns: 6
   OOG_RMG, Risk Assessment Manager, 0, 0, 0, -
   PROON, Processo / Process Onshore, 0, 0, 1, -
   ESTON, Estrutura / Stucture Onshore, 0, 0, 1, -
-  MANON, Manutenção /Maintenance Onshore, 0, 0, 1, -
+  MANON, ManutenÃ§Ã£o /Maintenance Onshore, 0, 0, 1, -
   HSEON, Sustentabilidade / Sustainability Onshore., 0, 0, 1, -
-  TECON, Tecnologia & Inovação / Technology & Innovation, 0, 0, 1, -
-  CSDON, Centro de Suporte a Decisão e Controle de Poço / Decision Support Center and Well Control, 0, 0, 1, -
+  TECON, Tecnologia & InovaÃ§Ã£o / Technology & Innovation, 0, 0, 1, -
+  CSDON, Centro de Suporte a DecisÃ£o e Controle de PoÃ§o / Decision Support Center and Well Control, 0, 0, 1, -
   OOG_RIGS, RIG Superintendentes Aprovadores, 0, 0, 0, -
   OOG_SQP, SQP Person Group to send WOREF communications revisions, 0, 0, 0, -
-  PERCO, VPE Perfuração / VPE Drilling, 0, 0, 1, -
-  FEICO, VP Finanças & Investimentos / VP Finance & Investments, 0, 0, 1, -
-  CEACO, VP Controladoria & Administração / VP Controllership & Administration, 0, 0, 1, -
-  JEGCO, VP Jurídico & Governança / VP Legal & Governance, 0, 0, 1, -
+  PERCO, VPE PerfuraÃ§Ã£o / VPE Drilling, 0, 0, 1, -
+  FEICO, VP FinanÃ§as & Investimentos / VP Finance & Investments, 0, 0, 1, -
+  CEACO, VP Controladoria & AdministraÃ§Ã£o / VP Controllership & Administration, 0, 0, 1, -
+  JEGCO, VP JurÃ­dico & GovernanÃ§a / VP Legal & Governance, 0, 0, 1, -
   SSTCO, VP Sustentabilidade / VP Sustainability, 0, 0, 1, -
   CFMCO, VP Conformidade / VP Compliance, 0, 0, 1, -
   CFMON, Conformidade / Compliance, 0, 0, 1, -
   CTRON, Controladoria / Controllership, 0, 0, 1, -
-  1079, Governança & Proteção de Dados / Governance & Data Protection, 0, 0, 1, -
-  GEPON, Governança & Proteção de Dados / Governance & Data Protection, 0, 0, 1, -
-  PIMON, Planejamento Estratégico & Inteligência de Mercado / Strategic Planning & Market Intelligence, 0, 0, 1, -
-  RINON, Relação com Investidores / Investor Relations, 0, 0, 1, -
+  1079, GovernanÃ§a & ProteÃ§Ã£o de Dados / Governance & Data Protection, 0, 0, 1, -
+  GEPON, GovernanÃ§a & ProteÃ§Ã£o de Dados / Governance & Data Protection, 0, 0, 1, -
+  PIMON, Planejamento EstratÃ©gico & InteligÃªncia de Mercado / Strategic Planning & Market Intelligence, 0, 0, 1, -
+  RINON, RelaÃ§Ã£o com Investidores / Investor Relations, 0, 0, 1, -
   TESON, Tesouraria / Treasury, 0, 0, 1, -
   OOG_MEET, Group for Planning and Simultaneity Meeting, 0, 0, 0, -
   OOG_LBAP, Log Book Approvers in WF OOG_LOGBOO, 0, 0, 0, -
@@ -157,10 +157,11 @@ FetchAll:  Columns: 6
   FSPON, Fornecedor / Supplier OnShore, 0, 0, 1, -
   APREDIAL, Adm Predial - Base UNP Only, 0, 1, 0, -
   INTEGRIT, Integrity, 0, 1, 0, -
-  MOVCAR, Movimentação de cargas - Base UNP Only, 0, 1, 0, -
-  DDNON, Desenvolvimento de Negócios / Business Development, 0, 0, 1, -
+  MOVCAR, MovimentaÃ§Ã£o de cargas - Base UNP Only, 0, 1, 0, -
+  DDNON, Desenvolvimento de NegÃ³cios / Business Development, 0, 0, 1, -
   CONF, Confiabilidade Aplicada, 0, 1, 0, -
   SST_ANALYS, Person Group of persons to preliminary applicability analysis in Alert & Bulletins SST, 0, 0, 0, -
   SST_SUSTEN, Group with sustentability persons, 0, 0, 0, -
-FetchAll: 155 rows fetched.
+  OOG_QA_RSK, Quality Assurance used in initial approval from Risk Assessment, 0, 0, 0, -
+FetchAll: 156 rows fetched.
 > 

@@ -57,6 +57,7 @@ def load_all_data():
         "persons": load_csv(IN_DIR / 'consolidated_person.csv') + load_person_supplements(),
         "persongroupview": load_csv(IN_DIR / 'consolidated_persongroupview.csv'),
         "groupuser": load_csv(IN_DIR / 'consolidated_groupuser.csv'),
+        "maxuserstatus": load_csv(IN_DIR / 'consolidated_maxuserstatus.csv'),
         # --- NOVAS FONTES: AD e Maximo ---
         "ad_users": load_csv(IN_DIR / 'consolidated_ad_users.csv'),
         "maximo_users": load_csv(IN_DIR / 'consolidated_maximo_users.csv'),
@@ -86,41 +87,15 @@ def load_person_supplements():
     return rows
 
 def write_license_decision_plan(rows):
-    """Writes an auditable CSV with the final license recommendation per user.
-    Ensures LOCATION_SITE is present by enriching rows from usage_analysis_phase3.csv when missing.
-    """
+    """Writes an auditable CSV with the final license recommendation per user."""
     if not rows:
         return
-    # Build a mapping user -> LOCATION_SITE from usage CSV (if available)
-    # IMPORTANT: Take the FIRST non-empty value found (don't overwrite with empty values)
-    usage_map = {}
-    usage_path = IN_DIR / 'usage_analysis_phase3.csv'
-    if usage_path.exists():
-        try:
-            with usage_path.open(encoding='utf-8-sig', newline='') as uf:
-                ureader = csv.DictReader(uf)
-                for ur in ureader:
-                    uid = str(ur.get('USERID', '')).strip().upper()
-                    if uid and uid not in usage_map:  # Only set if not already set
-                        # O campo no CSV é LOCAL_SITE (não LOCATION_SITE)
-                        location = ur.get('LOCAL_SITE') or ur.get('LOCATION_SITE') or ur.get('LOCATION') or ''
-                        if location:  # Only set if non-empty
-                            usage_map[uid] = location
-        except Exception:
-            pass
-
-    # Enrich rows with LOCATION_SITE if missing or invalid (e.g., '0')
-    for row in rows:
-        uid = str(row.get('USERID', '')).strip().upper()
-        location_site = row.get('LOCATION_SITE', '')
-        if uid and (not location_site or location_site == '0'):
-            row['LOCATION_SITE'] = usage_map.get(uid, '')
 
     fieldnames = [
         'USERID', 'DISPLAYNAME', 'ENTITLEMENT', 'LICENSE_MODEL', 'APP_POINTS',
         'EMAIL', 'DOMAIN_CATEGORY', 'MIGRATION_SCOPE', 'OPERATIONAL_PRESENCE',
         'LOCATION_SITE', 'USAGE_PROFILE', 'OPTIMIZATION_REC',
-        'OPTIMIZATION_REASON', 'LOGIN_COUNT_90D', 'DAYS_SINCE_LAST',
+        'OPTIMIZATION_REASON', 'LOGIN_COUNT_90D', 'LOGIN_COUNT_60D', 'DAYS_SINCE_LAST',
         'FACTOR_P50', 'FACTOR_P95', 'FACTOR_P100', 'TITLES', 'ACTIVE_HOURS'
     ]
     out_path = IN_DIR / 'license_decision_plan.csv'
@@ -348,7 +323,7 @@ def write_excel_workbook(summary, governance, license_rows, domain_counts, missi
         'USERID', 'DISPLAYNAME', 'EMAIL', 'DOMAIN_CATEGORY', 'MIGRATION_SCOPE',
         'ENTITLEMENT', 'LICENSE_MODEL', 'APP_POINTS', 'LOCATION_SITE',
         'USAGE_PROFILE', 'OPTIMIZATION_REC', 'OPTIMIZATION_REASON',
-        'LOGIN_COUNT_90D', 'DAYS_SINCE_LAST', 'FACTOR_P50', 'FACTOR_P95',
+        'LOGIN_COUNT_90D', 'LOGIN_COUNT_60D', 'DAYS_SINCE_LAST', 'FACTOR_P50', 'FACTOR_P95',
         'FACTOR_P100', 'TITLES'
     ]
 
@@ -439,11 +414,10 @@ def write_excel_workbook(summary, governance, license_rows, domain_counts, missi
     if identities:
         add_profile_access_sheet(wb, identities, add_sheet)
 
-    # Adicionar Aba 24: Auditoria - Data de Concessão de Acesso
-    persongroupview = governance.get('persongroupview', [])
-    if persongroupview:
-        add_audit_sheet(wb, persongroupview, identities, governance.get('groupuser', []),
-                         governance.get('logintrack', []), add_sheet)
+    # Adicionar Aba 16: Auditoria de Acesso
+    if identities:
+        add_audit_sheet(wb, identities, governance.get('groupuser', []), governance.get('logintrack', []),
+                         governance.get('maxuserstatus', []), add_sheet)
 
     # Aba 25: resumo executivo consolidado (migração + SoD + cenário conciliado)
     if migration_data or security_audit_data or reconciliation_data:
@@ -890,17 +864,27 @@ def add_reconciliation_sheets(wb, reconciliation_data, add_sheet):
                   highlight=lambda r, i: 'fef3c7' if r.get('POPULACAO') == 'TERCEIRO_ATIVO' else None)
 
 
-def add_audit_sheet(wb, persongroupview, identities, groupuser, logintrack, add_sheet):
+def add_audit_sheet(wb, identities, groupuser, logintrack, maxuserstatus, add_sheet):
     """Adiciona aba única de auditoria (ativos + inativados) — pedido de
     auditoria 2026-07-13.
 
     TYPE vem de MAXUSER (via consolidated_user_identity.csv) — valores reais
     'TYPE 1'..'TYPE 10' — não de PERSONGROUPVIEW.employeetype (campo
-    diferente, que ficava vazio/errado aqui). O Maximo guarda a data da
-    última mudança de status num único campo (PERSONGROUPVIEW.statusdate);
-    aqui ela é jogada em DATA_CONCESSAO (se STATUS=ACTIVE) ou DATA_INATIVACAO
-    (se não), nunca as duas ao mesmo tempo — colunas separadas para não
-    exigir olhar o STATUS pra saber o que aquela data significa. DEFSITE,
+    diferente, que ficava vazio/errado aqui). DATA_CONCESSAO/DATA_INATIVACAO
+    vêm de MAXUSERSTATUS (histórico real de mudança de status da CONTA —
+    mesma fonte da tela "View History" do Maximo), NÃO de
+    PERSONGROUPVIEW.statusdate: esse campo rastreia o status da PESSOA, não
+    da conta de login, e usá-lo como "data de inativação" produzia datas
+    erradas (ex.: USERID AAJUNIOR mostrava 21/04 — na verdade a data de
+    CRIAÇÃO da pessoa — quando a conta só foi inativada de fato em 24/06,
+    confirmado via MAXUSERSTATUS). MAXUSERSTATUS não é replicado entre
+    ambientes (cada ambiente tem seu próprio histórico), por isso o lookup é
+    por (ambiente, USERID). QTD_MUDANCAS_STATUS mostra quantas transições
+    ACTIVE/INACTIVE aquela conta já teve — uma conta com várias reativações
+    é um sinal de que o "tempo sem acesso" não é linear (foi zerado a cada
+    reativação manual), então DIAS_SEM_ACESSO por si só pode subestimar o
+    problema ou, ao contrário, ignorar uma reativação recente legítima.
+    DEFSITE,
     BASE_DO_PERFIL e BASE_LOGADA passam por norm_env() para exibição (ex.:
     'OP-BASE'/'BASE-UNP' -> 'BASE', 'NORBE09' -> 'N09') — mesmos ambientes,
     nomes diferentes por fonte. GRUPOS_ACESSO é a lista de GROUPNAME
@@ -926,7 +910,7 @@ def add_audit_sheet(wb, persongroupview, identities, groupuser, logintrack, add_
         return ''.join(c if ord(c) >= 32 or c in '\n\r\t' else '' for c in s)
 
     def parse_dt(s):
-        for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d-%H.%M.%S", "%Y-%m-%d"):
+        for fmt in ("%Y-%m-%d-%H.%M.%S.%f", "%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d-%H.%M.%S", "%Y-%m-%d"):
             try:
                 return datetime.strptime(s.strip(), fmt)
             except (ValueError, AttributeError):
@@ -943,13 +927,29 @@ def add_audit_sheet(wb, persongroupview, identities, groupuser, logintrack, add_
         e = (env or '').strip().upper()
         return ENV_ALIAS.get(e, e)
 
-    # STATUSDATE só existe em PERSONGROUPVIEW, indexado por PERSONID.
-    statusdate_by_personid = {}
-    for r in persongroupview:
-        pid = r.get('personid', '').strip().upper()
-        sd = r.get('statusdate', '').strip()
-        if pid and sd and pid not in statusdate_by_personid:
-            statusdate_by_personid[pid] = sd
+    # Histórico real de mudança de STATUS da CONTA (não da pessoa), por
+    # (ambiente normalizado, USERID) — ver docstring sobre por que isto
+    # substitui PERSONGROUPVIEW.statusdate. MAXUSERSTATUS não é replicado
+    # entre ambientes, então cada (env, uid) só existe no ambiente real da
+    # conta.
+    status_changes_by_env_userid = defaultdict(list)
+    for r in maxuserstatus:
+        env = norm_env(r.get('ENVIRONMENT', ''))
+        uid = r.get('USERID', '').strip().upper()
+        changedate = r.get('CHANGEDATE', '').strip()
+        if not uid or not changedate:
+            continue
+        dt = parse_dt(changedate)
+        if not dt:
+            continue
+        status_changes_by_env_userid[(env, uid)].append((dt, changedate))
+
+    latest_status_change_by_env_userid = {}
+    qtd_mudancas_by_env_userid = {}
+    for key, changes in status_changes_by_env_userid.items():
+        changes.sort(key=lambda c: c[0])
+        latest_status_change_by_env_userid[key] = changes[-1][1]  # CHANGEDATE mais recente (texto original)
+        qtd_mudancas_by_env_userid[key] = len(changes)
 
     # Grupos de acesso (GROUPNAME) por (ENVIRONMENT normalizado, USERID).
     groups_by_env_userid = defaultdict(set)
@@ -960,11 +960,19 @@ def add_audit_sheet(wb, persongroupview, identities, groupuser, logintrack, add_
         if uid and grp:
             groups_by_env_userid[(env, uid)].add(grp)
 
-    # Último login real (data + base logada) por USERID, via LOGINTRACKING.
+    # Último login real (data + base logada) por (ambiente normalizado,
+    # USERID), via LOGINTRACKING — não só por USERID: a mesma pessoa pode
+    # ter conta ativa num ambiente e inativa em outro (MAXUSERSTATUS não é
+    # replicado — ver docstring), então comparar "dias sem acesso" ou
+    # "login depois da inativação" precisa olhar o login DO MESMO ambiente
+    # da linha, não o login mais recente da pessoa em QUALQUER ambiente
+    # (auditoria 2026-07-13: sem isso, ~1100 contas legitimamente inativas
+    # num ambiente pareciam "logaram depois de inativadas" só porque a
+    # pessoa usou uma conta ATIVA em outro ambiente).
     # max_login_dt é usado como referência de "hoje" para calcular dias sem
     # acesso — mesmo padrão de allocation_analyzer.py (data corrida do
     # servidor não é confiável neste ambiente de execução).
-    last_login_by_userid = {}
+    last_login_by_env_userid = {}
     max_login_dt = None
     for rec in logintrack:
         if (rec.get('ATTEMPTRESULT') or '').strip().upper() != 'LOGIN':
@@ -972,38 +980,38 @@ def add_audit_sheet(wb, persongroupview, identities, groupuser, logintrack, add_
         uid = (rec.get('USERID') or '').strip().upper()
         if not uid:
             continue
+        rec_env = norm_env(rec.get('ENVIRONMENT', ''))
         dt = parse_dt(rec.get('ATTEMPTDATE', ''))
         if not dt:
             continue
         if not max_login_dt or dt > max_login_dt:
             max_login_dt = dt
-        prev = last_login_by_userid.get(uid)
+        key = (rec_env, uid)
+        prev = last_login_by_env_userid.get(key)
         if not prev or dt > prev[0]:
-            last_login_by_userid[uid] = (dt, (rec.get('ENVIRONMENT') or '').strip())
+            last_login_by_env_userid[key] = (dt, rec_env)
     INATIVIDADE_LIMITE_DIAS = 50
 
-    # Base: TODAS as identidades (ativos e inativos), com ou sem STATUSDATE
-    # conhecida. Antes, quem não tinha registro em PERSONGROUPVIEW (686/1900
-    # ativos, 36% — auditoria 2026-07-13, incluindo contas MAXADMIN) era
-    # excluído da aba sem nenhum aviso. Agora aparece igual, só com
-    # DATA_CONCESSAO/DATA_INATIVACAO em branco quando a data é desconhecida.
-    with_date = []
-    for r in identities:
-        pid = r.get('PERSONID', '').strip().upper()
-        statusdate = statusdate_by_personid.get(pid, '')
-        with_date.append((r, statusdate))
-
-    headers = ['USERID', 'DISPLAYNAME', 'EMAIL', 'STATUS', 'DATA_CONCESSAO', 'DATA_INATIVACAO', 'TYPE', 'DEFSITE', 'TITLE',
-               'PERSONGROUP', 'BASE_DO_PERFIL', 'GRUPOS_ACESSO', 'DATA_ULTIMO_ACESSO', 'BASE_LOGADA',
-               'DIAS_SEM_ACESSO', 'ALERTA_INATIVIDADE']
+    # Base: TODAS as identidades (ativos e inativos). Antes, quem não tinha
+    # registro em PERSONGROUPVIEW (686/1900 ativos, 36% — auditoria
+    # 2026-07-13, incluindo contas MAXADMIN) era excluído da aba sem nenhum
+    # aviso. Agora aparece igual, só com DATA_CONCESSAO/DATA_INATIVACAO em
+    # branco quando não há histórico em MAXUSERSTATUS para aquele (ambiente,
+    # USERID).
+    headers = ['USERID', 'DISPLAYNAME', 'EMAIL', 'STATUS', 'DATA_CONCESSAO', 'DATA_INATIVACAO', 'QTD_MUDANCAS_STATUS',
+               'TYPE', 'DEFSITE', 'TITLE', 'PERSONGROUP', 'BASE_DO_PERFIL', 'GRUPOS_ACESSO', 'DATA_ULTIMO_ACESSO',
+               'BASE_LOGADA', 'DIAS_SEM_ACESSO', 'ALERTA_INATIVIDADE']
 
     rows = []
-    for r, statusdate in with_date:  # Sem limite de linhas — ver nota acima sobre não esconder ninguém
+    for r in identities:  # Sem limite de linhas — ver nota acima sobre não esconder ninguém
         env = r.get('ENV_DB', '').strip()
         uid = r.get('USERID', '').strip().upper()
         is_active = r.get('STATUS', '').strip().upper() == 'ACTIVE'
-        grupos = sorted(groups_by_env_userid.get((norm_env(env), uid), []))
-        last_login = last_login_by_userid.get(uid)
+        env_uid_key = (norm_env(env), uid)
+        grupos = sorted(groups_by_env_userid.get(env_uid_key, []))
+        last_login = last_login_by_env_userid.get(env_uid_key)
+        statusdate = latest_status_change_by_env_userid.get(env_uid_key, '')
+        qtd_mudancas = qtd_mudancas_by_env_userid.get(env_uid_key, 0)
 
         # Conta ATIVA sem login há mais de 50 dias (ou nunca logou) é
         # sinalizada explicitamente — pedido de auditoria 2026-07-13:
@@ -1015,9 +1023,9 @@ def add_audit_sheet(wb, persongroupview, identities, groupuser, logintrack, add_
             if last_login:
                 dias_sem_acesso = (max_login_dt - last_login[0]).days
                 if dias_sem_acesso > INATIVIDADE_LIMITE_DIAS:
-                    alerta = f'REVISAR — {dias_sem_acesso}d sem acesso'
+                    alerta = f'REVISAR - {dias_sem_acesso}d sem acesso'
             else:
-                alerta = 'REVISAR — nenhum login registrado'
+                alerta = 'REVISAR - nenhum login registrado'
 
         rows.append({
             'USERID': clean_value(r.get('USERID', '')),
@@ -1026,6 +1034,7 @@ def add_audit_sheet(wb, persongroupview, identities, groupuser, logintrack, add_
             'STATUS': clean_value(r.get('STATUS', '')),
             'DATA_CONCESSAO': clean_value(statusdate) if is_active else '',
             'DATA_INATIVACAO': clean_value(statusdate) if not is_active else '',
+            'QTD_MUDANCAS_STATUS': qtd_mudancas,
             'TYPE': clean_value(r.get('TYPE', '')),
             'DEFSITE': clean_value(norm_env(r.get('DEFSITE', ''))),
             'TITLE': clean_value(r.get('TITLE', '')),
@@ -1163,11 +1172,20 @@ def main():
 
     # 2b. Enrich with LOCATION_SITE from persongroupview (ENVIRONMENT column) - BEFORE simulation
     # Usa lógica inteligente: pega o ambiente do último login ou DEFSITE
+    def _valid_site(v):
+        """'0' é um placeholder de sitedefault/DEFSITE vazio no Maximo — como
+        é uma string não-vazia, 'sitedefault or locationsite' o aceitava como
+        válido e nunca caía pro próximo nível da cadeia de prioridade
+        (auditoria 2026-07-14: 300+ usuários FORESEA ficavam com
+        LOCATION_SITE='0' em vez do ambiente real)."""
+        v = (v or '').strip()
+        return v if v and v != '0' else ''
+
     persongroupview_map = {}
     for pgv in all_data.get("persongroupview", []):
         uid = str(pgv.get('personid', '')).strip().upper()
         env = pgv.get('ENVIRONMENT', '').strip()
-        defsite = pgv.get('sitedefault', '').strip() or pgv.get('locationsite', '').strip()
+        defsite = _valid_site(pgv.get('sitedefault', '')) or _valid_site(pgv.get('locationsite', ''))
         if uid and env:
             if uid not in persongroupview_map:
                 persongroupview_map[uid] = {'environment': env, 'defsite': defsite}
@@ -1220,15 +1238,19 @@ def main():
 
     for profile in user_profiles.values():
         uid = str(profile.get('USERID', '')).strip().upper()
-        # Prioridade 1: ambiente real do logintracking
-        if uid in user_real_env:
-            profile['LOCATION_SITE'] = user_real_env[uid]
-        # Prioridade 2: DEFSITE do persongroupview (já é o ambiente correto)
-        elif uid in persongroupview_map:
-            profile['LOCATION_SITE'] = persongroupview_map[uid]['defsite'] or persongroupview_map[uid]['environment']
-        # Prioridade 3: DEFSITE do próprio perfil
-        elif not profile.get('LOCATION_SITE'):
-            profile['LOCATION_SITE'] = profile.get('DEFSITE', '')
+        # Cascata de prioridade — cada nível só "ganha" se produzir um valor
+        # de verdade válido (não '0'); antes, um nível com chave presente mas
+        # valor='0' vencia o elif e travava a cascata sem chegar nos
+        # próximos níveis (auditoria 2026-07-14).
+        pgv_entry = persongroupview_map.get(uid) or {}
+        site = (
+            _valid_site(user_real_env.get(uid, ''))  # Prioridade 1: ambiente real do logintracking
+            or _valid_site(pgv_entry.get('defsite', ''))  # Prioridade 2a: DEFSITE do persongroupview
+            or _valid_site(pgv_entry.get('environment', ''))  # Prioridade 2b: ambiente do persongroupview
+            or _valid_site(profile.get('DEFSITE', ''))  # Prioridade 3: DEFSITE do próprio perfil
+        )
+        if site:
+            profile['LOCATION_SITE'] = site
 
     active_profiles = [p for p in user_profiles.values() if p['STATUS'] == 'ACTIVE']
 
@@ -1272,9 +1294,10 @@ def main():
     # Re-enrich with LOCATION_SITE after simulation (simulate_app_points creates new dicts)
     for row in foresea_app_points + other_app_points:
         uid = str(row.get('USERID', '')).strip().upper()
-        if uid in persongroupview_map and not row.get('LOCATION_SITE'):
+        if not _valid_site(row.get('LOCATION_SITE', '')):
+            pgv_entry = persongroupview_map.get(uid) or {}
             # Priorizar defsite (ambiente alocado) sobre environment (ambiente do registro)
-            row['LOCATION_SITE'] = persongroupview_map[uid]['defsite'] or persongroupview_map[uid]['environment']
+            row['LOCATION_SITE'] = _valid_site(pgv_entry.get('defsite', '')) or _valid_site(pgv_entry.get('environment', ''))
 
     app_points_by_scope = {
         'foresea': foresea_app_points,
@@ -1330,6 +1353,7 @@ def main():
         'persongroupview': all_data['persongroupview'], # For audit sheet
         'groupuser': all_data['groupuser'], # For audit sheet (grupos de acesso por USERID)
         'logintrack': logintrack, # For audit sheet (data/base do último acesso real)
+        'maxuserstatus': all_data['maxuserstatus'], # For audit sheet (histórico real de status da conta)
     }
 
     # 7. Análise de Saneamento de Identidades (AD vs Maximo)

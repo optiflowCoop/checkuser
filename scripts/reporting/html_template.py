@@ -6,12 +6,13 @@ from .html_helpers import fmt_br, render_table
 from .ab0_extracao_modal import render_gear_icon, render_bat_modal, render_bat_modal_scripts
 from .ab1_painel import render_tab_painel
 from .ab2_governanca import render_tab_gov, render_allocation_summary
-from .ab3_cenarios import render_tab_apppoints
-from .ab5_plano_acao import render_tab_tabela
-from .ab6_peak import render_tab_peak
-from .ab7_saneamento import render_tab_saneamento, render_tab_saneamento_scripts
-from .ab8_migracao import render_tab_migracao, render_tab_migracao_scripts, render_allocation_detail
-from .ab9_seguranca import render_tab_seguranca, render_tab_seguranca_scripts
+from .ab3_seguranca import render_tab_seguranca, render_tab_seguranca_scripts
+from .ab4_saneamento import render_tab_saneamento, render_tab_saneamento_scripts
+from .ab5_migracao import render_tab_migracao, render_tab_migracao_scripts
+from .ab6_alocacao import render_allocation_detail
+from .ab7_cenarios import render_tab_apppoints
+from .ab8_peak import render_tab_peak
+from .ab9_plano_acao import render_tab_tabela
 
 
 def _render_styles():
@@ -283,6 +284,7 @@ def _render_styles():
             transition: background 0.2s;
         }
         .btn-export:hover { background: #047857; }
+        .btn-export.active { background: var(--danger); }
 
         /* ============================================================
            CHARTS
@@ -291,8 +293,21 @@ def _render_styles():
         .chart-box { height: 300px; display: flex; justify-content: center; align-items: center; background: white; border-radius: var(--radius); border: 1px solid var(--border); padding: 1rem; }
 
         /* ============================================================
-           SIMULATOR (Aba 3)
+           SIMULATOR (Aba 7)
            ============================================================ */
+        .sim-title-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: #f1f5f9;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 0.3rem 0.7rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .sim-title-chip input { cursor: pointer; }
+        .sim-title-chip:has(input:checked) { background: var(--accent); color: white; border-color: var(--accent); }
         .simulator-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.25rem; align-items: stretch; }
         .simulator-inputs { background: white; padding: 1.25rem; border-radius: var(--radius); border: 1px solid var(--border); }
         .simulator-total { background: white; padding: 1.25rem; border-radius: var(--radius); border: 1px solid var(--border); text-align: center; display: flex; flex-direction: column; justify-content: center; }
@@ -475,6 +490,10 @@ def _render_scripts(analytics, identity_analytics):
     points_by_scope_json = json.dumps(analytics.get('scenario_points_by_scope', {}))
     ceiling_limit = analytics.get('ceiling_limit', 1200)
 
+    sim_users_json = json.dumps(analytics.get('simulator_users', []))
+    sim_defaults_json = json.dumps(analytics.get('simulator_defaults', {}))
+    sim_points_config_json = json.dumps(analytics.get('simulator_points_config', {}))
+
     domain_keys = json.dumps(list(identity_analytics['domain_counts'].keys()))
     domain_values = json.dumps(list(identity_analytics['domain_counts'].values()))
 
@@ -508,61 +527,171 @@ def _render_scripts(analytics, identity_analytics):
             options: {{ responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: {{ legend: {{ position: 'right' }} }} }}
         }});
 
-                function loadScenario(scenarioKey, btnElement) {{
-            document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-            if (btnElement) btnElement.classList.add('active');
+        // ---- Simulador de Cenarios (Aba 7) — motor por usuario ----
+        // Espelha scripts/services/app_points.py::_assign_license_model(). Se a
+        // regra de negocio mudar de forma (nao so os limiares), atualize aqui
+        // tambem (pedido de negocio 2026-07-14: simulador movido de "4 caixas
+        // agregadas sem ligacao com a populacao real" para reclassificacao real
+        // por usuario, para permitir achar o cenario que bate o teto).
+        const simUsers = {sim_users_json};
+        const simDefaults = {sim_defaults_json};
+        const simPointsConfig = {sim_points_config_json};
+        let simOverride = null;  // null | 'all_concurrent' | 'all_authorized'
+        let simPeakScenario = 'p95';  // p50 | p95 | p100 — so afeta o lado Concurrent
+        let simChartInstance = null;
+        const SIM_PEAK_LABELS = {{ p50: 'P50 — uso típico', p95: 'P95 — planejamento', p100: 'P100 — pico histórico' }};
 
-            const isFactoredScenario = scenarioKey === 'otimizado_p95' || scenarioKey === 'otimizado_p50';
-            const physicalCountsKey = isFactoredScenario ? 'otimizado' : scenarioKey;
-
-            // Usa o escopo corrente filtrado.
-            // Fallback defensivo para evitar tela vazia quando faltar alguma chave.
-            const scopeObj = scenariosByScope[currentScope] || scenariosByScope['foresea'] || scenariosByScope['todos'] || {{}};
-            const data = scopeObj[physicalCountsKey] || {{ pA: 0, pC: 0, bA: 0, bC: 0 }};
-
-            const safePA = parseInt(data.pA, 10) || 0;
-            const safePC = parseInt(data.pC, 10) || 0;
-            const safeBA = parseInt(data.bA, 10) || 0;
-            const safeBC = parseInt(data.bC, 10) || 0;
-
-            document.getElementById('inpPremAuth').value = safePA;
-            document.getElementById('inpPremConc').value = safePC;
-            document.getElementById('inpBaseAuth').value = safeBA;
-            document.getElementById('inpBaseConc').value = safeBC;
-
-                        // Regra de exibição:
-            // - As-Is / Saneado: total calculado pela composição física do escopo selecionado.
-            // - Otimizado P95 / P50: total NEM do escopo selecionado.
-            const scopedPoints = scenarioPointsByScope[currentScope] || scenarioPointsByScope['todos'] || scenarioPoints;
-            let totalPoints = 0;
-            if (scenarioKey === 'otimizado_p95') {{
-                totalPoints = Math.round(scopedPoints.p95 || 0);
-            }} else if (scenarioKey === 'otimizado_p50') {{
-                totalPoints = Math.round(scopedPoints.p50 || 0);
-            }} else {{
-                totalPoints = (safePA * 5) + (safePC * 15) + (safeBA * 3) + (safeBC * 10);
-            }}
-
-
-            document.getElementById('calcTotalDisplay').innerText = totalPoints.toLocaleString('pt-BR');
-            updateCalculatorDisplay(totalPoints);
-            updateChartFromInputs();
+        function setSimPeakScenario(mode) {{
+            simPeakScenario = mode;
+            runSimulator();
         }}
 
+        function setSimOverride(mode) {{
+            simOverride = mode;
+            document.querySelectorAll('.simulator-inputs .btn-export').forEach(btn => btn.classList.remove('active'));
+            if (mode === null) {{
+                document.getElementById('simOnshoreFloor').value = simDefaults.onshoreFloor;
+                document.getElementById('simOffshoreFloor').value = simDefaults.offshoreFloor;
+                const defaultTitles = new Set((simDefaults.criticalTitles || []).map(t => t.toUpperCase()));
+                document.querySelectorAll('.sim-title-toggle').forEach(el => {{ el.checked = defaultTitles.has(el.value); }});
+            }}
+            runSimulator();
+        }}
 
+        function addSimCriticalTitle() {{
+            const input = document.getElementById('simNewTitle');
+            const value = (input.value || '').trim().toUpperCase();
+            if (!value) return;
+            const exists = Array.from(document.querySelectorAll('.sim-title-toggle')).some(el => el.value === value);
+            if (!exists) {{
+                const chipsEl = document.getElementById('simTitleChips');
+                const label = document.createElement('label');
+                label.className = 'sim-title-chip';
+                label.innerHTML = '<input type="checkbox" class="sim-title-toggle" value="' + value + '" checked onchange="runSimulator()"><span>' + value + '</span>';
+                chipsEl.appendChild(label);
+            }}
+            input.value = '';
+            runSimulator();
+        }}
 
-        let simChartInstance = null;
-        function updateCalculator() {{
-            document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-            const pAuth = parseInt(document.getElementById('inpPremAuth').value) || 0;
-            const pConc = parseInt(document.getElementById('inpPremConc').value) || 0;
-            const bAuth = parseInt(document.getElementById('inpBaseAuth').value) || 0;
-            const bConc = parseInt(document.getElementById('inpBaseConc').value) || 0;
-            const totalPoints = Math.round((pAuth * 5) + (pConc * 15) + (bAuth * 3) + (bConc * 10));
+        function _simIsCriticalTitle(titlesUpper, criticalTitlesUpper) {{
+            return criticalTitlesUpper.some(k => titlesUpper.includes(k));
+        }}
+
+        // Mesmas 4 ramificacoes de _assign_license_model() em app_points.py.
+        function classifyUser(u, floors, criticalTitlesUpper) {{
+            if (u.t === 1 && u.a !== 1) return 'CONCURRENT';
+            const crit = _simIsCriticalTitle(u.ti, criticalTitlesUpper);
+            if (u.l === 0) return crit ? 'AUTHORIZED' : 'CONCURRENT';
+            if (u.e === 'LIMITED') return 'CONCURRENT';
+            if (u.o === 'OFFSHORE') {{
+                return (crit && u.l6 > floors.offshore) ? 'AUTHORIZED' : 'CONCURRENT';
+            }}
+            return (u.l6 > floors.onshore || crit) ? 'AUTHORIZED' : 'CONCURRENT';
+        }}
+
+        function pointsFor(ent, lic) {{
+            const cfg = simPointsConfig[ent] || simPointsConfig['BASE'] || {{ CONCURRENT: 10, AUTHORIZED: 3 }};
+            return lic === 'AUTHORIZED' ? (cfg.AUTHORIZED || 0) : (cfg.CONCURRENT || 0);
+        }}
+
+        function runSimulator() {{
+            const floors = {{
+                onshore: parseInt(document.getElementById('simOnshoreFloor').value, 10) || 0,
+                offshore: parseInt(document.getElementById('simOffshoreFloor').value, 10) || 0,
+            }};
+            const criticalTitlesUpper = Array.from(document.querySelectorAll('.sim-title-toggle:checked')).map(el => el.value);
+            const baselineFloors = {{ onshore: simDefaults.onshoreFloor, offshore: simDefaults.offshoreFloor }};
+            const baselineTitles = (simDefaults.criticalTitles || []).map(t => t.toUpperCase());
+
+            // Authorized e reserva fixa (1:1, nao depende de concorrencia) —
+            // recalculado direto por usuario. Concurrent NAO usa headcount bruto:
+            // seria superestimar, pois boa parte de quem e elegivel a Concurrent
+            // nunca esta logada ao mesmo tempo (achado do usuario 2026-07-14).
+            // Em vez de inventar um 2o calculo de pico, ancoramos no P50/P95/P100
+            // REAL do Cenario Conciliado (scenarioPointsByScope — MESMA fonte da
+            // Aba 8, unificada em 2026-07-11 para nao ter calculos de pico
+            // divergentes) e escalamos pelo headcount Concurrent simulado.
+            let simAuthPoints = 0, baselineAuthPoints = 0;
+            let authCount = 0, concCount = 0, baselineConcCount = 0, movedToAuth = 0, movedToConc = 0;
+
+            simUsers.forEach(u => {{
+                if (currentScope !== 'todos' && u.s !== currentScope) return;
+
+                const baselineLic = classifyUser(u, baselineFloors, baselineTitles);
+                if (baselineLic === 'AUTHORIZED') {{ baselineAuthPoints += pointsFor(u.e, baselineLic); }} else {{ baselineConcCount++; }}
+
+                let lic;
+                if (simOverride === 'all_concurrent') {{
+                    lic = 'CONCURRENT';
+                }} else if (simOverride === 'all_authorized') {{
+                    lic = (u.t === 1 && u.a !== 1) ? 'CONCURRENT' : 'AUTHORIZED';
+                }} else {{
+                    lic = classifyUser(u, floors, criticalTitlesUpper);
+                }}
+
+                if (lic === 'AUTHORIZED') {{ simAuthPoints += pointsFor(u.e, lic); authCount++; }} else {{ concCount++; }}
+
+                if (lic !== baselineLic) {{
+                    if (lic === 'AUTHORIZED') {{ movedToAuth++; }} else {{ movedToConc++; }}
+                }}
+            }});
+
+            const scopedNem = scenarioPointsByScope[currentScope] || scenarioPointsByScope['todos'];
+            const realReserve = scopedNem.reserva_authorized || 0;
+            const realConcurrentHeadcount = scopedNem.concurrent || 0;
+            const realConcurrentNEM = Math.max((scopedNem[simPeakScenario] || 0) - realReserve, 0);
+            // Custo medio por vaga Concurrent MEDIDO de verdade no cenario real
+            // (nao inventado) — aplicado ao headcount elegivel simulado.
+            const avgPtsPerSeat = realConcurrentHeadcount > 0 ? (realConcurrentNEM / realConcurrentHeadcount) : 0;
+
+            const simConcurrentNEM = concCount * avgPtsPerSeat;
+            const baselineConcurrentNEM = baselineConcCount * avgPtsPerSeat;
+
+            const totalPoints = Math.round(simAuthPoints + simConcurrentNEM);
+            const baselinePoints = Math.round(baselineAuthPoints + baselineConcurrentNEM);
+            const deltaPts = totalPoints - baselinePoints;
+            const deltaSign = deltaPts > 0 ? '+' : '';
+            const chartByLic = {{ AUTHORIZED: Math.round(simAuthPoints), CONCURRENT: Math.round(simConcurrentNEM) }};
 
             document.getElementById('calcTotalDisplay').innerText = totalPoints.toLocaleString('pt-BR');
             updateCalculatorDisplay(totalPoints);
-            updateChartFromInputs();
+
+            const totalLabelEl = document.getElementById('simTotalLabel');
+            if (totalLabelEl) {{
+                totalLabelEl.innerText = 'AppPoints Requeridos (cenário simulado — pico ' + simPeakScenario.toUpperCase() + ')';
+            }}
+            const peakRefEl = document.getElementById('simPeakRefText');
+            if (peakRefEl) {{
+                peakRefEl.innerText = 'Cenário ativo: ' + (SIM_PEAK_LABELS[simPeakScenario] || simPeakScenario)
+                    + ' · Authorized = ' + authCount.toLocaleString('pt-BR') + ' usuários (100% reservado, ' + Math.round(simAuthPoints).toLocaleString('pt-BR') + ' pts) · '
+                    + 'Concurrent = ' + concCount.toLocaleString('pt-BR') + ' elegíveis × ' + avgPtsPerSeat.toFixed(2) + ' pts/vaga '
+                    + '(custo médio real medido no Cenário Conciliado para esse escopo/cenário, Aba 8) = ' + Math.round(simConcurrentNEM).toLocaleString('pt-BR') + ' pts. '
+                    + 'Referência real da Aba 8 (população atual, sem simulação): ' + Math.round(scopedNem[simPeakScenario] || 0).toLocaleString('pt-BR') + ' pts.';
+            }}
+
+            const deltaEl = document.getElementById('simDeltaText');
+            if (deltaEl) {{
+                deltaEl.innerText = 'vs. regra atual (mesmo cenário de pico): ' + deltaSign + deltaPts.toLocaleString('pt-BR') + ' pts · '
+                    + (movedToAuth + movedToConc).toLocaleString('pt-BR') + ' usuários migrando ('
+                    + movedToAuth.toLocaleString('pt-BR') + ' p/ Authorized, ' + movedToConc.toLocaleString('pt-BR') + ' p/ Concurrent)';
+            }}
+
+            const ctxSim = document.getElementById('simChart').getContext('2d');
+            const chartData = [chartByLic.AUTHORIZED || 0, chartByLic.CONCURRENT || 0];
+            if (simChartInstance) {{
+                simChartInstance.data.datasets[0].data = chartData;
+                simChartInstance.update();
+            }} else {{
+                simChartInstance = new Chart(ctxSim, {{
+                    type: 'doughnut',
+                    data: {{
+                        labels: ['AppPoints Authorized', 'AppPoints Concurrent'],
+                        datasets: [{{ data: chartData, backgroundColor: ['#1e3a8a', '#10b981'] }}]
+                    }},
+                    options: {{ responsive: true, maintainAspectRatio: false, cutout: '50%', plugins: {{ legend: {{ position: 'right' }} }} }}
+                }});
+            }}
         }}
 
         function updateCalculatorDisplay(totalPoints) {{
@@ -575,28 +704,6 @@ def _render_scripts(analytics, identity_analytics):
             }} else {{
                 document.getElementById('calcTotalDisplay').style.color = 'var(--success)';
                 alertEl.style.display = 'none';
-            }}
-        }}
-
-        function updateChartFromInputs() {{
-            const pAuth = parseInt(document.getElementById('inpPremAuth').value) || 0;
-            const pConc = parseInt(document.getElementById('inpPremConc').value) || 0;
-            const bAuth = parseInt(document.getElementById('inpBaseAuth').value) || 0;
-            const bConc = parseInt(document.getElementById('inpBaseConc').value) || 0;
-            const data = [(pAuth * 5), (pConc * 15), (bAuth * 3), (bConc * 10)];
-            const ctxSim = document.getElementById('simChart').getContext('2d');
-            if (simChartInstance) {{
-                simChartInstance.data.datasets[0].data = data;
-                simChartInstance.update();
-            }} else {{
-                simChartInstance = new Chart(ctxSim, {{
-                    type: 'doughnut',
-                    data: {{
-                        labels: ['Prem Auth', 'Prem Conc', 'Base Auth', 'Base Conc'],
-                        datasets: [{{ data: data, backgroundColor: ['#1e3a8a', '#3b82f6', '#047857', '#10b981'] }}]
-                    }},
-                    options: {{ responsive: true, maintainAspectRatio: false, cutout: '50%', plugins: {{ legend: {{ position: 'right' }} }} }}
-                }});
             }}
         }}
 
@@ -775,13 +882,10 @@ def _render_scripts(analytics, identity_analytics):
                 }}
             }} catch(e) {{ console.error('peakLineChart init failed', e); }}
 
-            const initialPoints = Math.round(scenarioPoints.p95);
-            document.getElementById('calcTotalDisplay').innerText = initialPoints.toLocaleString('pt-BR');
-
-            loadScenario('otimizado_p95', document.getElementById('btnOtimizado'));
+            updateScopeFilter();
         }});
 
-        // ---- Escopo Filter Toggle (Aba 3) ----
+        // ---- Escopo Filter Toggle (Aba 7 — Cenários de AppPoints) ----
         function updateScopeFilter() {{
             var els = document.getElementsByName('scopeFilter');
             var newScope = 'foresea';
@@ -816,22 +920,9 @@ def _render_scripts(analytics, identity_analytics):
             setCardText('cardScopedAuthConc', Number(scopedPointsCard.authorized || 0).toLocaleString('pt-BR') + ' / ' + Number(scopedPointsCard.concurrent || 0).toLocaleString('pt-BR'));
             setCardText('cardScopedReserva', Number(scopedPointsCard.reserva_authorized || 0).toLocaleString('pt-BR'));
 
-            console.log("Filtro de escopo alterado para:", newScope);
-            
-            // Recarrega o cenário atualmente selecionado com novo escopo
-            const activeBtn = document.querySelector('.preset-btn.active');
-            if (activeBtn) {{
-                const scenarioMap = {{
-                    'btnAsIs': 'asis',
-                    'btnSaneado': 'saneado',
-                    'btnOtimizado': 'otimizado_p95',
-                    'btnOtimizadoP50': 'otimizado_p50'
-                }};
-                const scenarioKey = scenarioMap[activeBtn.id] || 'otimizado_p95';
-                loadScenario(scenarioKey, activeBtn);
-            }} else {{
-                loadScenario('otimizado_p95', document.getElementById('btnOtimizado'));
-            }}
+            // Recarrega o simulador de licencas (Authorized/Concurrent por regra) com o
+            // novo escopo — runSimulator() tambem atualiza o texto de simPeakRefText.
+            runSimulator();
         }}
 
     </script>

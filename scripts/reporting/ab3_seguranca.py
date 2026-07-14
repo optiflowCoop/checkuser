@@ -1,4 +1,4 @@
-# scripts/reporting/ab9_seguranca.py
+# scripts/reporting/ab3_seguranca.py
 """Aba dedicada à auditoria de Segregação de Funções (SoD): grupos e
 usuários com permissão simultânea de EMISSOR e APROVADOR nas aplicações de
 Compras (Requisição, Ordem de Compra, Requisição Simplificada)."""

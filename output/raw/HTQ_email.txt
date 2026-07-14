@@ -1456,7 +1456,7 @@ FetchAll:  Columns: 1
   ROBSONDIAS,robsondias@foresea.com
   RYANGUEDES,ryanguedes@foresea.com
   STENIOFERREIRA,stenioferreira@foresea.com
-  THIAGOCANÇADO,talmeida@foresea.com
+  THIAGOCANÃ‡ADO,talmeida@foresea.com
   WAGNERBRANDAO,wagnerbrandao@foresea.com
   WAGNERSILVA,wagnersilva@foresea.com
   WASHINGTONSILVA,washingtonsantos@foresea.com
@@ -2159,7 +2159,7 @@ FetchAll:  Columns: 1
   ROSENILDOGOMES,rosenildogomes@wood.com
   FELIPEGOMESSANTOS,felipegomessantos@slb.com
   LUIZAVELINO,luizavelino@aasj.com
-  FRANCISCOMACIEL,franciscomaciel@aasj.com
+  FRANCISCOMACIEL,fmanhaesmaciel71@gmail.com
   WILKERSILVEIRA,wilkermvs10@gmail.com
   WILKERS,wilkers@slb.com
   MATHEUSFRANCOO,matheus.franco@weatherford.com
@@ -2642,5 +2642,35 @@ FetchAll:  Columns: 1
   DJALMAFILHO,djalma.filho@technipfmc.com
   YURIBARBOSA,ybarbosa3@slb.com
   PVRMACHADO,pvitorrmachado@gmail.com
-FetchAll: 2635 rows fetched.
+  LUIZVIEIRA,luizvieira@foresea.com
+  DABSONLIMA,dabsonlima@foresea.com
+  AGPRATA,prataaedmo@gmail.com
+  FELIPEPINA,felipepganzaga@gmail.com
+  GABRIELMAIA,gabriel.maquinas35@gmail.com
+  LUCASELEUTERIO,lucaseleuterio@outlook.com
+  DIEGOPACHECO,diegosouza680@gmail.com
+  LEONARDORMARIA,leonardormaria@aasj.com.br
+  KELLVINMAGGI,kellvinmaggi@aasj.com.br
+  MAICONLIMA,maiconlima@aasj.com.br
+  GUILHERMECOZENDEY,gcozendey@slb.com
+  JOAOCRUZ,joaomarcelo0606@iclod.com
+  MRPARENTE,matheusrparente@gmail.com
+  TDBRISETO,thiagoriseto@gmail.com
+  GTELLES,gabriel.telles@techinipifmc.com
+  RAIGLESIAS,raiglesias@gmail.com
+  HMSOARES,hmsoares@gmail.com
+  BRUNOLESSA,brunolessa9339@gmail.com
+  LOSROCHA,Leandrorcha04@gmail.com
+  ANDERSONCAPISTRANO,capistranodesouzaanderson@gmail.com
+  KLEBERDESOUZA,klebersouza526@gmail.com
+  LUIZLEITE,luizantonioteixeira.leite@halliburton.com
+  LUCASMATOS,lucasmatoschagas13@gmail.com
+  RUDINEYFILHO,rfilho12@slb.com
+  RAFAELGENTIL,rafaelbomfim.gentil@halliburton.com
+  ADRIANOMEDEIROS,medeirosjunioradriano@gmail.com
+  JOSEBASTOS,jose.bastos@nsgeng.com
+  ENEASRODRIGUES,rodriguesgjulho@gmail.com
+  WCARLOSGUIDONI,wguidoni@slb.com
+  MARCUSPETTER,marcuspetteraragao@gmail.com
+FetchAll: 2665 rows fetched.
 > 

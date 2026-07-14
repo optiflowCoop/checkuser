@@ -102,6 +102,18 @@ STANDARD_QUERIES: Dict[str, str] = {
         "FROM LOGINTRACKING "
         "WHERE ATTEMPTDATE >= CURRENT_DATE - 90 DAYS AND ATTEMPTRESULT = 'LOGIN'"
     ),
+    # Histórico completo de mudança de STATUS da conta (MAXUSER), o mesmo
+    # que a tela "View History" do Maximo mostra. NÃO é replicado entre
+    # ambientes (cada ambiente tem seu próprio MAXUSERSTATUS) — diferente de
+    # PERSONGROUPVIEW, que é a mesma base em todos os 7. Necessário porque
+    # PERSONGROUPVIEW.statusdate rastreia o status da PESSOA, não da conta
+    # de login — usar aquele campo pra "data de inativação da conta" mistura
+    # os dois conceitos e gera datas erradas (auditoria 2026-07-13).
+    "maxuserstatus": (
+        "SELECT COALESCE(userid, '') || ',' || COALESCE(CHAR(status), '') || ',' || "
+        "COALESCE(CHAR(changedate), '') || ',' || COALESCE(REPLACE(memo, ',', ';'), '') || ',' || "
+        "COALESCE(changeby, '') as CSV_ROW FROM MAXUSERSTATUS"
+    ),
 }
 
 DEFAULT_QUERIES = list(STANDARD_QUERIES.keys())

@@ -1,4 +1,4 @@
-# scripts/reporting/ab6_peak.py
+# scripts/reporting/ab8_peak.py
 import json
 from .html_helpers import fmt_br
 

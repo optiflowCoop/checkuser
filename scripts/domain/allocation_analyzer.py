@@ -76,7 +76,7 @@ def normalize_env(env):
 
 def infer_env_from_clienthost(clienthost):
     """Infere o ambiente a partir do CLIENTHOST (hostname ou IP).
-    Retorna (env, is_shared). Baseado em analyze_usage.py / generate_risk_report.py."""
+    Retorna (env, is_shared). Mesma lógica usada em generate_risk_report.py."""
     if not clienthost:
         return None, False
     host = clienthost.strip().upper()

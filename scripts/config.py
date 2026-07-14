@@ -25,16 +25,16 @@ def get_entitlement_keywords():
     }
 
 def get_critical_titles():
-    return ['ALMOXARIFE', 'SUPERVISOR', 'COORDENADOR', 'GERENTE', 'LIDER', 'ENCARREGADO']
+    # GERENTE/GESTOR/MANAGER (inclui "Rig Manager") removidos: esses cargos
+    # quase não acessam o sistema e não justificam AUTHORIZED garantido
+    # offshore só pelo título — pedido de negocio 2026-07-14.
+    return ['ALMOXARIFE', 'SUPERVISOR', 'COORDENADOR', 'LIDER', 'ENCARREGADO']
 
 def get_foresea_domains():
     return ['foresea.com', 'foresea-partner.com']
 
 def get_og_group_keywords():
-    """
-    Security group name patterns that indicate O&G access requiring PREMIUM licensing.
-    Must be aligned with config/licensing_rules.json user_classification.og_group_keywords.
-    """
+    """Security group name patterns that indicate O&G access requiring PREMIUM licensing."""
     return [
         'OG_', 'OOG_', 'OOG_PTW_ISSUER', 'O&G', 'OILGAS', 'PETROLEUM', 'PETRO',
         'HSE', 'DRILLING', 'DRILL', 'RIG', 'FPSO', 'PFWORK', 'LOCREC',

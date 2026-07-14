@@ -23,6 +23,97 @@ DB2CLI = Path(r"C:\Users\esilva\AppData\Local\Programs\Python\Python313\Lib\site
 OUTDIR = ROOT / 'output' / 'raw'
 OUTDIR.mkdir(parents=True, exist_ok=True)
 
+# db2cli.exe (é o "IBM Db2 Interactive CLI Sample Program", uma ferramenta de
+# demonstração, não pensada para extração em massa) tem um limite fixo de
+# ~1.2MB de texto de saída por execução — acima disso, ele para de emitir
+# linhas SILENCIOSAMENTE (sem erro, sem aviso, rc=0 normal) e nunca imprime
+# a linha final "FetchAll: N rows fetched." Isso é independente de escrever
+# em arquivo (-outfile) ou capturar via stdout — confirmado em auditoria
+# 2026-07-13: PERSONGROUPVIEW perdia ~85% das linhas (12402 -> ~1850) e
+# PERSON ~87% (9942 -> ~1325) em todos os 7 ambientes, sem qualquer indício
+# de falha. Tabelas "largas" (muitas colunas) paginam a extração em blocos
+# pequenos via OFFSET/FETCH FIRST — cada bloco fica bem abaixo do limite —
+# e os blocos são unidos num único arquivo bruto no formato que
+# consolidate_outputs.py já espera.
+PAGINATED_QUERIES = {'persongroupview': 'personid', 'person': 'personid', 'maxuserstatus': 'userid'}
+PAGE_SIZE = 800
+
+
+def _has_real_data(stdout_text):
+    """db2cli.exe retorna rc=0 (SQL_SUCCESS) mesmo quando a conexão caiu no
+    meio da sessão (SQL30081N) ou outro erro de SQL/conexão acontece — o
+    processo não morre, só imprime o erro no meio do texto e continua.
+    Sem checar o CONTEÚDO (não só o código de saída), uma extração que na
+    verdade falhou é registrada como sucesso silenciosamente (auditoria
+    2026-07-13: 14 extrações "✓ Sucesso" continham só erro de conexão,
+    zero linhas de dado)."""
+    if 'SQLError' in stdout_text or 'SQL30081N' in stdout_text:
+        return False
+    return 'FetchAll' in stdout_text or 'CSV_ROW' in stdout_text
+
+
+def _extract_data_lines(stdout_text):
+    """Extrai só as linhas de dados (após o marcador CSV_ROW/Columns:,
+    ignorando separadores e o resumo final) de uma saída do db2cli.exe."""
+    lines = stdout_text.splitlines()
+    data_started = False
+    out = []
+    for line in lines:
+        if not data_started:
+            if 'CSV_ROW' in line or 'Columns:' in line:
+                data_started = True
+            continue
+        if line.startswith('-') or 'record(s) selected' in line or 'rows fetched' in line or not line.strip():
+            continue
+        if ',' in line:
+            out.append(line)
+    return out
+
+
+def run_paginated_extraction(connstr, base_sql, order_by, page_size=PAGE_SIZE, max_pages=300):
+    """Roda base_sql em páginas de page_size linhas (ORDER BY order_by +
+    OFFSET/FETCH FIRST), cada uma bem abaixo do limite de ~1.2MB do
+    db2cli.exe, e retorna a lista completa de linhas de dados (sem
+    duplicar cabeçalhos/banners entre páginas)."""
+    all_data_lines = []
+    for page in range(max_pages):
+        offset = page * page_size
+        paged_sql = f"{base_sql} ORDER BY {order_by} OFFSET {offset} ROWS FETCH FIRST {page_size} ROWS ONLY"
+
+        # Retry por página: uma queda de conexão no meio da paginação não
+        # pode ser tratada como "página vazia = fim da tabela" — isso
+        # truncaria a extração silenciosamente do mesmo jeito que o bug
+        # original do db2cli.exe (auditoria 2026-07-13).
+        page_lines = None
+        last_page_error = None
+        for page_attempt in range(MAX_RETRIES):
+            tf = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.sql', dir=ROOT)
+            tf.write(paged_sql.rstrip().rstrip(';') + ';\n')
+            tf.flush()
+            tf.close()
+            try:
+                proc = subprocess.run([str(DB2CLI), 'execsql', '-connstring', connstr, '-inputsql', tf.name],
+                                       capture_output=True, text=True, timeout=300)
+            finally:
+                try:
+                    os.remove(tf.name)
+                except OSError:
+                    pass
+            if proc.returncode == 0 and _has_real_data(proc.stdout):
+                page_lines = _extract_data_lines(proc.stdout)
+                break
+            last_page_error = proc.stderr[:400] if proc.returncode != 0 else proc.stdout[-400:]
+            time.sleep(RETRY_DELAY)
+        if page_lines is None:
+            raise RuntimeError(f"página {page} falhou após {MAX_RETRIES} tentativas: {last_page_error}")
+
+        if not page_lines:
+            break  # página vazia (com dado real, não erro) = chegou ao fim da tabela
+        all_data_lines.extend(page_lines)
+        if len(page_lines) < page_size:
+            break  # última página parcial = chegou ao fim da tabela
+    return all_data_lines
+
 with open(CONFIG, 'r', encoding='utf-8') as f:
     cfg = json.load(f)
 
@@ -127,21 +218,8 @@ for conn_idx, conn in enumerate(connections, 1):
             sql = qname
             
         print(f"\n  [{q_idx}/{total_queries}] ({progress_pct:.1f}%) Extraindo: {qname}")
-        
-        tf = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.sql', dir=ROOT)
-        tf.write(sql.rstrip().rstrip(';') + ';\n')
-        tf.flush()
-        tf.close()
-        
+
         outpath = OUTDIR / f"{env}_{qname}.txt"
-        # NÃO usar '-outfile' do db2cli.exe: para tabelas largas (muitas colunas,
-        # ex. PERSONGROUPVIEW e PERSON) a escrita direto em arquivo do driver
-        # trunca o resultado silenciosamente (rc=0, sem erro) — confirmado em
-        # auditoria 2026-07-13: PERSONGROUPVIEW perdia ~85% das linhas (12402 ->
-        # ~1850) e PERSON ~87% (9942 -> ~1325), enquanto capturar via stdout e
-        # escrever o arquivo nós mesmos traz o resultado completo, sem mudar a
-        # query nem o formato do arquivo de saída.
-        cmd = [str(DB2CLI), 'execsql', '-connstring', connstr, '-inputsql', tf.name]
 
         # RETRY LOGIC
         attempt = 1
@@ -150,19 +228,48 @@ for conn_idx, conn in enumerate(connections, 1):
 
         while attempt <= MAX_RETRIES and not success:
             try:
-                proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-                rc = proc.returncode
-                if rc == 0:
-                    outpath.write_text(proc.stdout, encoding='utf-8', errors='replace')
+                if qname in PAGINATED_QUERIES:
+                    # Tabela larga: extrai em páginas (ver run_paginated_extraction)
+                    # pra nunca bater no limite de ~1.2MB do db2cli.exe.
+                    data_lines = run_paginated_extraction(connstr, sql, PAGINATED_QUERIES[qname])
+                    header_text = (
+                        "IBM Db2 Interactive CLI Sample Program (extração paginada)\n"
+                        f"> {sql};\n"
+                        "FetchAll:  Columns: 1\n"
+                        "  CSV_ROW \n"
+                    )
+                    outpath.write_text(header_text + '\n'.join(data_lines) + '\n',
+                                        encoding='utf-8', errors='replace')
                     success = True
-                    summary.append({'env': env, 'query': qname, 'rc': rc, 'outfile': str(outpath)})
-                    print(f"  ✓ Sucesso! Arquivo: {outpath.name}")
+                    summary.append({'env': env, 'query': qname, 'rc': 0, 'outfile': str(outpath),
+                                     'rows': len(data_lines)})
+                    print(f"  ✓ Sucesso! Arquivo: {outpath.name} ({len(data_lines)} linhas, paginado)")
                 else:
-                    last_error = proc.stderr[:400]
-                    print(f"  ⚠ [{attempt}/{MAX_RETRIES}] Retry {env}_{qname} due to Return Code {rc}...")
-                    time.sleep(RETRY_DELAY)
-                    attempt += 1
-            except subprocess.TimeoutExpired as e:
+                    tf = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.sql', dir=ROOT)
+                    tf.write(sql.rstrip().rstrip(';') + ';\n')
+                    tf.flush()
+                    tf.close()
+                    try:
+                        cmd = [str(DB2CLI), 'execsql', '-connstring', connstr, '-inputsql', tf.name]
+                        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+                    finally:
+                        try:
+                            os.remove(tf.name)
+                        except OSError:
+                            pass
+                    rc = proc.returncode
+                    if rc == 0 and _has_real_data(proc.stdout):
+                        outpath.write_text(proc.stdout, encoding='utf-8', errors='replace')
+                        success = True
+                        summary.append({'env': env, 'query': qname, 'rc': rc, 'outfile': str(outpath)})
+                        print(f"  ✓ Sucesso! Arquivo: {outpath.name}")
+                    else:
+                        last_error = (proc.stderr[:400] if rc != 0
+                                       else 'db2cli retornou rc=0 mas o conteúdo indica erro de conexão/SQL')
+                        print(f"  ⚠ [{attempt}/{MAX_RETRIES}] Retry {env}_{qname} due to Return Code {rc}...")
+                        time.sleep(RETRY_DELAY)
+                        attempt += 1
+            except subprocess.TimeoutExpired:
                 last_error = f"Timed out after 300s"
                 print(f"  ⚠ [{attempt}/{MAX_RETRIES}] Retry {env}_{qname} due to Timeout...")
                 time.sleep(RETRY_DELAY)
@@ -172,15 +279,10 @@ for conn_idx, conn in enumerate(connections, 1):
                 print(f"  ⚠ [{attempt}/{MAX_RETRIES}] Retry {env}_{qname} due to Error: {last_error}")
                 time.sleep(RETRY_DELAY)
                 attempt += 1
-                
+
         if not success:
             summary.append({'env': env, 'query': qname, 'error': last_error, 'outfile': str(outpath)})
             print(f"  ✗ Falha após {MAX_RETRIES} tentativas")
-            
-        try:
-            os.remove(tf.name)
-        except OSError:
-            pass
     
     # Resumo do ambiente
     env_success = sum(1 for s in summary if s.get('env') == env and 'error' not in s)

@@ -28,8 +28,8 @@ BASE,OOG_RIGMGR,Rig Manager,0,0,0,0,0,0,0,0,0,-,-
 BASE,OOG_ASSET_ENGINEER,Asset Engineer Group - Read Only,0,1,1,0,1,0,0,0,0,-,-
 BASE,OOG_PR_CREATOR,Group to allow users creating and approving PR's,0,0,0,0,0,0,0,0,0,-,-
 BASE,OOG_DEPARTMENT_TEAM,Department Team,0,1,0,0,1,0,0,0,0,-,-
-BASE,OOG_LOGISTICA_ADM,Grupo para Administrar aplica��es de Transporte,1,1,0,0,0,0,0,0,0,-,-
-BASE,OOG_LOGISTICA,Grupo para acessar aplica��es de Transporte,1,1,0,0,0,0,0,0,0,-,-
+BASE,OOG_LOGISTICA_ADM,Grupo para Administrar aplicações de Transporte,1,1,0,0,0,0,0,0,0,-,-
+BASE,OOG_LOGISTICA,Grupo para acessar aplicações de Transporte,1,1,0,0,0,0,0,0,0,-,-
 BASE,OOG_ISOLATION_APPROVER,Isolation Approver,0,0,0,0,0,0,0,0,0,-,-
 BASE,OOG_ISOLATION_MANAGER,Isolation Manager,0,0,0,0,0,0,0,0,0,-,-
 BASE,TUTOR_GROUP,Tutor,0,0,0,0,0,0,0,0,0,-,-
@@ -47,7 +47,7 @@ BASE,OOG_OPMGR,Operation Manager,0,0,0,0,0,0,0,0,0,-,-
 BASE,OCY_SST,Foresea Sustentabilidade - Acesso a TA Revisor,0,1,0,0,0,0,0,0,0,-,-
 BASE,OOG_TRANSPORTADOR,Grupo para acessar aplicaoes de transportador,1,0,0,0,0,0,0,0,0,-,-
 BASE,OOG_RELIABILITY_TEAM,Reliability Team,0,0,0,0,0,0,0,0,0,-,-
-BASE,OOG_APPUSERS,Grupo para permitir acesso a aplica��o Users,0,1,0,0,0,0,0,0,0,-,-
+BASE,OOG_APPUSERS,Grupo para permitir acesso a aplicação Users,0,1,0,0,0,0,0,0,0,-,-
 BASE,OOG_REQUISITANTET,Grupo para acessar aplicaoes de transporte como requisitante,1,1,0,0,0,0,0,0,0,-,-
 BASE,OOG_PTW_ADMIN,Permit To Work Admin,0,1,0,0,0,0,0,0,0,-,-
 BASE,OOG_SUPERVISOR,Grupo de supervisores,0,0,0,0,1,0,0,0,0,-,-
@@ -77,7 +77,7 @@ BASE,OOG_PROJECT_ENGINEER,Project Engineers Group,0,0,1,0,1,0,0,0,0,-,-
 BASE,PRIO_MATERIALS_COORDINATOR,Prio Materials Coordinator,0,0,1,0,0,0,0,0,0,-,-
 BASE,PRIO_REGISTER,PRIO Item Registration,0,0,0,0,1,0,0,0,0,-,-
 BASE,PRIO_USERS,Prio Users,0,0,0,1,0,0,0,0,0,-,-
-BASE,OOG_AB_SST,Grupo de seguran�a para acesso a aplica��o Alert & Bulletins SST,0,0,0,0,0,0,0,0,0,-,-
+BASE,OOG_AB_SST,Grupo de segurança para acesso a aplicação Alert & Bulletins SST,0,0,0,0,0,0,0,0,0,-,-
 BASE,FetchAll:,79,rows,fetched.,,,,,,,,,
 BASE,>,,,,,,,,,,,,
 HTQ,MAXREADONLYSPPT,Maximo Read Only Access for Support,0,1,1,1,1,0,0,0,0,-,-
@@ -132,8 +132,8 @@ HTQ,OOG_ISOLATION_APPROVER,Isolation Approver,0,0,0,0,0,0,0,0,0,-,-
 HTQ,OOG_SQP_QUALITY,SQP Quality Department,0,0,0,0,0,0,0,0,0,-,-
 HTQ,OOG_TRANSPORTADOR,Grupo para acessar aplicaoes de transportador,1,0,0,0,0,0,0,0,0,-,-
 HTQ,OOG_REQUISITANTET,Grupo para acessar aplicaoes de transporte como requisitante,1,1,0,0,0,0,0,0,0,-,-
-HTQ,OOG_LOGISTICA_ADM,Grupo para Administrar aplica��es de Transporte,1,1,0,0,0,0,0,0,0,-,-
-HTQ,OOG_LOGISTICA,Grupo para acessar aplica��es de Transporte,1,1,0,0,0,0,0,0,0,-,-
+HTQ,OOG_LOGISTICA_ADM,Grupo para Administrar aplicações de Transporte,1,1,0,0,0,0,0,0,0,-,-
+HTQ,OOG_LOGISTICA,Grupo para acessar aplicações de Transporte,1,1,0,0,0,0,0,0,0,-,-
 HTQ,OOG_SQP_OPENERS,SQP Openers,0,0,0,0,0,0,0,0,0,-,-
 HTQ,OOG_RIGSUPSQP,Rig Superintendent SQP,0,0,0,0,0,0,0,0,0,-,-
 HTQ,OOG_MATERIALS_COORDINATOR_YARD,Materials Coordinator Yard,0,0,1,0,0,0,0,0,0,-,-
@@ -146,7 +146,7 @@ HTQ,Inv_ready,Inventory Read Only,0,0,0,0,0,0,0,0,0,-,-
 HTQ,OOG_USERS_HTQ,HTQ Users,0,0,0,1,0,0,0,0,0,-,-
 HTQ,OOG_MACRO_ACTIONS,Atualizacao de acoes em  MACROESTRUTURA,0,1,0,0,0,0,0,0,0,-,-
 HTQ,MOBILE,Security Group for Mobile,0,0,0,0,0,0,0,0,0,-,-
-HTQ,OOG_APPUSERS,Grupo para permitir acesso a aplica��o Users,0,1,0,0,0,0,0,0,0,-,-
+HTQ,OOG_APPUSERS,Grupo para permitir acesso a aplicação Users,0,1,0,0,0,0,0,0,0,-,-
 HTQ,OOG_PTW_ADMIN,Permit To Work Admin,0,1,0,0,0,0,0,0,0,-,-
 HTQ,OOG_PTW_ISSUER,Permit to Work Issuer,0,1,0,0,0,0,0,0,0,-,-
 HTQ,OOG_PTW_APPROVERS,Permit to Work Approvers,0,1,0,0,0,0,0,0,0,-,-
@@ -156,7 +156,7 @@ HTQ,MGUEST,Guest Group,0,1,0,0,0,0,0,0,0,SELFSERVICE,-
 HTQ,PRIO_MATERIALS_COORDINATOR,Prio Materials Coordinator,0,0,1,0,0,0,0,0,0,-,-
 HTQ,PRIO_REGISTER,Prio Item Registration,0,0,0,0,1,0,0,0,0,-,-
 HTQ,PRIO_USERS,Prio Users,0,0,0,1,0,0,0,0,0,-,-
-HTQ,OOG_AB_SST,Grupo de seguran�a para acesso a aplica��o Alert & Bulletins SST,0,0,0,0,0,0,0,0,0,-,-
+HTQ,OOG_AB_SST,Grupo de segurança para acesso a aplicação Alert & Bulletins SST,0,0,0,0,0,0,0,0,0,-,-
 HTQ,FetchAll:,77,rows,fetched.,,,,,,,,,
 HTQ,>,,,,,,,,,,,,
 N06,MAXREADONLYSPPT,Maximo Read Only Access for Support,0,1,1,1,1,0,0,0,0,-,-
@@ -216,15 +216,15 @@ N06,OOG_ISOLATION_APPROVER,Isolation Approver,0,0,0,0,0,0,0,0,0,-,-
 N06,OOG_TRANSPORTADOR,Grupo para acessar aplicaoes de transportador,1,0,0,0,0,0,0,0,0,-,-
 N06,OOG_ISOLATION_MANAGER,Isolation Manager,0,0,0,0,0,0,0,0,0,-,-
 N06,OOG_REQUISITANTET,Grupo para acessar aplicaoes de transporte como requisitante,1,1,0,0,0,0,0,0,0,-,-
-N06,OOG_LOGISTICA_ADM,Grupo para Administrar aplica��es de Transporte,1,1,0,0,0,0,0,0,0,-,-
-N06,OOG_LOGISTICA,Grupo para acessar aplica��es de Transporte,1,1,0,0,0,0,0,0,0,-,-
+N06,OOG_LOGISTICA_ADM,Grupo para Administrar aplicações de Transporte,1,1,0,0,0,0,0,0,0,-,-
+N06,OOG_LOGISTICA,Grupo para acessar aplicações de Transporte,1,1,0,0,0,0,0,0,0,-,-
 N06,TUTOR_GROUP,Tutor,0,0,0,0,0,0,0,0,0,-,-
 N06,Inv_ready,Inventory Read Only,0,0,0,0,0,0,0,0,0,-,-
 N06,OOG_INSPECTORSUP,Inspector supervisor group OOG,0,0,0,0,0,0,0,0,0,-,-
 N06,OOG_DEPARTMENT_TEAM,Department Team,0,0,0,0,1,0,0,0,0,-,-
 N06,OOG_QUALIFIED_PROFESSIONAL,Qualified Professional - SPIE,0,0,1,0,1,0,0,0,0,-,-
 N06,OOG_RELIABILITY_TEAM,Reliability Team,0,0,0,0,0,0,0,0,0,-,-
-N06,OOG_APPUSERS,Grupo para permitir acesso a aplica��o Users,0,1,0,0,0,0,0,0,0,-,-
+N06,OOG_APPUSERS,Grupo para permitir acesso a aplicação Users,0,1,0,0,0,0,0,0,0,-,-
 N06,OOG_PTW_ADMIN,Permit To Work Admin,0,1,0,0,0,0,0,0,0,-,-
 N06,OOG_PTW_ISSUER,Permit to Work Issuer,0,1,0,0,0,0,0,0,0,-,-
 N06,OOG_PTW_APPROVERS,Permit to Work Approvers,0,1,0,0,0,0,0,0,0,-,-
@@ -232,7 +232,7 @@ N06,OOG_REGISTER_HTQ,HTQ Item Registration,0,0,0,0,1,0,0,0,0,-,-
 N06,HTQ_MATERIALS_COORDINATOR,HTQ Materials Coordinator,0,0,1,0,0,0,0,0,0,-,-
 N06,OOG_USERS_HTQ,HTQ Users,0,0,0,1,0,0,0,0,0,-,-
 N06,MOBILE,Security Group for Mobile,0,0,0,0,0,0,0,0,0,-,-
-N06,OOG_AB_SST,Grupo de seguran�a para acesso a aplica��o Alert & Bulletins SST,0,0,0,0,0,0,0,0,0,-,-
+N06,OOG_AB_SST,Grupo de segurança para acesso a aplicação Alert & Bulletins SST,0,0,0,0,0,0,0,0,0,-,-
 N06,FetchAll:,74,rows,fetched.,,,,,,,,,
 N06,>,,,,,,,,,,,,
 N08,OOG_RELIABILITY_TEAM,Reliability Team,0,0,0,0,0,0,0,0,0,-,-
@@ -293,11 +293,11 @@ N08,MOBILE,Security Group for Mobile,0,0,0,0,0,0,0,0,0,-,-
 N08,OOG_SQP_QUALITY,SQP Quality Department,0,0,0,0,0,0,0,0,0,-,-
 N08,OOG_TRANSPORTADOR,Grupo para acessar aplicaoes de transportador,1,0,0,0,0,0,0,0,0,-,-
 N08,OOG_REQUISITANTET,Grupo para acessar aplicaoes de transporte como requisitante,1,1,0,0,0,0,0,0,0,-,-
-N08,OOG_LOGISTICA_ADM,Grupo para Administrar aplica��es de Transporte,1,1,0,0,0,0,0,0,0,-,-
-N08,OOG_LOGISTICA,Grupo para acessar aplica��es de Transporte,1,1,0,0,0,0,0,0,0,-,-
+N08,OOG_LOGISTICA_ADM,Grupo para Administrar aplicações de Transporte,1,1,0,0,0,0,0,0,0,-,-
+N08,OOG_LOGISTICA,Grupo para acessar aplicações de Transporte,1,1,0,0,0,0,0,0,0,-,-
 N08,OOG_SQP_OPENERS,SQP Openers,0,0,0,0,0,0,0,0,0,-,-
 N08,OOG_RIGSUPSQP,Rig Superintendent SQP,0,0,0,0,0,0,0,0,0,-,-
-N08,OOG_APPUSERS,Grupo para permitir acesso a aplica��o Users,0,1,0,0,0,0,0,0,0,-,-
+N08,OOG_APPUSERS,Grupo para permitir acesso a aplicação Users,0,1,0,0,0,0,0,0,0,-,-
 N08,OOG_PTW_ADMIN,Permit To Work Admin,0,1,0,0,0,0,0,0,0,-,-
 N08,OOG_PTW_ISSUER,Permit to Work Issuer,0,1,0,0,0,0,0,0,0,-,-
 N08,OOG_PTW_APPROVERS,Permit to Work Approvers,0,1,0,0,0,0,0,0,0,-,-
@@ -308,7 +308,7 @@ N08,OOG_MATERIALS_COORDINATOR_YARD,Materials Coordinator Yard,0,0,1,0,0,0,0,0,0,
 N08,OOG_DEPARTMENT_TEAM,Department Team,0,0,0,0,1,0,0,0,0,-,-
 N08,OOG_INSPECTORSUP,Inspector supervisor group OOG,0,0,0,0,0,0,0,0,0,-,-
 N08,OOG_QUALIFIED_PROFESSIONAL,Qualified Professional - SPIE,0,0,1,0,1,0,0,0,0,-,-
-N08,OOG_AB_SST,Grupo de seguran�a para acesso a aplica��o Alert & Bulletins SST,0,0,0,0,0,0,0,0,0,-,-
+N08,OOG_AB_SST,Grupo de segurança para acesso a aplicação Alert & Bulletins SST,0,0,0,0,0,0,0,0,0,-,-
 N08,FetchAll:,74,rows,fetched.,,,,,,,,,
 N08,>,,,,,,,,,,,,
 N09,MAXREADONLYSPPT,Maximo Read Only Access for Support,0,1,1,1,1,0,0,0,0,-,-
@@ -360,9 +360,9 @@ N09,OOG_DEPARTMENT_TEAM,Department Team,0,0,0,0,1,0,0,0,0,-,-
 N09,OOG_MOC_MACRO,MOC para MACROESTRUTURA,0,1,0,0,0,0,0,0,0,-,-
 N09,OOG_TRANSPORTADOR,Grupo para acessar aplicaoes de transportador,1,0,0,0,0,0,0,0,0,-,-
 N09,OOG_REQUISITANTET,Grupo para acessar aplicaoes de transporte como requisitante,1,1,0,0,0,0,0,0,0,-,-
-N09,OOG_LOGISTICA_ADM,Grupo para Administrar aplica��es de Transporte,1,1,0,0,0,0,0,0,0,-,-
-N09,OOG_LOGISTICA,Grupo para acessar aplica��es de Transporte,1,1,0,0,0,0,0,0,0,-,-
-N09,OOG_APPUSERS,Grupo para permitir acesso a aplica��o Users,0,1,0,0,0,0,0,0,0,-,-
+N09,OOG_LOGISTICA_ADM,Grupo para Administrar aplicações de Transporte,1,1,0,0,0,0,0,0,0,-,-
+N09,OOG_LOGISTICA,Grupo para acessar aplicações de Transporte,1,1,0,0,0,0,0,0,0,-,-
+N09,OOG_APPUSERS,Grupo para permitir acesso a aplicação Users,0,1,0,0,0,0,0,0,0,-,-
 N09,OOG_PTW_ADMIN,Permit To Work Admin,0,1,0,0,0,0,0,0,0,-,-
 N09,OOG_PTW_ISSUER,Permit to Work Issuer,0,1,0,0,0,0,0,0,0,-,-
 N09,OOG_PTW_APPROVERS,Permit to Work Approvers,0,1,0,0,0,0,0,0,0,-,-
@@ -384,7 +384,7 @@ N09,MOBILE,Security Group for Mobile,0,0,0,0,0,0,0,0,0,-,-
 N09,OOG_INSPECTORSUP,Inspector supervisor group OOG,0,0,0,0,0,0,0,0,0,-,-
 N09,OOG_QUALIFIED_PROFESSIONAL,Qualified Professional - SPIE,0,0,1,0,1,0,0,0,0,-,-
 N09,TUTOR_GROUP,Tutor,0,0,0,0,0,0,0,0,0,-,-
-N09,OOG_AB_SST,Grupo de seguran�a para acesso a aplica��o Alert & Bulletins SST,0,0,0,0,0,0,0,0,0,-,-
+N09,OOG_AB_SST,Grupo de segurança para acesso a aplicação Alert & Bulletins SST,0,0,0,0,0,0,0,0,0,-,-
 N09,FetchAll:,74,rows,fetched.,,,,,,,,,
 N09,>,,,,,,,,,,,,
 ODN1,MAXREADONLYSPPT,Maximo Read Only Access for Support,0,1,1,1,1,0,0,0,0,-,-
@@ -443,15 +443,15 @@ ODN1,OOG_MATERIALS_COORDINATOR_YARD,Materials Coordinator Yard,0,0,1,0,0,0,0,0,0
 ODN1,OOG_MOC_MACRO,MOC para MACROESTRUTURA,0,1,0,0,0,0,0,0,0,-,-
 ODN1,OOG_TRANSPORTADOR,Grupo para acessar aplicaoes de transportador,1,0,0,0,0,0,0,0,0,-,-
 ODN1,OOG_REQUISITANTET,Grupo para acessar aplicaoes de transporte como requisitante,1,1,0,0,0,0,0,0,0,-,-
-ODN1,OOG_LOGISTICA_ADM,Grupo para Administrar aplica��es de Transporte,1,1,0,0,0,0,0,0,0,-,-
-ODN1,OOG_LOGISTICA,Grupo para acessar aplica��es de Transporte,1,1,0,0,0,0,0,0,0,-,-
+ODN1,OOG_LOGISTICA_ADM,Grupo para Administrar aplicações de Transporte,1,1,0,0,0,0,0,0,0,-,-
+ODN1,OOG_LOGISTICA,Grupo para acessar aplicações de Transporte,1,1,0,0,0,0,0,0,0,-,-
 ODN1,OOG_ISOLATION_APPROVER,Isolation Approver,0,0,0,0,0,0,0,0,0,-,-
 ODN1,OOG_DEPARTMENT_TEAM,Department Team,0,0,0,0,1,0,0,0,0,-,-
 ODN1,OOG_ISOLATION_MANAGER,Isolation Manager,0,0,0,0,0,0,0,0,0,-,-
 ODN1,OOG_SQP_QUALITY,SQP Quality Department,0,0,0,0,0,0,0,0,0,-,-
 ODN1,OOG_SQP_OPENERS,SQP Openers,0,0,0,0,0,0,0,0,0,-,-
 ODN1,OOG_RIGSUPSQP,Rig Superintendent SQP,0,0,0,0,0,0,0,0,0,-,-
-ODN1,OOG_APPUSERS,Grupo para permitir acesso a aplica��o Users,0,1,0,0,0,0,0,0,0,-,-
+ODN1,OOG_APPUSERS,Grupo para permitir acesso a aplicação Users,0,1,0,0,0,0,0,0,0,-,-
 ODN1,OOG_PTW_ADMIN,Permit To Work Admin,0,1,0,0,0,0,0,0,0,-,-
 ODN1,OOG_PTW_ISSUER,Permit to Work Issuer,0,1,0,0,0,0,0,0,0,-,-
 ODN1,OOG_PTW_APPROVERS,Permit to Work Approvers,0,1,0,0,0,0,0,0,0,-,-
@@ -460,7 +460,7 @@ ODN1,OOG_MACRO_ACTIONS,Atualizacao de acoes em  MACROESTRUTURA,0,1,0,0,0,0,0,0,0
 ODN1,MOBILE,Security Group for Mobile,0,0,0,0,0,0,0,0,0,-,-
 ODN1,Inv_ready,Inventory Read Only,0,0,0,0,0,0,0,0,0,-,-
 ODN1,OOG_RELIABILITY_TEAM,Reliability Team,0,0,0,0,0,0,0,0,0,-,-
-ODN1,OOG_AB_SST,Grupo de seguran�a para acesso a aplica��o Alert & Bulletins SST,0,0,0,0,0,0,0,0,0,-,-
+ODN1,OOG_AB_SST,Grupo de segurança para acesso a aplicação Alert & Bulletins SST,0,0,0,0,0,0,0,0,0,-,-
 ODN1,FetchAll:,74,rows,fetched.,,,,,,,,,
 ODN1,>,,,,,,,,,,,,
 ODN2,MAXREADONLYSPPT,Maximo Read Only Access for Support,0,1,1,1,1,0,0,0,0,-,-
@@ -515,7 +515,7 @@ ODN2,OOG_SQP_QUALITY,SQP Quality Department,0,0,0,0,0,0,0,0,0,-,-
 ODN2,OOG_SQP_OPENERS,SQP Openers,0,0,0,0,0,0,0,0,0,-,-
 ODN2,OOG_RIGSUPSQP,Rig Superintendent SQP,0,0,0,0,0,0,0,0,0,-,-
 ODN2,OOG_RELIABILITY_TEAM,Reliability Team,0,0,0,0,0,0,0,0,0,-,-
-ODN2,OOG_APPUSERS,Grupo para permitir acesso a aplica��o Users,0,1,0,0,0,0,0,0,0,-,-
+ODN2,OOG_APPUSERS,Grupo para permitir acesso a aplicação Users,0,1,0,0,0,0,0,0,0,-,-
 ODN2,OOG_PTW_ADMIN,Permit To Work Admin,0,1,0,0,0,0,0,0,0,-,-
 ODN2,OOG_PTW_ISSUER,Permit to Work Issuer,0,1,0,0,0,0,0,0,0,-,-
 ODN2,OOG_PTW_APPROVERS,Permit to Work Approvers,0,1,0,0,0,0,0,0,0,-,-
@@ -525,8 +525,8 @@ ODN2,OOG_ISOLATION_MANAGER,Isolation Manager,0,0,0,0,0,0,0,0,0,-,-
 ODN2,OOG_MOC_MACRO,MOC para MACROESTRUTURA,0,1,0,0,0,0,0,0,0,-,-
 ODN2,OOG_TRANSPORTADOR,Grupo para acessar aplicaoes de transportador,1,0,0,0,0,0,0,0,0,-,-
 ODN2,OOG_REQUISITANTET,Grupo para acessar aplicaoes de transporte como requisitante,1,1,0,0,0,0,0,0,0,-,-
-ODN2,OOG_LOGISTICA_ADM,Grupo para Administrar aplica��es de Transporte,1,1,0,0,0,0,0,0,0,-,-
-ODN2,OOG_LOGISTICA,Grupo para acessar aplica��es de Transporte,1,1,0,0,0,0,0,0,0,-,-
+ODN2,OOG_LOGISTICA_ADM,Grupo para Administrar aplicações de Transporte,1,1,0,0,0,0,0,0,0,-,-
+ODN2,OOG_LOGISTICA,Grupo para acessar aplicações de Transporte,1,1,0,0,0,0,0,0,0,-,-
 ODN2,OOG_SUPERVISOR,Grupo de supervisores,0,0,0,0,1,0,0,0,0,-,-
 ODN2,MGUEST,Guest Group,0,1,0,0,0,0,0,0,0,SELFSERVICE,-
 ODN2,OOG_REGISTER_HTQ,HTQ Item Registration,0,0,0,0,1,0,0,0,0,-,-
@@ -536,6 +536,6 @@ ODN2,Inv_ready,Inventory Read Only,0,0,0,0,0,0,0,0,0,-,-
 ODN2,OOG_MATERIALS_COORDINATOR_YARD,Materials Coordinator Yard,0,0,1,1,0,0,0,0,0,-,-
 ODN2,OOG_MACRO_ACTIONS,Atualizacao de acoes em  MACROESTRUTURA,0,1,0,0,0,0,0,0,0,-,-
 ODN2,MOBILE,Security Group for Mobile,0,0,0,0,0,0,0,0,0,-,-
-ODN2,OOG_AB_SST,Grupo de seguran�a para acesso a aplica��o Alert & Bulletins SST,0,0,0,0,0,0,0,0,0,-,-
+ODN2,OOG_AB_SST,Grupo de segurança para acesso a aplicação Alert & Bulletins SST,0,0,0,0,0,0,0,0,0,-,-
 ODN2,FetchAll:,74,rows,fetched.,,,,,,,,,
 ODN2,>,,,,,,,,,,,,

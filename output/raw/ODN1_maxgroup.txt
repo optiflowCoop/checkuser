@@ -63,15 +63,15 @@ FetchAll:  Columns: 13
   OOG_MOC_MACRO, MOC para MACROESTRUTURA, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
   OOG_TRANSPORTADOR, Grupo para acessar aplicaoes de transportador, 1, 0, 0, 0, 0, 0, 0, 0, 0, -, -
   OOG_REQUISITANTET, Grupo para acessar aplicaoes de transporte como requisitante, 1, 1, 0, 0, 0, 0, 0, 0, 0, -, -
-  OOG_LOGISTICA_ADM, Grupo para Administrar aplicações de Transporte, 1, 1, 0, 0, 0, 0, 0, 0, 0, -, -
-  OOG_LOGISTICA, Grupo para acessar aplicações de Transporte, 1, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_LOGISTICA_ADM, Grupo para Administrar aplicaÃ§Ãµes de Transporte, 1, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_LOGISTICA, Grupo para acessar aplicaÃ§Ãµes de Transporte, 1, 1, 0, 0, 0, 0, 0, 0, 0, -, -
   OOG_ISOLATION_APPROVER, Isolation Approver, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
   OOG_DEPARTMENT_TEAM, Department Team, 0, 0, 0, 0, 1, 0, 0, 0, 0, -, -
   OOG_ISOLATION_MANAGER, Isolation Manager, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
   OOG_SQP_QUALITY, SQP Quality Department, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
   OOG_SQP_OPENERS, SQP Openers, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
   OOG_RIGSUPSQP, Rig Superintendent SQP, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
-  OOG_APPUSERS, Grupo para permitir acesso a aplicação Users, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_APPUSERS, Grupo para permitir acesso a aplicaÃ§Ã£o Users, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
   OOG_PTW_ADMIN, Permit To Work Admin, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
   OOG_PTW_ISSUER, Permit to Work Issuer, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
   OOG_PTW_APPROVERS, Permit to Work Approvers, 0, 1, 0, 0, 0, 0, 0, 0, 0, -, -
@@ -80,6 +80,6 @@ FetchAll:  Columns: 13
   MOBILE, Security Group for Mobile, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
   Inv_ready, Inventory Read Only, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
   OOG_RELIABILITY_TEAM, Reliability Team, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
-  OOG_AB_SST, Grupo de segurança para acesso a aplicação Alert & Bulletins SST, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
+  OOG_AB_SST, Grupo de seguranÃ§a para acesso a aplicaÃ§Ã£o Alert & Bulletins SST, 0, 0, 0, 0, 0, 0, 0, 0, 0, -, -
 FetchAll: 74 rows fetched.
 > 

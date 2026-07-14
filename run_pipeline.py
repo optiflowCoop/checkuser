@@ -75,19 +75,7 @@ PIPELINE_STEPS = [
         "skippable": False
     },
     {
-        "name": "12. [FASE 3] Analisando Histórico de Uso (analyze_usage.py)",
-        "cmd": [sys.executable, str(ROOT / "src" / "analyze_usage.py")],
-        "skippable": False,
-        "features": "✓ Dados REAIS ✓ UserClassificationEngine ✓ 6 rules independentes"
-    },
-    {
-        "name": "13. [FASE 3-B] Detector de Otimização (license_optimizer.py)",
-        "cmd": [sys.executable, str(ROOT / "src" / "license_optimizer.py")],
-        "skippable": False,
-        "features": "✓ LicenseOptimizer ✓ 6 estratégias ✓ Batch processing ✓ Summary stats"
-    },
-    {
-        "name": "14. Gerando Dashboards e Excel de Risco (generate_risk_report.py)",
+        "name": "12. Gerando Dashboards e Excel de Risco (generate_risk_report.py)",
         "cmd": [sys.executable, str(ROOT / "scripts" / "generate_risk_report.py")],
         "skippable": False
     }
@@ -98,7 +86,7 @@ def main():
     print("\n" + "=" * 100)
     print("MAXIMO IDENTITY SANITY PIPELINE")
     print("=" * 100)
-    print("\nVersão: 1.0 (com UserClassificationEngine + LicenseOptimizer)")
+    print("\nVersão: 1.1")
     print("Dados: 100% REAIS de consolidated_logintracking.csv ")
     print("Padrões: Strategy Pattern + SOLID Principles")
     
@@ -173,30 +161,19 @@ def main():
     print(f"     • consolidated_user_identity.csv")
     print(f"     • consolidated_user_access_normalized.csv")
     print(f"     • consolidated_logintracking.csv (dados REAIS)")
-    print(f"     • usage_analysis.csv (com UserClassificationEngine)")
-    print(f"     • license_optimization_recommendations.csv (com LicenseOptimizer)")
+    print(f"     • license_decision_plan.csv (decisão de licença por usuário)")
     print(f"  📊 output/reports/")
     print(f"     • maximo_unified_dashboard.html (dashboard)")
     print(f"     • maximo_risk_and_optimization_workbook.xlsx (excel)")
-    
-    print(f"\n[FEATURES SOLID APLICADAS]")
-    print(f"  ✓ Strategy Pattern (ClassificationRule, OptimizationStrategy)")
-    print(f"  ✓ Facade Pattern (UserClassificationEngine, LicenseOptimizer)")
-    print(f"  ✓ Single Responsibility Principle")
-    print(f"  ✓ Open/Closed Principle (extensível sem modificar core)")
-    print(f"  ✓ Liskov Substitution Principle")
-    print(f"  ✓ Interface Segregation Principle")
-    print(f"  ✓ Dependency Inversion Principle")
-    
+
     print(f"\n[PROXIMOS PASSOS]")
-    print(f"  1. Revisar arquivo: output/consolidated/usage_analysis.csv")
-    print(f"  2. Revisar arquivo: output/consolidated/license_optimization_recommendations.csv")
-    print(f"  3. Abrir dashboard em: output/reports/maximo_unified_dashboard.html")
-    print(f"  4. Abrir workbook em: output/reports/maximo_risk_and_optimization_workbook.xlsx")
-    
+    print(f"  1. Revisar arquivo: output/consolidated/license_decision_plan.csv")
+    print(f"  2. Abrir dashboard em: output/reports/maximo_unified_dashboard.html")
+    print(f"  3. Abrir workbook em: output/reports/maximo_risk_and_optimization_workbook.xlsx")
+
     print(f"\n[PROXIMA EXECUCAO RAPIDA]")
     print(f"  $ python run_pipeline.py --skip-extract")
-    print(f"  (Pula extração do DB2, roda logintracking + análise + otimização)")
+    print(f"  (Pula extração do DB2, roda logintracking + geração de relatórios)")
     
     print(f"\n{'=' * 100}\n")
 

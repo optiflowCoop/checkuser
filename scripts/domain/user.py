@@ -47,7 +47,7 @@ def build_user_profiles(identities, access_rows, email_rows=None, person_rows=No
     user_profiles = defaultdict(lambda: {
         'USERID': '', 'DISPLAYNAME': set(), 'STATUS': 'INACTIVE', 'EMAIL': '',
         'DOMAIN_CATEGORY': 'SEM DOMINIO', 'PERSONGROUPS': set(), 'TITLES': set(),
-        'GROUPS': set(), 'ENVS': set(), 'TYPE': set(),
+        'GROUPS': set(), 'ENVS': set(), 'TYPE': set(), 'DEFSITE': '',
     })
 
     for r in identities:
@@ -60,6 +60,14 @@ def build_user_profiles(identities, access_rows, email_rows=None, person_rows=No
         profile['ENVS'].add(normalize_env(r.get('ENV_DB', '').strip()))
         if r.get('STATUS', '').upper() == 'ACTIVE':
             profile['STATUS'] = 'ACTIVE'
+        # DEFSITE nunca era populado aqui — profile.get('DEFSITE','') no
+        # fallback de LOCATION_SITE (generate_risk_report.py) sempre voltava
+        # vazio para todo mundo, mascarado até agora por um pipeline paralelo
+        # que preenchia isso por fora (removido em 2026-07-14). Prioriza a
+        # linha ACTIVE (mais confiável) sem sobrescrever com uma vazia.
+        defsite = r.get('DEFSITE', '').strip()
+        if defsite and (not profile['DEFSITE'] or r.get('STATUS', '').upper() == 'ACTIVE'):
+            profile['DEFSITE'] = defsite
         email = r.get('PRIMARYEMAIL', '').strip()
 
         # CORREÇÃO: Detectar contas de integração pelo USERID quando não há email

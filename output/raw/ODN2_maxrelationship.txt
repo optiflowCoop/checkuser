@@ -232,6 +232,7 @@ FetchAll:  Columns: 8
   HAZARD, SAFETYPLAN, SAFETYLEXICON, safetylexiconid in (select safetylexiconid from  splexiconlink where spworkassetid in (select spworkassetid from spworkasset where safetyplanid = :safetyplanid and siteid=:siteid) and siteid=:siteid) and siteid=:siteid, UNDEFINED, 0, Relationship to SafetyLexicon table for a given safetyplan. The Sql is ( safetylexiconid in (select safetylexiconid from  splexiconlink	where spworkassetid in (select spworkassetid from spworkasset where	safetyplanid = safetyplan.safetyplanid ))). Used to search all safetyplans which has specified hazard in SafetyPlan application. The result set will contain zero or more objects., 328
   ACCOUNTDEFAULTS, ORGANIZATION, ACCOUNTDEFAULTS, orgid = :orgid, UNDEFINED, 0, Relationship to the AccountDefaults table, used to find all account defaults records for a given organization. (organization.orgid = accountdefaults.orgid). The resulting set will contain one or more objects., 329
   OOG_PJPADDITIONALINFO_RISKS, PLUSGPERMITWORK, OOG_PJPADDITIONALINFO, PERMITWORKNUM = :PERMITWORKNUM AND SITEID = :SITEID AND OOG_INFOTYPE = 'TOOLS', -, 0, -, 3000000019
+  OOG_QUALITYASSURANCE_V2, PLUSGMOC, PERSONGROUPTEAM, PERSONGROUP='OOG_QA_RSK' AND (USEFORSITE IS NULL OR USEFORSITE= :SITEID), -, 0, Relationship to the Qualitty Assurance group of the site used in workflow of Risk Assessment in MOC DOC Approval, 3000000020
   SHOWINVRESERVE, WORKORDER, INVRESERVE, wonum in (select wonum from workorder where (wonum=:wonum or (parent=:wonum and istask = :yes)) and siteid=:siteid ), MULTIPLE, 0, Relationship to the ShowInvReserve Set used by UI for display. This is a special MboSet used for displaying the inventory reserves for a given workorder and it's tasks. (wonum in (select wonum from workorder where ((workorder.wonum=workorder.wonum) or (workorder.parent=workorder.wonum and workorder.istask = :yes)) and workorder.siteid=workorder.siteid)). The resulting set will contain zero or more objects., 330
   COMPANY, ACCOUNTDEFAULTS, COMPANIES, company = :groupvalue and orgid=:orgid, UNDEFINED, 0, Relationship to the Companies table, used to find the company used as the group for establishing a default account. (accountdefaults.groupvalue = companies.company). The resulting set will contain zero or one object., 331
   RANGEDOMSEGMENT, MAXDOMAIN, NUMRANGEDOMAIN, domainid=:domainid, UNDEFINED, 0, Relationship to RangeDomSegment (rangedomsegment.domainid = maxdomain.domainid and maxdomain.domaintype in (select valuelist.value from valuelist where valuelist.listname = 'DOMTYPE' and valuelist.maxvalue = 'NUMRANGE')). If this is a numeric range domain, the result set will contain one or more objects., 332
@@ -539,7 +540,7 @@ FetchAll:  Columns: 8
   CLASSSPEC, LOCATIONSPEC, CLASSSPEC, classstructureid=:classstructureid and assetattrid=:assetattrid and (section is null or (section is not null and section=:section)), UNDEFINED, 0, Relationship to the ClassSpec table, used to find the base specification which the given location specification is derived from. (locationspec.classstructureid = classspec.classstructureid and locationspec.assetattrid = classspec.assetattrid ). The resulting set will contain one object., 786
   SERVRECTRANS, POLINE, SERVRECTRANS, ponum = :ponum and polinenum = :polinenum and belongsto is null and positeid = :siteid, UNDEFINED, 0, Relationship to the ServRecTrans table, used to find the service receipts that were created for a purchase order line. (servrectrans.ponum = poline.ponum and servrectrans.polinenum = poline.polinenum). The resulting set will contain zero or more objects., 643
   OOG_READING, ASSETMETER, METERREADING, metername=:metername and assetnum=:assetnum and siteid=:siteid and readingtype in ('ACTUAL','DELTA') order by enterdate desc, -, 0, Pega a ultima leitura valida, 3000000013
-  COMMLOG, PLUSGMOC, COMMLOG, :WORKORDERID = ownerid AND ownertable = 'MOC', -, 0, Relacionamento entre MOC e COMMLOG, para os logs de comunicação, 3000000014
+  COMMLOG, PLUSGMOC, COMMLOG, :WORKORDERID = ownerid AND ownertable = 'MOC', -, 0, Relacionamento entre MOC e COMMLOG, para os logs de comunicaÃ§Ã£o, 3000000014
   WOSLTAGENABLED, WORKORDER, WOSAFETYLINK, wonum = :wonum and tagoutid is null and exists (select * from wohazard where wonum = :wonum and hazardid = wosafetylink.hazardid and wosafetydatasource = wosafetylink.wosafetydatasource and tagoutenabled = :yes and siteid=:siteid) and siteid=:siteid, MULTIPLE, 0, Relationship to the WoSafetyLink table, used to find tagout-enabled hazards. (WoSafetyLink.wonum = workorder.wonum and exists (select * from wohazard where wonum = workorder.wonum and hazardid = wosafetylink.hazardid and wosafetydatasource = wosafetylink.wosafetydatasource and tagoutenabled = :yes)). This is used for the Wotrack Safety tab, Tagout subtab. This resulting set will contain zero or more objects., 644
   MASTERPMS, LOCATIONS, PM, pmnum not in (select a.masterpm from pm a where a.location = :location and a.siteid=:siteid and a.masterpm=pmnum) and exists (select * from masterpm where applympmtoloc=:yes and itemnum=:itemnum and itemsetid=:itemsetid), UNDEFINED, 0, Relationship to the PM table, used to find the master preventive maintenance records to apply item assembly atructure using the operating location's ItemNum. (locations.itemnum = pm.masterpmitemnum and pm.applymasterpmtoloc = yes and pm.ismasterpm = yes and pm.pmnum NOT IN (Select masterpm from PM where location= locations.location) and pm.itemsetid = locations.itemsetid). The resulting set will contain zero or more objects. ItemNum is a non-persistent column for the Location object. See the attribute defined in psdi.app.location.Location for more information., 645
   JPASSETSPLINK, SAFETYPLAN, JPASSETSPLINK, safetyplanid = :safetyplanid and siteid=:siteid, UNDEFINED, 0, Relationship to JpAssetSpLink table. (jpassetsplink.safetyplanid = safetyplan.safetyplanid). This is a cross reference table that points back to the JobPlan. The result set will contain zero or more objects., 646
@@ -3481,7 +3482,7 @@ and status not in (select value from synonymdomain where domainid='PRSTATUS' and
   PLUSCJPSTATUS, JOBPLAN, PLUSCJPSTATUS, jpnum=:jpnum and jprevnum=:pluscrevnum and ((orgid=:orgid and siteid=:siteid) or (orgid=:orgid and siteid is null) or (orgid is null and siteid is null)), -, -, Relationship to the status history object., 96371
   PLUSCLOCATIONWODS, LOCATIONS, PLUSCWODS, siteid = :siteid and location = :location, -, -, Relationship to the PLUSCWODS table through its related location used on View Calibration History dialog, 96372
   PLUSCLPLOC, ASSET, LOCATIONS, location = :plusclploc and siteid = :siteid, -, -, Relationship to the Location table, used to find all locations for a given asset's loop location. (locations.location = asset.plusclploc). This resulting set will contain zero or one object., 96373
-  PLUSCMAXVARINPUT, ORGANIZATION, MAXVARINPUT, orgid=:orgid, -, -, Relationship to the MaxVarInput table, used to get it´s mbo instance for the organization, 96374
+  PLUSCMAXVARINPUT, ORGANIZATION, MAXVARINPUT, orgid=:orgid, -, -, Relationship to the MaxVarInput table, used to get itÂ´s mbo instance for the organization, 96374
   PLUSCNEWLPLOC, ASSET, LOCATIONS, location = :pluscnewlploc and siteid = :siteid, -, -, Relationship to the Location table, used to find all locations for a given asset's new loop location. (locations.location = asset.pluscnewlploc). This resulting set will contain zero or one object., 96375
   PLUSCPLUSCWODS, PLUSCWODSINSTR, PLUSCWODS, wonum = :wonum and siteid = :siteid and dsplannum=:dsplannum and revisionnum = :revisionnum and wodsnum=:wodsnum, -, -, WODS for each WODSINSTR, 96376
   PLUSCPLUSDSPLAN, PLUSCDSSTATUS, PLUSDSPLAN, dsplannum=:dsplannum and revisionnum = :revisionnum, -, -, -, 96377
@@ -3922,15 +3923,18 @@ and status not in (select value from synonymdomain where domainid='PRSTATUS' and
   OOG_OAPOCLONE, OOG_PRTRKMXPR, OOG_PRTRKOAPOCLONE, maxprnum=:maxprnum and maxprlinenum =:maxprlinenum  and maxsiteid=:maxsiteid and maxorgid=:maxorgid, -, 0, -, 97478
   OOG_MANUFACTURER, REORDERPAD, COMPANIES, company=:manufacturer and orgid=:orgid, -, 0, Relationship to the companies table, used to find the companies records for a given Reorder record., 97479
   OOG_OARFQ, OOG_PRTRKMXPR, OOG_PRTRKOARFQ, maxprnum=:maxprnum and maxprlinenum =:maxprlinenum  and maxsiteid=:maxsiteid and maxorgid=:maxorgid, -, 0, -, 97481
-  OOG_OAPO, OOG_PRTRKMXPR, OOG_PRTRKOAPO, maxprnum=:maxprnum and maxprlinenum =:maxprlinenum  and maxsiteid=:maxsiteid and maxorgid=:maxorgid 
+  OOG_OAPO, OOG_PRTRKMXPR, OOG_PRTRKOAPO, maxprnum=:maxprnum and maxprlinenum =:maxprlinenum  and maxsiteid=:maxsiteid and maxorgid=:maxorgid 
+
 and OOG_PRTRKOAPOid =  (select max(OOG_PRTRKOAPOid) from MAXIMO.OOG_PRTRKOAPO where maxprnum=:maxprnum and maxprlinenum =:maxprlinenum  and maxsiteid=:maxsiteid and maxorgid=:maxorgid ), -, 0, -, 97482
   OOG_OARECEIPT, OOG_PRTRKMXPR, OOG_PRTRKOARECEIPT, exists (select * from OOG_PRTRKOAPO 
 where MAXSITEID=OOG_PRTRKOARECEIPT.MAXSITEID and MAXORGID=OOG_PRTRKOARECEIPT.MAXORGID 
 and maxponum=OOG_PRTRKOARECEIPT.maxponum and maxpoline=OOG_PRTRKOARECEIPT.maxpoline
 and maxprnum=:maxprnum and maxprlinenum =:maxprlinenum  and maxsiteid=:maxsiteid and maxorgid=:maxorgid), -, 0, -, 97484
   OOG_OAIMP, OOG_PRTRKOAPO, OOG_PRTRKOAIMP, MAXSITEID=:MAXSITEID and MAXORGID=:MAXORGID and maxponum=:maxponum and maxpoline=:maxpoline, -, 0, -, 97486
-  OOG_PRAPPR, OOG_PRTRKMXPR, PRSTATUS, prnum = :maxprnum and siteid = :maxsiteid and orgid = :maxorgid
-and status = 'APPR'
+  OOG_PRAPPR, OOG_PRTRKMXPR, PRSTATUS, prnum = :maxprnum and siteid = :maxsiteid and orgid = :maxorgid
+
+and status = 'APPR'
+
 and TRUNC(changedate) = (select TRUNC(min(a.changedate)) from prstatus a where a.prnum=PRSTATUS.prnum and a.siteid = PRSTATUS.siteid and a.orgid = PRSTATUS.orgid), -, 0, -, 97488
   OOG_OAINV, OOG_PRTRKOAPO, OOG_PRTRKOAINV, MAXSITEID=:MAXSITEID and MAXORGID=:MAXORGID and maxponum=:maxponum and maxpoline=:maxpoline, -, 0, -, 97493
   OOG_PRLINE, OOG_PRTRKOAPR, PRLINE, prnum = :maxprnum and prlinenum = :maxprlinenum and siteid = :maxsiteid and orgid = :maxorgid, -, 0, -, 97496
@@ -5935,15 +5939,21 @@ and ISDEFAULT=1, -, 0, -, 97503
   VIEWWOPMS, LABOR, VIEWWOPMS, -, -, -, Relationship from the INVOICELINE to the non-persistent VIEWWOPMS table. (No where clause.) The resulting set will contain zero objects. This relationship is used when the View Work Details dialog is launched from a location or asset field, 97148
   CHANGEPUBLICURI, OSLCPROVIDER, CHANGEPUBLICURI, -, -, -, Relation to non persistent object for changing public URI., 97149
   VIEWCONTINPUT, INVUSELINE, VIEWCONTINPUT, -, -, -, Relationship to the non-persistent ViewContInput., 97150
-  MASTERPM, JOBPLAN, MASTERPM, EXISTS
-( SELECT 1
-FROM MASTERPMSEQ
-WHERE JPNUM = :JPNUM
-AND MASTERPMSEQ.MASTERPMNUM = MASTERPM.MASTERPMNUM
+  MASTERPM, JOBPLAN, MASTERPM, EXISTS
+
+( SELECT 1
+
+FROM MASTERPMSEQ
+
+WHERE JPNUM = :JPNUM
+
+AND MASTERPMSEQ.MASTERPMNUM = MASTERPM.MASTERPMNUM
+
 ), -, 0, Relationship for the MasterPM Table, 97645
   OOG_OAPO_NOCANCEL, OOG_PRTRKMXPR, OOG_PRTRKOAPO, maxprnum=:maxprnum and maxprlinenum =:maxprlinenum  and maxsiteid=:maxsiteid and maxorgid=:maxorgid and Orapocanceled IS NULL, -, 0, Relationship used to retrive PO that was not cacelled in ORACLE, 97670
   OOG_CRITICALITYDESC, INVENTORY, ALNDOMAIN, domainid = 'OOG_ITEMCRITICALIT' and value = :oog_criticality, -, 0, Relationship to show item criticality description, 97675
-  OOG_ACTIVECARGOMAN, INVENTORY, OOG_CARGOMANLINE, itemnum = :ITEMNUM and FINALLOCATION = :SITEID 
+  OOG_ACTIVECARGOMAN, INVENTORY, OOG_CARGOMANLINE, itemnum = :ITEMNUM and FINALLOCATION = :SITEID 
+
 and exists(select 1 from OOG_CARGOMAN cm where cm.CARGOMANNUM = oog_cargomanline.CARGOMANNUM and cm.tosite = oog_cargomanline.FINALLOCATION and cm.STATUS = 'SENT'), -, 0, Relationship to OOG_CARGOMANLINE table, to find cargo manisfets active., 97635
   OOG_MANAREA, PLUSGMOC, PERSONGROUP, PERSONGROUP = :OOG_MANAREA, -, 0, Relationship between PERSONGROUP and PLUSGMOC, 97761
   ASSETSTATUSNOTRUNNING, ASSET, ASSETSTATUS, CHANGEDATE = (SELECT MAX(CHANGEDATE) FROM ASSETSTATUS WHERE ASSETNUM=:ASSETNUM AND SITEID=:SITEID AND WONUM=:WONUM AND ISRUNNING = 0), -, 0, Relationship to the AssetStatus table, used to find all status for a given asset and is not running. (assetstatus.assetnum = asset.assetnum and assetstatus.siteid=asset=siteid and assetstatus.isrunning=0). This resulting set will contain zero or more objects., 97719
@@ -5973,9 +5983,12 @@ oog_groupteam = :oog_manarea and oog_previousstatus = :status and oog_risk in (s
 and persongroup in ('OOG_AC','OOG_ASMG','OOG_DCSD','OOG_EC','OOG_MCSD','OOG_NR13','OOG_SUBS','OOG_SUDI')), -, 0, Relationship to persongroup team to assign to the approver of MOC, 97804
   OOG_RES_AB, PLUSGIMPROVE, OOG_RES_AB, :WONUM = RESID, -, 0, Relationship with RES, 97805
   OOG_RES_ALERT, OOG_RES_AB, OOG_ALERT, :ALERTID = ALERTID, -, 0, Relationship with alert and bulletins, 97806
-  OOG_OACMLINE, OOG_CARGOMANLINE, OOG_PRTRKOACM, :finallocation = maxsiteid and 
-:orgid = maxorgid and 
-:ponum = maxponum and 
+  OOG_OACMLINE, OOG_CARGOMANLINE, OOG_PRTRKOACM, :finallocation = maxsiteid and 
+
+:orgid = maxorgid and 
+
+:ponum = maxponum and 
+
 :polinenum = maxpoline, -, 0, -, 97636
   OOG_WODEPT, WORKORDER, PERSONGROUPTEAM, useforsite = :SITEID and PERSONGROUP = :PERSONGROUP and exists(select 1 from workorder where wonum = :wonum and siteid = useforsite) and exists(select 1 from GROUPUSER where GROUPNAME in ('OOG_DEPARTMENT_LEADER','OOG_DEPARTMENT_TEAM') and userid = RESPPARTYGROUP), -, 0, -, 97637
   OOG_PO, OOG_PRTRKMXPR, PO, ponum in (select ponum from prline where prnum=:maxprnum and prlinenum =:maxprlinenum  and siteid=:maxsiteid  and orgid=:maxorgid), -, 0, -, 97660
@@ -6034,7 +6047,8 @@ and personid in (select p.resppartygroup from persongroupteam p where p.useforsi
   OOG_PRLINE_ASSET, PRLINE, ASSET, siteid = :siteid and assetnum = :assetnum, -, 0, Relationship to the PRLine table, used to find the asset, 97673
   OOG_CONTRACT_INVALID, CONTRACTLINE, CONTRACT, contractnum = :contractnum and revisionnum = :revisionnum and orgid = :orgid and enddate is not null, -, 0, -, 97640
   OOG_INVENTORY_CURBAL, INVENTORY, OOG_INVENTORY_CURBAL, itemnum =:itemnum and siteid =:siteid and location =:location, -, 0, -, 97658
-  OOG_MAXCM, OOG_PRTRKOAPO, OOG_CARGOMANLINE, finallocation = :maxsiteid and orgid = :maxorgid and 
+  OOG_MAXCM, OOG_PRTRKOAPO, OOG_CARGOMANLINE, finallocation = :maxsiteid and orgid = :maxorgid and 
+
 ponum = :maxponum and polinenum = :maxpoline, -, 0, -, 97638
   OOG_PRLINE_WORKORDER, PRLINE, WORKORDER, wonum = :refwo and siteid = :siteid, -, 0, Relationship to the PRLINE table, used to find the WORKORDER, 97674
   OOG_DEP, WORKORDER, PERSONGROUPTEAM, PERSONGROUP = :PERSONGROUP AND EXISTS(SELECT 1 FROM workorder WHERE wonum = :wonum) AND (USEFORSITE = :SITEID OR USEFORSITE IS NULL), -, 0, -, 97643
@@ -6053,7 +6067,8 @@ The resulting set will contain zero or more objects., 97793
   OOG_WOSTATUS_WORKORDER, WOSTATUS, WORKORDER, :wonum = workorder.wonum
 and :siteid = workorder.siteid
 and :orgid = workorder.orgid, -, 0, Workorder Status Relationship, 97796
-  OOG_PLSV_DEPUTY_PROJECT_MANAGER, PR, MAXUSER, userid in (select g.userid from groupuser g where g.groupname = 'PLSV_DEPUTY_PROJECT_MANAGER')
+  OOG_PLSV_DEPUTY_PROJECT_MANAGER, PR, MAXUSER, userid in (select g.userid from groupuser g where g.groupname = 'PLSV_DEPUTY_PROJECT_MANAGER')
+
 and personid in (select p.resppartygroup from persongroupteam p where p.useforsite = :siteid and p.persongroup = :persongroup), -, 0, Relationship that retrieves Deputy Project Managers responsible for approving a PR in PLSV sites., 97634
   OOG_INVENTORY, OOG_CARGOMANLINE, INVENTORY, itemnum = :itemnum and itemsetid = :itemsetid and location = :tolocation, -, 0, Relationship to retrieve the Inventory record associated with  any type of  Cargo Manifest Line., 97743
   OOG_LASTWOMETER, WORKORDER, METERREADING, METERREADINGID in ( SELECT METERREADINGID FROM WOMETER
@@ -6748,18 +6763,18 @@ COMPLETED = 0 AND EXISTS (SELECT 1 FROM PLUSGSTDACT PA WHERE PA.PLUSGSTDACTID = 
   ALERT_RES_ALERT, OOG_ALERT, OOG_RES_AB, :ALERTID = ALERTID, -, 0, -, 99822
   PLUSGIMPROVE, PLUSGINVFMECA, PLUSGIMPROVE, :WONUM = WONUM, -, 0, Relationship FMECA, 99823
   PLUSGLISTTEAM, PROBLEM, PLUSGLISTTEAM, wonum = :origrecordid and siteid = :siteid, -, 0, Relationship Fmeca, 99824
-  PLUSGFAILMECHCODE, PLUSGINVFMECA, NUMERICDOMAIN, DOMAINID = 'PLUSGFAILMECHCODE' AND VALUE = :PLUSGFAILMECH, -, 0, DESCRIÇÃO PLUSGFAILMECH, 99825
-  PLUSGFAILMESUBCODE, PLUSGINVFMECA, ALNDOMAIN, domainid = 'PLUSGFAILMESUBCODE' and value = :PLUSGFAILSUBDIV, -, 0, DESCRIÇÃO PLUSGFAILSUBDIV, 99826
+  PLUSGFAILMECHCODE, PLUSGINVFMECA, NUMERICDOMAIN, DOMAINID = 'PLUSGFAILMECHCODE' AND VALUE = :PLUSGFAILMECH, -, 0, DESCRIÃ‡ÃƒO PLUSGFAILMECH, 99825
+  PLUSGFAILMESUBCODE, PLUSGINVFMECA, ALNDOMAIN, domainid = 'PLUSGFAILMESUBCODE' and value = :PLUSGFAILSUBDIV, -, 0, DESCRIÃ‡ÃƒO PLUSGFAILSUBDIV, 99826
   PLUSGLISTTEAM, PLUSGINVFMECA, PLUSGLISTTEAM, wonum = :ticketid  and siteid = :siteid, -, 0, Relationship FMECA, 99827
   OOG_FMECATEAM, PERSON, OOG_FMECATEAM, :personid = person, -, 0, Time FMECA, 99828
   OOG_FMECATEAM, PLUSGIMPROVE, OOG_FMECATEAM, wonum = :wonum and :siteid = siteid and :orgid = orgid, -, 0, Relacionamento com time FMECA, 99829
   PLUSGLISTTEAM, SR, PLUSGLISTTEAM, wonum = :ticketid and siteid = :siteid, -, 0, Relacionamento para Team Members funcionar na guia FMECA., 99830
-  OOG_PROBABILITY, PLUSGINVFMECA, ALNDOMAIN, VALUE = :OOG_PROBABILITY AND DOMAINID = 'OOG_PROBABILITY', -, 0, Relacionamento para buscar descrição do domínio., 99831
-  OOG_SEVERITY, PLUSGINVFMECA, ALNDOMAIN, VALUE = :OOG_SEVERITY AND DOMAINID = 'OOG_PROPDAMAGE', -, 0, Relacionamento para buscar descrição do domínio., 99832
+  OOG_PROBABILITY, PLUSGINVFMECA, ALNDOMAIN, VALUE = :OOG_PROBABILITY AND DOMAINID = 'OOG_PROBABILITY', -, 0, Relacionamento para buscar descriÃ§Ã£o do domÃ­nio., 99831
+  OOG_SEVERITY, PLUSGINVFMECA, ALNDOMAIN, VALUE = :OOG_SEVERITY AND DOMAINID = 'OOG_PROPDAMAGE', -, 0, Relacionamento para buscar descriÃ§Ã£o do domÃ­nio., 99832
   TKSTATUS, SR, TKSTATUS, ticketid=:ticketid and class=:class, -, 0, SR com TKSTATUS, 99833
   OOG_FMECATEAM, SR, OOG_FMECATEAM, ticketid = :ticketid and siteid = :siteid and orgid = :orgid, -, 0, -, 99834
-  OOG_FAILCAUSE, PLUSGINVFMECA, ALNDOMAIN, VALUE = :OOG_FAILCAUSE_DESCRIPTION AND DOMAINID = 'OOG_FAILCAUSE', -, 0, Relacionamento para buscar descrição do domínio., 99835
-  OOG_RECOMMENDATION, PLUSGINVFMECA, ALNDOMAIN, VALUE = :RECOMMENDATION AND DOMAINID = 'OOG_RECOMMENDATION', -, 0, Relacionamento para buscar descrição do domínio., 99836
+  OOG_FAILCAUSE, PLUSGINVFMECA, ALNDOMAIN, VALUE = :OOG_FAILCAUSE_DESCRIPTION AND DOMAINID = 'OOG_FAILCAUSE', -, 0, Relacionamento para buscar descriÃ§Ã£o do domÃ­nio., 99835
+  OOG_RECOMMENDATION, PLUSGINVFMECA, ALNDOMAIN, VALUE = :RECOMMENDATION AND DOMAINID = 'OOG_RECOMMENDATION', -, 0, Relacionamento para buscar descriÃ§Ã£o do domÃ­nio., 99836
   PLUSGTRAINING, PLUSGPERSONCOURSE, PLUSGTRAINING, plusgtrainingid = :plusgtrainingid, -, -, Relationship to find all course., 100568
   PLUSGPERSONCOURSE, PLUSGTRAINING, PLUSGPERSONCOURSE, plusgtrainingid = :plusgtrainingid, -, -, Relationship to find all person course., 100569
   PLUSGPERTYPECOURSE, PLUSGPERTYPE, PLUSGPERTYPECOURSE, pertypenum = :pertypenum and ((orgid=:orgid and siteid=:siteid) or (orgid=:orgid and siteid is null) or (orgid is null and siteid is null)), -, -, Relationship to find all permit and Certificate Type course., 100570
@@ -7046,7 +7061,7 @@ and eauditusername = :eauditusername, -, 0, -, 100852
   WORKORDER, SKDWOBREAKINOUT, WORKORDER, workorderid=:workorderid, -, -, Returns WO record for a given SKDWOBREAKINOUT., 100729
   SKDWOBREAKINOUT, SKDCOMPLIANCE, SKDWOBREAKINOUT, skdcomplianceid=:skdcomplianceid, -, -, Returns SKDWOBREAKINOUT records for a given SKDCOMPLIANCE., 100730
   SKDWOBREAKIN, SKDCOMPLIANCE, SKDWOBREAKINOUT, skdcomplianceid=:skdcomplianceid and breakin=:yes, -, -, Returns SKDWOBREAKINOUT records for a given SKDCOMPLIANCE., 100732
-  OOG_DRAKE, PERSON, OOG_DRAKE, OOG_REGISTRY =:OOG_REGISTRY, -, 0, Relacionamento para recuperar os usuários que possuem registros no Drake, 100737
+  OOG_DRAKE, PERSON, OOG_DRAKE, OOG_REGISTRY =:OOG_REGISTRY, -, 0, Relacionamento para recuperar os usuÃ¡rios que possuem registros no Drake, 100737
   PERSON, OOG_DRAKE, PERSON, OOG_REGISTRY =:OOG_REGISTRY, -, 0, Relacionamento para identificar os dados das pessoas no drake., 100738
   VIEWMANAGER, DASHBOARDAUTH, VIEWMANAGER, viewmanagerid = :viewmanagerid, -, -, DASHBOARDAUTH viewmanagerid to VIEWMANAGER viewmanagerid relation, 100774
   DASHBOARDAUTH, VIEWMANAGER, DASHBOARDAUTH, viewmanagerid=:viewmanagerid, -, -, Relationship to get all related DASHBOARDAUTH records., 100775
@@ -7377,15 +7392,15 @@ and eauditusername = :eauditusername, -, 0, -, 100852
   PLUSGCERTENV, PLUSGRISKASSESS, PLUSGCERT, plusgcertid = :plusgcertid, -, -, Retrieves the certifications for a risk assessment., 99378
   OOG_PERSON_LOG, PLUSGPERMITWORK, PERSON, personid=:&PERSONID&, -, -, Recupera personid, 99856
   TEMPMEASUREUNIT, PLUSGPERWORKGASTEST, MEASUREUNIT, MEASUREUNITUID = :TEMPMEASUREUNITID, -, -, Relationship to measure unit table to get the merasure unit, 99857
-  OOG_TUTOR_ANSWER_TUTORED, OOG_TUTOR, OOG_TUTOR_CHECKLIST, OOG_TUTORID=:OOG_TUTORID and OOG_TYPE='QUIZPROGTUTORED', -, -, Relacionamento para popular tab de avaliação do programa de tutor na tab de TUTORADO na aplicação de tutor, 99887
+  OOG_TUTOR_ANSWER_TUTORED, OOG_TUTOR, OOG_TUTOR_CHECKLIST, OOG_TUTORID=:OOG_TUTORID and OOG_TYPE='QUIZPROGTUTORED', -, -, Relacionamento para popular tab de avaliaÃ§Ã£o do programa de tutor na tab de TUTORADO na aplicaÃ§Ã£o de tutor, 99887
   OOG_RELEASERAPPROVERS, PLUSGPERMITWORK, PLUSGPERWORKREV, plusgpermitworkid = :plusgpermitworkid and personid in (select personid from person where plusgtechauthority = 1) AND EXISTS (SELECT PLUSGPERWORKWRKPTID,p.*  FROM PLUSGPERWORKWRKPT p,PLUSGPERMITWORK pt WHERE  ((ATTENDEE = 150 AND pt.PERTYPENUM = 'PET') OR (ATTENDEE = 110 AND pt.PERTYPENUM = 'PTW'))  AND PLUSGPERWORKREV.plusgpermitworkid = p.plusgpermitworkid AND PLUSGPERWORKREV.PERSONID = p.oog_PERSON AND pt.plusgpermitworkid = p.plusgpermitworkid), -, -, Relationship with approvers/revisor table to list only techauthority people, 99884
-  OOG_DOUBLEASSESSMENT, OOG_TUTOR, OOG_TUTOR_CHECKLIST, OOG_TUTORID=:OOG_TUTORID and OOG_TYPE='BUDDYTUTOR', -, -, Relacionamento para popular tab de avaliação de dupla na aplicação de tutor, 99885
-  OOG_TUTOREDASSESSMENT, OOG_TUTOR, OOG_TUTOR_CHECKLIST, OOG_TUTORID=:OOG_TUTORID and OOG_TYPE='TUTORED', -, -, Relacionamento para popular tab de avaliação Tutorado na aplicação de tutor, 99886
-  OOG_TUTORASSESSMENT, OOG_TUTOR, OOG_TUTOR_CHECKLIST, OOG_TUTORID=:OOG_TUTORID and OOG_TYPE='TUTOR', -, -, Relacionamento para popular tab de avaliação de tutor na aplicação de tutor, 99888
-  OOG_TUTOR_ANSWER_TUTOR, OOG_TUTOR, OOG_TUTOR_CHECKLIST, OOG_TUTORID=:OOG_TUTORID and OOG_TYPE='QUIZPROGTUTOR', -, -, Relacionamento para popular tab de avaliação do programa de tutor na tab de TUTOR na aplicação de tutor, 99889
-  OOG_TUTOREDSIGNATURE, OOG_TUTOR, OOG_TUTOR_CHECKLIST, OOG_TUTORID=:OOG_TUTORID and OOG_TYPE='SIGTUTORED', -, -, Relacionamento para popular tab de assinatura na aplicação de tutor, 99890
-  OOG_CHECKLIST, OOG_TUTOR, OOG_TUTOR_CHECKLIST, OOG_TUTORID=:OOG_TUTORID, -, -, Relacionamento com a tabela Checklist_tutor para validação e assinatura de terceiros com pagina Externa, 99891
-  OOG_SITUATION, OOG_TUTOR, OOG_SITUATION, OOG_VALUE=:SITUATION, -, -, Relacionamento para popular o campo descrição de situação, 99892
+  OOG_DOUBLEASSESSMENT, OOG_TUTOR, OOG_TUTOR_CHECKLIST, OOG_TUTORID=:OOG_TUTORID and OOG_TYPE='BUDDYTUTOR', -, -, Relacionamento para popular tab de avaliaÃ§Ã£o de dupla na aplicaÃ§Ã£o de tutor, 99885
+  OOG_TUTOREDASSESSMENT, OOG_TUTOR, OOG_TUTOR_CHECKLIST, OOG_TUTORID=:OOG_TUTORID and OOG_TYPE='TUTORED', -, -, Relacionamento para popular tab de avaliaÃ§Ã£o Tutorado na aplicaÃ§Ã£o de tutor, 99886
+  OOG_TUTORASSESSMENT, OOG_TUTOR, OOG_TUTOR_CHECKLIST, OOG_TUTORID=:OOG_TUTORID and OOG_TYPE='TUTOR', -, -, Relacionamento para popular tab de avaliaÃ§Ã£o de tutor na aplicaÃ§Ã£o de tutor, 99888
+  OOG_TUTOR_ANSWER_TUTOR, OOG_TUTOR, OOG_TUTOR_CHECKLIST, OOG_TUTORID=:OOG_TUTORID and OOG_TYPE='QUIZPROGTUTOR', -, -, Relacionamento para popular tab de avaliaÃ§Ã£o do programa de tutor na tab de TUTOR na aplicaÃ§Ã£o de tutor, 99889
+  OOG_TUTOREDSIGNATURE, OOG_TUTOR, OOG_TUTOR_CHECKLIST, OOG_TUTORID=:OOG_TUTORID and OOG_TYPE='SIGTUTORED', -, -, Relacionamento para popular tab de assinatura na aplicaÃ§Ã£o de tutor, 99890
+  OOG_CHECKLIST, OOG_TUTOR, OOG_TUTOR_CHECKLIST, OOG_TUTORID=:OOG_TUTORID, -, -, Relacionamento com a tabela Checklist_tutor para validaÃ§Ã£o e assinatura de terceiros com pagina Externa, 99891
+  OOG_SITUATION, OOG_TUTOR, OOG_SITUATION, OOG_VALUE=:SITUATION, -, -, Relacionamento para popular o campo descriÃ§Ã£o de situaÃ§Ã£o, 99892
   MODDOWNTIMEHIST, MULTIASSETLOCCI, MODDOWNTIMEHIST, 1=1, -, -, Relationship to non-persistent MODDOWNTIMEHIST object., 99903
   OPNWRKFORLOC, LOCATIONS, MULTIASSETLOCCI, location=:location and siteid=:siteid and exists (select 1 from workorder where workorder.woclass=multiassetlocci.recordclass and workorder.wonum=multiassetlocci.recordkey and workorder.siteid=multiassetlocci.worksiteid and workorder.historyflag=0), -, -, Relationship to the MULTIASSETLOCCI table, used to find open work orders for the Location. The resulting set can contain zero or more objects., 99904
   INSPECTIONFORM, ROUTE_STOP, INSPECTIONFORM, inspformnum=:inspformnum and orgid=:orgid and status in (select value from synonymdomain where domainid = 'INSPECTFORMSTATUS' and maxvalue='ACTIVE'), -, -, Relationship from ROUTE_STOP to INSPECTIONFORM. This relationship can return one row., 99905
@@ -7781,7 +7796,7 @@ and eauditusername = :eauditusername, -, 0, -, 100852
   PLUSGINVFMECA, PLUSGIMPROVE, PLUSGINVFMECA, WONUM = :WONUM, -, 0, Relationship to analysis risk., 99841
   OOG_RSR_AB, SR, OOG_RES_AB, :ORIGWOID = RESID, -, 0, Relationship with RES Alert, 99842
   OCY_FAILUREMODE, PLUSGINVFMECA, ALNDOMAIN, VALUE = :FAILUREMODE AND
-DOMAINID = 'OCY_FAILUREMODE', -, 0, Relacionamento para buscar descrição do domínio., 99843
+DOMAINID = 'OCY_FAILUREMODE', -, 0, Relacionamento para buscar descriÃ§Ã£o do domÃ­nio., 99843
   OOG_ALERT, PLUSGIMPROVE, OOG_ALERT, :wonum = resnumber, -, 0, Relationship with OOG_ALERT, 99844
   RELSR, SR, SR, OOG_CNH_MOTORISTA is not null, -, 0, Relationship of SR table, 99845
   PLUSGRISKTEAM, SR, PLUSGRISKTEAM, PLUSGRISKASSESSID = :PLUSGRISKASSESSID, -, 0, Retrieves the assessment team for a risk assessment., 99846
@@ -7862,7 +7877,7 @@ AND LOCATION = (CASE
 END), -, 0, -, 100757
   OOG_PO_STATUS, INVUSELINE, PO, ponum=:ponum and revisionnum=:porevisionnum, -, 0, Relacionamento criado para atender o script OOG_INVUSELINE, que faz a chamada do mesmo.
 
-Ticket#0359489 — PROBLEMA P/ CONCLUIR O SHIPMENT TRANSFER - PO, 100734
+Ticket#0359489 â€” PROBLEMA P/ CONCLUIR O SHIPMENT TRANSFER - PO, 100734
   BIMASSETTREE, LOCATIONS, ASSET, location in ( select location from locancestor where ancestor =:location and systemid in (select systemid from locsystem where siteid =:siteid  and primarysystem = 1) ) and siteid =:siteid, -, -, All assets associated with the location or any child of the location location in ( select location from locancestor where ancestor =:location and systemid in (select systemid from locsystem where siteid =:siteid  and primarysystem = 1) ) and siteid =:siteid, 98788
   FACILITY, ASSET, LOCATIONS, location in ( select ancestor from locancestor where location =:location and systemid in ( select systemid from locsystem where siteid =:siteid and primarysystem = 1))  and siteid =:siteid  and BIMUSAGE in ( select value from synonymdomain where domainid = 'BIMLOCATIONUSE' and MAXVALUE = 'FACILITY' ), -, -, Facility in which the asset is located, 98789
   FLOOR, ASSET, LOCATIONS, location in ( select ancestor from locancestor where location =:location and systemid in ( select systemid from locsystem where siteid =:siteid and primarysystem = 1))  and siteid =:siteid  and BIMUSAGE in ( select value from synonymdomain where domainid = 'BIMLOCATIONUSE' and MAXVALUE = 'FLOOR' ), -, -, Floor on which the asset is located, 98790
@@ -7911,8 +7926,8 @@ Ticket#0359489 — PROBLEMA P/ CONCLUIR O SHIPMENT TRANSFER - PO, 100734
   PLUSGRISKASSESSOFASS, ASSET, PLUSGRISKASSESS, assetid=:assetid, -, -, Relationship to Asset table., 99425
   COMMLOG, PLUSGAUDTEAM, COMMLOG, ownertable = 'PLUSGAUDTEAM' and ownerid = :plusgaudteamid, -, -, Relationship to get communication logs for a audit tean record., 99426
   COMMLOG, PLUSGAUDIT, COMMLOG, (ownerid = :plusgauditid and ownertable = 'PLUSGAUDIT' )or (ownertable = 'PLUSGAUDTEAM' and ownerid in (select plusgaudteamid from PLUSGAUDTEAM where plusgauditid=:plusgauditid)), -, -, Relationship to get communication logs for a audit record., 99427
-  OOG_TUTOREDSIGNATURE_S, OOG_TUTOR, OOG_TUTOR_CHECKLIST, OOG_TUTORID=:OOG_TUTORID and OOG_TYPE='SIGTUTORED_S', -, 0, Relacionamento para popular tab de assinatura na aplicação de tutor, 100736
-  OOG_SIMOOPS, PLUSGPERMITWORK, ALNDOMAIN, domainid = 'OOG_SIMOOPS' and value = :oog_simoops, -, 0, Busca a descrição da operação referente a Matriz Simoops, 100759
+  OOG_TUTOREDSIGNATURE_S, OOG_TUTOR, OOG_TUTOR_CHECKLIST, OOG_TUTORID=:OOG_TUTORID and OOG_TYPE='SIGTUTORED_S', -, 0, Relacionamento para popular tab de assinatura na aplicaÃ§Ã£o de tutor, 100736
+  OOG_SIMOOPS, PLUSGPERMITWORK, ALNDOMAIN, domainid = 'OOG_SIMOOPS' and value = :oog_simoops, -, 0, Busca a descriÃ§Ã£o da operaÃ§Ã£o referente a Matriz Simoops, 100759
   OOG_MEETWORKTEAM, SR, OOG_MEETWORKTEAM, ticketid = :ticketid and ticketuid = :ticketuid and siteid = :siteid, -, 0, -, 100772
   BOOKMARK, BIMPRODUCT, BOOKMARK, app='PRODUCT' and keyvalue=:BIMPRODUCTBASEID, -, -, Relationship to the bookmark records, used to find the bookmark records for a given asset., 98811
   DOCLINKS, BIMPRODUCT, DOCLINKS, ownertable = 'BIMPRODUCT' and ownerid = :BIMPRODUCTBASEID, -, -, Relationship to the DocLinks table, used to find all documents for a given product. (ownertable = 'BIMPRODUCT' and ownerid = :BIMPRODUCTBASEID). The resulting set will contain zero or more objects., 98812
@@ -7977,8 +7992,8 @@ Ticket#0359489 — PROBLEMA P/ CONCLUIR O SHIPMENT TRANSFER - PO, 100734
   REPLOCASSIGN, LOCATIONS, ASSIGNREPLOC, repairlocation=:location and replocsiteid=:siteid, -, -, Relationship to ASSIGNREPLOC table., 99479
   ASSIGNREPLOC, LOCATIONS, ASSIGNREPLOC, repairlocation=:location and replocsiteid=:siteid, -, -, Relationship to ASSIGNREPLOC table., 99480
   ASSIGNREPLOC, WORKORDER, ASSIGNREPLOC, wonum=:wonum and siteid=:siteid, MULTIPLE, -, Relationship to ASSIGNREPLOC table., 99482
-  A1, OOG_SIMOOPS, ALNDOMAIN, domainid = 'OOG_SIMOOPS' and value = :oog_simoops1, -, 0, Pega a descrição da atividade 1, 100760
-  A2, OOG_SIMOOPS, ALNDOMAIN, domainid = 'OOG_SIMOOPS' and value = :oog_simoops2, -, 0, Pega a descrição da atividade 2, 100761
+  A1, OOG_SIMOOPS, ALNDOMAIN, domainid = 'OOG_SIMOOPS' and value = :oog_simoops1, -, 0, Pega a descriÃ§Ã£o da atividade 1, 100760
+  A2, OOG_SIMOOPS, ALNDOMAIN, domainid = 'OOG_SIMOOPS' and value = :oog_simoops2, -, 0, Pega a descriÃ§Ã£o da atividade 2, 100761
   PRODUCTCHANGESTATUS, BIMPRODUCT, BIMPRODUCTCHANGESTATUS, -, -, -, Relationship to the non-persistent BIMProductChangeStatus table. (No where clause). The resulting set will contain zero objects. This relationship is used only for the Change Status action page to change the status of a given product., 98834
   BIMASSETTYPE, ASSET, BIMPRODUCT, productid = :productid  and orgid = :orgid and designspec=0, -, -, Relationship to the BIMProduct table, used to find the product/type for an asset (productid = :productid  and orgid = :orgid).  This resulting set will contain zero or one object, 98835
   VENDORPRODUCT, INVVENDOR, BIMPRODUCTBASE, productid = :productid  and orgid = :orgid and designspec=0, -, -, Relationship to the BIMProduct table, used to find the product/type for an inventory vendor (productid = :productid  and orgid = :orgid).  This resulting set will contain zero or one object, 98836
@@ -8474,7 +8489,7 @@ Ticket#0359489 — PROBLEMA P/ CONCLUIR O SHIPMENT TRANSFER - PO, 100734
   OOG_PLUSGPERWORKREVIEWER, PLUSGPERMITWORK, PERSON, personid = :oog_closurereviewer, -, -, Retrieves details about the selected person., 99748
   OOG_WL_REJECT, PLUSGDRL, WORKLOG, RECORDKEY= :wonum  AND CLASS= 'DRILLCOMP'  AND SITEID= :SITEID  AND CREATEDATE = (SELECT MAX(wl.CREATEDATE) FROM WORKLOG wl WHERE wl.RECORDKEY= :WONUM AND wl.CLASS='DRILLCOMP' and wl.SITEID= :SITEID and wl.logtype = 'REJECT'), -, -, Relationship to get the last REJECT worklog for WO Drilling, 99803
   OOG_WOSTATUS, PLUSGDRL, WOSTATUS, wonum = :wonum and siteid=:siteid, -, -, Relationship between Drilliing and Status historical, 99804
-  OOG_CHANGEBY, PLUSGDRL, PERSON, personid = :changeby, -, -, Search for  change byÂ´s name, 99805
+  OOG_CHANGEBY, PLUSGDRL, PERSON, personid = :changeby, -, -, Search for  change byÃ‚Â´s name, 99805
   OOG_WL_WOREFREV, PLUSGDRL, WORKLOG, RECORDKEY= :wonum  AND CLASS= 'DRILLCOMP'  AND SITEID= :SITEID  AND CREATEDATE = (SELECT MAX(wl.CREATEDATE) FROM WORKLOG wl WHERE wl.RECORDKEY= :WONUM AND wl.CLASS='DRILLCOMP' and wl.SITEID= :SITEID and wl.logtype = 'UPDATE'), -, -, Relationship to get the last UPDATE worklog for WO Ref, 99806
   OOG_DRL_WOREFRM, PLUSGDRL, PERSONGROUPTEAM, persongroup = 'OOG_RIGM', -, -, Relationship to get All users in Rig Manager Group for WO Ref notification, 99807
   OOG_DRL_WOREFRS, PLUSGDRL, PERSONGROUPTEAM, persongroup = 'OOG_RIGS', -, -, Relationship to get All users in Rig Superintendent Group for WO Ref notification, 99808
@@ -8640,7 +8655,7 @@ AND CREATEDATE = (
         AND SITEID = :SITEID
         AND OOG_STATUS = 'WAPPR'
     ), -, 0, -, 100855
-  WORKLOG, LOCATIONS, WORKLOG, recordkey=:LOCATION and class = 'ASSETLOGBOOK' and siteid=:siteid, -, 0, Relacionamento criado para inserção de registros da aba Log Book, em Technical Accounts, 100856
+  WORKLOG, LOCATIONS, WORKLOG, recordkey=:LOCATION and class = 'ASSETLOGBOOK' and siteid=:siteid, -, 0, Relacionamento criado para inserÃ§Ã£o de registros da aba Log Book, em Technical Accounts, 100856
   WFASSIGNMENT, LOCATIONS, WFASSIGNMENT, ownertable = 'LOCATIONS' and wfassignment.ownerid = :locationsid and assignstatus in (select value from synonymdomain where domainid='WFASGNSTATUS' and maxvalue='ACTIVE'), -, 0, Relationship to active assignments on this LOCATIONS. (ownertable = 'LOCATIONS' and wfassignment.ownerid = :locationsid and assignstatus in (select value from synonymdomain where domainid='WFASGNSTATUS' and maxvalue='ACTIVE')) Zero to many member set., 100857
   WFTOOLBAR, LOCATIONS, WFTOOLBAR, -, -, 0, Get the virtual set that manages the toolbar buttons., 100860
   WORKFLOWMAP, LOCATIONS, WORKFLOWMAP, -, -, 0, Get the virtual set to display process maps., 100859
@@ -8708,7 +8723,7 @@ AND CREATEDATE = (
   PLUSGPTWSUSPEND, PLUSGPERMITWORK, PLUSGPTWSUSPEND, 1=1, -, -, Relationship to show suspend all permits dialog, 99217
   PLUSGPERMITWORK, PLUSGPTWSUSPEND, PLUSGPERMITWORK, -, -, -, Relationship to show suspend all permits dialog, 99218
   PLUSGPERWORKSTATUS, PLUSGPTWSUSPEND, PLUSGPERWORKSTATUS, 1!=1, -, -, Relationship to PLUGPERWORKSTATUS, 99219
-  OOG_APRIEC, PLUSGPERMITWORK, ALNDOMAIN, :OOG_RISKEC = value and 'OOG_APRIEC' = domainid, -, 0, Busca informações da APRI\EC, 100735
+  OOG_APRIEC, PLUSGPERMITWORK, ALNDOMAIN, :OOG_RISKEC = value and 'OOG_APRIEC' = domainid, -, 0, Busca informaÃ§Ãµes da APRI\EC, 100735
   PICDESC, OOG_RSK_PNL_ENRGY, ALNDOMAIN, :cod = value and 'OOG_RSK_RISKCODE' = domainid, -, 0, -, 100739
   OOG_RSK_PNL_ENRGY, PLUSGRISKASSESS, OOG_RSK_PNL_ENRGY, riskassessnum = :riskassessnum and siteid = :siteid and plusgriskassessid = :plusgriskassessid, -, 0, Dados do Painel de Risco, 100740
   OOG_RSK_PNL_MITIGATIONS, PLUSGRISKASSESS, OOG_RSK_PNL_MITIGATIONS, riskassessnum = :riskassessnum and siteid = :siteid and plusgriskassessid = :plusgriskassessid, -, 0, Dados do Painel de Risco, 100741
@@ -8720,7 +8735,7 @@ AND CREATEDATE = (
   OOG_JOBPLAN, SR, JOBPLAN, RSR_TICKETID = :TICKETID, -, 0, -, 100750
   OOG_NEWMEETING, ORGANIZATION, SR, 1=2, -, 0, -, 100753
   OOG_MEETWORKTEAM, TICKET, OOG_MEETWORKTEAM, ticketuid=:ticketuid, -, 0, -, 100754
-  OOG_MEETINGPERSON, SR, PERSONGROUPTEAM, persongroup = 'OOG_MEET', -, 0, Grupo com os envolvidos na reunião de planejamento e simultaidade, 100755
+  OOG_MEETINGPERSON, SR, PERSONGROUPTEAM, persongroup = 'OOG_MEET', -, 0, Grupo com os envolvidos na reuniÃ£o de planejamento e simultaidade, 100755
   MEETPERSON, OOG_MEETWORKTEAM, PERSON, personid = :personid, -, 0, -, 100756
   AUDIT_INVCOST, INVCOST, A_INVCOST, itemnum = :itemnum and itemsetid = :itemsetid and siteid = :siteid and location = :location, -, 0, -, 100766
   AUDIT_INVCOST, INVENTORY, A_INVCOST, itemnum = :itemnum and itemsetid = :itemsetid and siteid = :siteid and location = :location, -, 0, -, 100767
@@ -8967,7 +8982,7 @@ AND CREATEDATE = (
   VENDOR, OOG_BACKLOADLINE, COMPANIES, company=:vendor and orgid=:orgid, -, 0, -, 99707
   CMLINE, OOG_MANIFESTBACKLOAD, OOG_BACKLOADLINE, CARGOMANIFEST = :CARGOMANIFEST and SITEID = :SITEID and ORGID = :ORGID and VERSION = :VERSION, -, 0, -, 99708
   DOCLINKS, OOG_MANIFESTBACKLOAD, DOCLINKS, (ownertable='OOG_MANIFESTBACKLOAD' and ownerid = :OOG_MANIFESTBACKLOADID), -, 0, -, 99709
-  INVCOST, OOG_BACKLOADLINE, INVCOST, itemnum = :itemnum and itemsetid = :itemsetid and location = (select location from locations where siteid = :siteid AND TYPE = 'STOREROOM' and isdefault =1), -, 0, Relacionamento usado no script OOG_CMBKLINE_ITEM para buscar o custo unitário., 99710
+  INVCOST, OOG_BACKLOADLINE, INVCOST, itemnum = :itemnum and itemsetid = :itemsetid and location = (select location from locations where siteid = :siteid AND TYPE = 'STOREROOM' and isdefault =1), -, 0, Relacionamento usado no script OOG_CMBKLINE_ITEM para buscar o custo unitÃ¡rio., 99710
   DOCLINKS_LINES, OOG_MANIFESTBACKLOAD, DOCLINKS, ownertable='OOG_BACKLOADLINE' and exists (select 1 from maximo.OOG_MANIFESTBACKLOAD OH , maximo.OOG_BACKLOADLINE OL WHERE :OOG_MANIFESTBACKLOADID = OH.OOG_MANIFESTBACKLOADID AND OL.CARGOMANIFEST = OH.CARGOMANIFEST AND OL.SITEID = OH.SITEID AND OL.OOG_BACKLOADLINEID = DOCLINKS.ownerid), -, 0, -, 99711
   CARGOMANIFEST, OOG_CMLINE, OOG_MANIFEST, CARGOMANIFEST = :CARGOMANIFEST
 and SITEID =      :SITEID
@@ -9054,5 +9069,5 @@ and VERSION = :VERSION, -, 0, -, 99722
   PLUSGCERT, PLUSGLOCCALCULATE, PLUSGCERT, plusgcertid = :plusgcertid, -, -, Retrieves the Certification for a PLUSGLOCCALCULATE., 99400
   PLUSGASSCALCULATE, ASSET, PLUSGASSCALCULATE, assetuid = :assetuid, -, -, Retrieves the PLUSGASSCALCULATE for a Certification., 99401
   PLUSGASSCALCULATE, PERSON, PLUSGASSCALCULATE, validatebyid = :personuid, -, -, Shows PLUSGASSCALCULATE of a person., 99402
-FetchAll: 8903 rows fetched.
+FetchAll: 8904 rows fetched.
 > 

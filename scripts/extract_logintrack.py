@@ -38,7 +38,7 @@ def main():
         print("\n✅ LOGINTRACKING extraído com sucesso!")
         print("\n📋 Próximos passos:")
         print("   1. Execute: python run_pipeline.py --skip-extract")
-        print("   2. Revise: output/consolidated/usage_analysis.csv")
+        print("   2. Revise: output/consolidated/license_decision_plan.csv")
         print("   3. Abra: output/reports/maximo_unified_dashboard.html")
         
     except subprocess.CalledProcessError as e:

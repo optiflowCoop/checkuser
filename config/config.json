@@ -17,7 +17,8 @@
     "maxrelationship",
     "applicationauth",
     "pr_sod_evidence",
-    "siteauth"
+    "siteauth",
+    "maxuserstatus"
   ],
   "connections": [
     {
